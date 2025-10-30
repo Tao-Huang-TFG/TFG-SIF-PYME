@@ -1,6 +1,8 @@
 package es.upm.tfg.sifpyme;
 
 import es.upm.tfg.sifpyme.util.DatabaseConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -8,8 +10,10 @@ import java.sql.Statement;
 
 public class Main {
     
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    
     public static void main(String[] args) {
-        System.out.println("=== Aplicación de Facturación ===\n");
+        logger.info("=== Aplicacion de Facturacion ===");
         
         try {
             // Probar conexión
@@ -19,12 +23,14 @@ public class Main {
             // SwingUtilities.invokeLater(() -> new MainView().setVisible(true));
             
         } catch (Exception e) {
-            System.err.println("Error fatal: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error fatal en la aplicacion", e);
         } finally {
             // Cerrar al finalizar la aplicación
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 DatabaseConnection.close();
+                try{
+                    Thread.sleep(500);
+                } catch (InterruptedException ignored){}
             }));
         }
     }
@@ -33,38 +39,37 @@ public class Main {
      * Prueba la conexión y muestra algunos datos
      */
     private static void testDatabaseConnection() {
-        System.out.println("Probando conexión a la base de datos...\n");
+        logger.info("Probando conexion a la base de datos...");
         
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {
             
             // Verificar tipos de IVA
             ResultSet rs = stmt.executeQuery("SELECT * FROM Tipo_IVA");
-            System.out.println("Tipos de IVA disponibles:");
+            logger.info("Tipos de IVA disponibles:");
             while (rs.next()) {
-                System.out.printf("  - %s: %.2f%%\n", 
+                logger.info("  - {}: {}%", 
                     rs.getString("nombre"), 
-                    rs.getDouble("porcentaje")
+                    String.format("%.2f", rs.getDouble("porcentaje"))
                 );
             }
             rs.close();
             
             // Verificar empresas
             rs = stmt.executeQuery("SELECT * FROM Empresa");
-            System.out.println("\nEmpresas registradas:");
+            logger.info("Empresas registradas:");
             while (rs.next()) {
-                System.out.printf("  - %s (NIF: %s)\n", 
+                logger.info("  - {} (NIF: {})", 
                     rs.getString("nombre_comercial"), 
                     rs.getString("nif")
                 );
             }
             rs.close();
             
-            System.out.println("\n✓ Conexión exitosa!\n");
+            logger.info("Conexion exitosa!");
             
         } catch (Exception e) {
-            System.err.println("✗ Error al conectar: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error al conectar a la base de datos", e);
         }
     }
 }

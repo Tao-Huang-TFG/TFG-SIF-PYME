@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    
+    <!-- Configuración para la consola -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Configuración para archivo (opcional) -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/sifpyme.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Rotación diaria -->
+            <fileNamePattern>logs/sifpyme.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- Mantener logs de los últimos 30 días -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Logger para HikariCP (reducir verbosidad) -->
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+    
+    <!-- Logger para H2 (reducir verbosidad) -->
+    <logger name="org.h2" level="WARN"/>
+    
+    <!-- Logger para tu aplicación -->
+    <logger name="es.upm.tfg.sifpyme" level="DEBUG"/>
+    
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+    
+</configuration>

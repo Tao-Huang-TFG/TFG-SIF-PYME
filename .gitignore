@@ -9,6 +9,10 @@ data/
 #IDE
 .vscode/
 
+#logs
+logs/
+*.log
+
 #Archivos temporales de Office
 ~$*
 
