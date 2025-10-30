@@ -1,1 +1,14 @@
+#Maven
 target/
+
+#Base de datos H2
+data/
+*.mv.db
+*.trace.db
+
+#IDE
+.vscode/
+
+#Archivos temporales de Office
+~$*
+
