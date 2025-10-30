@@ -28,10 +28,7 @@ CREATE TABLE IF NOT EXISTS Empresa (
   telefono VARCHAR(20),
   email VARCHAR(100),
   web VARCHAR(200),
-  logo_path VARCHAR(255),
   tipo_retencion_irpf DECIMAL(5,2) DEFAULT 15.00,
-  regimen_iva VARCHAR(50) DEFAULT 'General',
-  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   activo BOOLEAN DEFAULT TRUE,
   por_defecto BOOLEAN DEFAULT FALSE
 );
@@ -45,9 +42,7 @@ CREATE TABLE IF NOT EXISTS Cliente (
   nif VARCHAR(20) NOT NULL UNIQUE,
   direccion VARCHAR(255),
   telefono VARCHAR(20),
-  email VARCHAR(100),
-  fecha_alta DATE DEFAULT CURRENT_DATE,
-  activo BOOLEAN DEFAULT TRUE
+  email VARCHAR(100)
 );
 
 -- ======================
@@ -62,8 +57,6 @@ CREATE TABLE IF NOT EXISTS Producto (
   precio DECIMAL(10,2),
   precio_base DECIMAL(10,2),
   tipo_retencion DECIMAL(5,2) DEFAULT 0,
-  activo BOOLEAN DEFAULT TRUE,
-  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT chk_precio_no_nulo CHECK (
     precio IS NOT NULL OR precio_base IS NOT NULL
   ),
