@@ -10,7 +10,7 @@ INSERT INTO Tipo_IVA (nombre, porcentaje) VALUES
 ('Exento', 0.00);
 
 -- Empresa por defecto (ejemplo)
-INSERT INTO Empresa (
+/*INSERT INTO Empresa (
   nombre_comercial, 
   razon_social, 
   nif, 
@@ -32,4 +32,4 @@ INSERT INTO Empresa (
   'contacto@miempresa.com',
   '965000000',
   TRUE
-);
+);*/
