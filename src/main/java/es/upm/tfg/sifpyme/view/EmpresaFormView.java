@@ -443,7 +443,13 @@ public class EmpresaFormView extends JFrame {
             empresa.setActivo(true);
 
             // Guardar a través del controlador
-            boolean success = controller.guardarEmpresa(empresa);
+            boolean success;
+            if(modoEdicion)
+            {
+                success = controller.actualizarEmpresa(empresa);
+            }else{
+                success = controller.guardarEmpresa(empresa);
+            }
 
             if (success) {
                 JOptionPane.showMessageDialog(
@@ -529,7 +535,7 @@ public class EmpresaFormView extends JFrame {
         );
 
         if (respuesta == JOptionPane.YES_OPTION) {
-            System.exit(0);
+            dispose();
         }
     }
 }
