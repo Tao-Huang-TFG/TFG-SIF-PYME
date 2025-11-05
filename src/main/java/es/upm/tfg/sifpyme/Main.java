@@ -3,6 +3,7 @@ package es.upm.tfg.sifpyme;
 import es.upm.tfg.sifpyme.controller.EmpresaController;
 import es.upm.tfg.sifpyme.model.entity.Empresa;
 import es.upm.tfg.sifpyme.util.DatabaseConnection;
+import es.upm.tfg.sifpyme.view.ClientesView;
 import es.upm.tfg.sifpyme.view.EmpresaFormView;
 import es.upm.tfg.sifpyme.view.MainMenuView;
 import org.slf4j.Logger;
@@ -40,6 +41,10 @@ public class Main {
                             Empresa empresaGuardada = empresaController.obtenerEmpresaPorDefecto();
                             if (empresaGuardada != null) {
                                 abrirMenuPrincipal(empresaGuardada);
+                            } else {
+                                // Si no se guardó, cerrar la aplicación
+                                logger.info("No se registró ninguna empresa. Cerrando aplicación.");
+                                System.exit(0);
                             }
                         }
                     });
@@ -93,6 +98,7 @@ public class Main {
         
         // Listener para el botón de Empresas
         menu.setEmpresasListener(e -> {
+            logger.info("Abriendo formulario de empresa");
             // Abrir formulario de empresas en modo edición
             EmpresaFormView empresaForm = new EmpresaFormView(empresaActual);
             empresaForm.setVisible(true);
@@ -101,16 +107,16 @@ public class Main {
             empresaForm.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosed(java.awt.event.WindowEvent e) {
-                    // Podrías actualizar la información en el menú principal aquí
                     logger.info("Formulario de empresa cerrado");
                 }
             });
         });
         
-        // Listener para el botón de Clientes (funcionalidad futura)
+        // Listener para el botón de Clientes
         menu.setClientesListener(e -> {
-            menu.mostrarFuncionalidadNoDisponible("Gestión de Clientes");
-            // Aquí irá: new ClientesView().setVisible(true);
+            logger.info("Abriendo gestión de clientes");
+            ClientesView clientesView = new ClientesView();
+            clientesView.setVisible(true);
         });
         
         // Listener para el botón de Productos (funcionalidad futura)
