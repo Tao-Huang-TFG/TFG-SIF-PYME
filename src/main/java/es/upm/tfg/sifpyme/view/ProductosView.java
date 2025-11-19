@@ -3,6 +3,7 @@ package es.upm.tfg.sifpyme.view;
 import es.upm.tfg.sifpyme.controller.ProductoController;
 import es.upm.tfg.sifpyme.model.entity.Producto;
 import es.upm.tfg.sifpyme.model.entity.TipoIva;
+import es.upm.tfg.sifpyme.util.NavigationManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -28,15 +29,17 @@ public class ProductosView extends JFrame {
     private JButton btnEditar;
     private JButton btnEliminar;
     private JButton btnRefrescar;
+    private JButton btnVolver;
     private JLabel lblTotalProductos;
     private TableRowSorter<DefaultTableModel> sorter;
 
     // Colores y fuentes
-    private final Color COLOR_PRIMARIO = new Color(155, 89, 182);
+    private final Color COLOR_PRIMARIO = new Color(52, 152, 219);
     private final Color COLOR_SECUNDARIO = new Color(142, 68, 173);
     private final Color COLOR_EXITO = new Color(46, 204, 113);
     private final Color COLOR_PELIGRO = new Color(231, 76, 60);
     private final Color COLOR_INFO = new Color(52, 152, 219);
+    private final Color COLOR_VOLVER = new Color(149, 165, 166);
     private final Color COLOR_FONDO = new Color(245, 245, 245);
     private final Color COLOR_BORDE = new Color(220, 220, 220);
 
@@ -56,7 +59,14 @@ public class ProductosView extends JFrame {
 
     private void configurarVentana() {
         setTitle("Gestión de Productos - SifPyme");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Cambiado para usar navegación
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                NavigationManager.getInstance().navigateBack();
+            }
+        });
+
         setPreferredSize(new Dimension(1300, 700));
         setMinimumSize(new Dimension(1100, 600));
         setResizable(true);
@@ -79,7 +89,7 @@ public class ProductosView extends JFrame {
         tablaProductos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         tablaProductos.setForeground(Color.DARK_GRAY);
-        tablaProductos.setSelectionForeground(Color.WHITE);
+        tablaProductos.setSelectionForeground(Color.DARK_GRAY);
 
         tablaProductos.getColumnModel().getColumn(0).setPreferredWidth(50);
         tablaProductos.getColumnModel().getColumn(1).setPreferredWidth(100);
@@ -93,7 +103,7 @@ public class ProductosView extends JFrame {
         JTableHeader header = tablaProductos.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 13));
         header.setBackground(COLOR_PRIMARIO);
-        header.setForeground(Color.WHITE);
+        header.setForeground(Color.DARK_GRAY);
         header.setBorder(BorderFactory.createLineBorder(COLOR_SECUNDARIO));
 
         // Sorter para búsqueda
@@ -126,11 +136,13 @@ public class ProductosView extends JFrame {
         btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
         btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
         btnRefrescar = crearBoton("🔄 Refrescar", COLOR_PRIMARIO);
+        btnVolver = crearBoton("← Volver", COLOR_VOLVER);
 
         btnNuevo.addActionListener(e -> nuevoProducto());
         btnEditar.addActionListener(e -> editarProducto());
         btnEliminar.addActionListener(e -> eliminarProducto());
         btnRefrescar.addActionListener(e -> cargarProductos());
+        btnVolver.addActionListener(e -> NavigationManager.getInstance().navigateBack());
 
         // Label de totales
         lblTotalProductos = new JLabel("Total: 0 productos");
@@ -141,12 +153,11 @@ public class ProductosView extends JFrame {
     private JButton crearBoton(String texto, Color color) {
         JButton boton = new JButton();
         boton.setLayout(new BorderLayout(5, 5));
-        boton.setBackground(Color.WHITE);
+        boton.setBackground(color);
+        boton.setForeground(color);
         boton.setFocusPainted(false);
 
-        boton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(color, 2),
-                BorderFactory.createEmptyBorder(10, 15, 10, 15)));
+        boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         String[] partes = texto.split(" ", 2);
@@ -187,20 +198,20 @@ public class ProductosView extends JFrame {
         boton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 boton.setBackground(color);
-                lblTexto.setForeground(Color.WHITE);
-                lblIcono.setForeground(Color.WHITE);
-                boton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(color.darker(), 2),
-                        BorderFactory.createEmptyBorder(10, 15, 10, 15)));
+                if (lblTexto != null) {
+                    lblTexto.setForeground(color);
+                }
+                lblIcono.setForeground(color);
+                boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                boton.setBackground(Color.WHITE);
-                lblTexto.setForeground(color.darker().darker());
+                boton.setBackground(color);
+                if (lblTexto != null) {
+                    lblTexto.setForeground(color.darker().darker());
+                }
                 lblIcono.setForeground(color.darker().darker());
-                boton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(color, 2),
-                        BorderFactory.createEmptyBorder(10, 15, 10, 15)));
+                boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
             }
         });
 
@@ -274,8 +285,13 @@ public class ProductosView extends JFrame {
                 BorderFactory.createLineBorder(COLOR_BORDE, 1),
                 BorderFactory.createEmptyBorder(15, 20, 15, 20)));
 
-        // Panel de búsqueda
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        // Panel de volver a la izquierda
+        JPanel backPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        backPanel.setOpaque(false);
+        backPanel.add(btnVolver);
+
+        // Panel de búsqueda (centrado)
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         searchPanel.setOpaque(false);
 
         JLabel lblBuscar = new JLabel("🔍 Buscar:");
@@ -292,7 +308,8 @@ public class ProductosView extends JFrame {
         buttonsPanel.add(btnEliminar);
         buttonsPanel.add(btnRefrescar);
 
-        panel.add(searchPanel, BorderLayout.WEST);
+        panel.add(backPanel, BorderLayout.WEST);
+        panel.add(searchPanel, BorderLayout.CENTER);
         panel.add(buttonsPanel, BorderLayout.EAST);
 
         return panel;

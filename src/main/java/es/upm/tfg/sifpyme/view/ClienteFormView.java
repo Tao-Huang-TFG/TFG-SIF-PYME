@@ -8,11 +8,13 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
- * Vista para el formulario de registro/edición de cliente
+ * Panel para el formulario de registro/edición de cliente
  */
-public class ClienteFormView extends JDialog {
+public class ClienteFormView extends JPanel {
 
     private final ClienteController controller;
+    private final CardLayout cardLayout;
+    private final JPanel cardPanel;
 
     // Componentes del formulario
     private JTextField txtNombreFiscal;
@@ -25,7 +27,6 @@ public class ClienteFormView extends JDialog {
 
     private Cliente clienteEditar;
     private boolean modoEdicion;
-    private boolean guardadoExitoso = false;
 
     // Colores y fuentes consistentes
     private final Color COLOR_PRIMARIO = new Color(155, 89, 182);
@@ -40,17 +41,17 @@ public class ClienteFormView extends JDialog {
     private final Font FUENTE_CAMPO = new Font("Segoe UI", Font.PLAIN, 14);
     private final Font FUENTE_BOTON = new Font("Segoe UI", Font.BOLD, 14);
 
-    public ClienteFormView(Frame parent) {
-        this(parent, null);
+    public ClienteFormView(CardLayout cardLayout, JPanel cardPanel) {
+        this(cardLayout, cardPanel, null);
     }
 
-    public ClienteFormView(Frame parent, Cliente clienteEditar) {
-        super(parent, true); // Modal
+    public ClienteFormView(CardLayout cardLayout, JPanel cardPanel, Cliente clienteEditar) {
         this.controller = new ClienteController();
+        this.cardLayout = cardLayout;
+        this.cardPanel = cardPanel;
         this.clienteEditar = clienteEditar;
         this.modoEdicion = (clienteEditar != null);
 
-        configurarVentana();
         initComponents();
         setupLayout();
 
@@ -59,22 +60,12 @@ public class ClienteFormView extends JDialog {
         }
     }
 
-    private void configurarVentana() {
-        String titulo = modoEdicion ? "Editar Cliente" : "Nuevo Cliente";
-        setTitle(titulo + " - SifPyme");
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setPreferredSize(new Dimension(650, 550));
-        setMinimumSize(new Dimension(600, 500));
-        setResizable(false);
-        setLocationRelativeTo(getParent());
-    }
-
     private void initComponents() {
         configurarCamposTexto();
         configurarBotones();
 
         btnGuardar.addActionListener(e -> guardarCliente());
-        btnCancelar.addActionListener(e -> cancelar());
+        btnCancelar.addActionListener(e -> volverALista());
     }
 
     private void configurarCamposTexto() {
@@ -100,63 +91,42 @@ public class ClienteFormView extends JDialog {
         String textoGuardar = modoEdicion ? "Actualizar" : "Guardar";
         btnGuardar = new JButton(textoGuardar);
         btnGuardar.setBackground(COLOR_EXITO);
-        btnGuardar.setForeground(Color.WHITE);
+        btnGuardar.setForeground(COLOR_EXITO);
         btnGuardar.setFont(FUENTE_BOTON);
         btnGuardar.setFocusPainted(false);
         btnGuardar.setBorder(BorderFactory.createEmptyBorder(12, 30, 12, 30));
         btnGuardar.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        btnGuardar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btnGuardar.setBackground(COLOR_EXITO.darker());
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btnGuardar.setBackground(COLOR_EXITO);
-            }
-        });
-
         btnCancelar = new JButton("Cancelar");
-        btnCancelar.setBackground(Color.WHITE);
+        btnCancelar.setBackground(COLOR_PELIGRO);
         btnCancelar.setForeground(COLOR_PELIGRO);
         btnCancelar.setFont(FUENTE_BOTON);
         btnCancelar.setFocusPainted(false);
-        btnCancelar.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_PELIGRO, 1),
+        btnCancelar.setBorder(
             BorderFactory.createEmptyBorder(10, 25, 10, 25)
-        ));
+        );
         btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        btnCancelar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btnCancelar.setBackground(new Color(255, 245, 245));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btnCancelar.setBackground(Color.WHITE);
-            }
-        });
     }
 
     private void setupLayout() {
-        JPanel mainPanel = new JPanel(new BorderLayout(0, 0));
-        mainPanel.setBackground(COLOR_FONDO);
+        setLayout(new BorderLayout(0, 0));
+        setBackground(COLOR_FONDO);
 
         // Header
         JPanel headerPanel = createHeaderPanel();
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        add(headerPanel, BorderLayout.NORTH);
 
         // Formulario
         JPanel formPanel = createFormPanel();
         JScrollPane scrollPane = new JScrollPane(formPanel);
         scrollPane.setBorder(null);
         scrollPane.setBackground(COLOR_FONDO);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.CENTER);
 
         // Botones
         JPanel buttonPanel = createButtonPanel();
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        add(mainPanel);
-        pack();
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private JPanel createHeaderPanel() {
@@ -343,8 +313,7 @@ public class ClienteFormView extends JDialog {
                     JOptionPane.INFORMATION_MESSAGE
                 );
 
-                guardadoExitoso = true;
-                dispose();
+                volverALista();
             } else {
                 String mensajeError = "Error al guardar el cliente.\n";
                 if (controller.obtenerClientePorNif(cliente.getNif()) != null) {
@@ -401,11 +370,7 @@ public class ClienteFormView extends JDialog {
         return true;
     }
 
-    private void cancelar() {
-        dispose();
-    }
-
-    public boolean isGuardadoExitoso() {
-        return guardadoExitoso;
+    private void volverALista() {
+        cardLayout.show(cardPanel, "listaClientes");
     }
 }

@@ -133,40 +133,19 @@ public class ProductoFormView extends JDialog {
         String textoGuardar = modoEdicion ? "Actualizar" : "Guardar";
         btnGuardar = new JButton(textoGuardar);
         btnGuardar.setBackground(COLOR_EXITO);
-        btnGuardar.setForeground(Color.WHITE);
+        btnGuardar.setForeground(COLOR_EXITO);
         btnGuardar.setFont(FUENTE_BOTON);
         btnGuardar.setFocusPainted(false);
         btnGuardar.setBorder(BorderFactory.createEmptyBorder(12, 30, 12, 30));
         btnGuardar.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        btnGuardar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btnGuardar.setBackground(COLOR_EXITO.darker());
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btnGuardar.setBackground(COLOR_EXITO);
-            }
-        });
-
         btnCancelar = new JButton("Cancelar");
-        btnCancelar.setBackground(Color.WHITE);
+        btnCancelar.setBackground(COLOR_PELIGRO);
         btnCancelar.setForeground(COLOR_PELIGRO);
         btnCancelar.setFont(FUENTE_BOTON);
         btnCancelar.setFocusPainted(false);
-        btnCancelar.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_PELIGRO, 1),
-            BorderFactory.createEmptyBorder(10, 25, 10, 25)
-        ));
+        btnCancelar.setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
         btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        btnCancelar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btnCancelar.setBackground(new Color(255, 245, 245));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btnCancelar.setBackground(Color.WHITE);
-            }
-        });
     }
 
     private void setupLayout() {

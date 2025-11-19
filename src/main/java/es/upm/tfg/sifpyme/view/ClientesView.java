@@ -2,6 +2,7 @@ package es.upm.tfg.sifpyme.view;
 
 import es.upm.tfg.sifpyme.controller.ClienteController;
 import es.upm.tfg.sifpyme.model.entity.Cliente;
+import es.upm.tfg.sifpyme.util.NavigationManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,8 +27,14 @@ public class ClientesView extends JFrame {
     private JButton btnEditar;
     private JButton btnEliminar;
     private JButton btnRefrescar;
+    private JButton btnVolver;
     private JLabel lblTotalClientes;
     private TableRowSorter<DefaultTableModel> sorter;
+
+    // CardLayout para navegación interna
+    private CardLayout cardLayout;
+    private JPanel cardPanel;
+    private ClienteFormView clienteFormView;
 
     // Colores y fuentes
     private final Color COLOR_PRIMARIO = new Color(155, 89, 182);
@@ -35,6 +42,7 @@ public class ClientesView extends JFrame {
     private final Color COLOR_EXITO = new Color(46, 204, 113);
     private final Color COLOR_PELIGRO = new Color(231, 76, 60);
     private final Color COLOR_INFO = new Color(52, 152, 219);
+    private final Color COLOR_VOLVER = new Color(149, 165, 166);
     private final Color COLOR_FONDO = new Color(245, 245, 245);
     private final Color COLOR_BORDE = new Color(220, 220, 220);
 
@@ -45,6 +53,8 @@ public class ClientesView extends JFrame {
 
     public ClientesView() {
         this.controller = new ClienteController();
+        this.cardLayout = new CardLayout();
+        this.cardPanel = new JPanel(cardLayout);
 
         configurarVentana();
         initComponents();
@@ -54,7 +64,14 @@ public class ClientesView extends JFrame {
 
     private void configurarVentana() {
         setTitle("Gestión de Clientes - SifPyme");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                NavigationManager.getInstance().navigateBack();
+            }
+        });
+
         setPreferredSize(new Dimension(1200, 700));
         setMinimumSize(new Dimension(1000, 600));
         setResizable(true);
@@ -77,8 +94,8 @@ public class ClientesView extends JFrame {
         tablaClientes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // Aplicar color de texto consistente con los botones
-        tablaClientes.setForeground(Color.DARK_GRAY); // Mismo color oscuro que los botones
-        tablaClientes.setSelectionForeground(Color.WHITE); // Texto blanco cuando está seleccionado
+        tablaClientes.setForeground(Color.DARK_GRAY);
+        tablaClientes.setSelectionForeground(Color.DARK_GRAY);
 
         tablaClientes.getColumnModel().getColumn(0).setPreferredWidth(50);
         tablaClientes.getColumnModel().getColumn(1).setPreferredWidth(200);
@@ -90,10 +107,9 @@ public class ClientesView extends JFrame {
         JTableHeader header = tablaClientes.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 13));
         header.setBackground(COLOR_PRIMARIO);
-        header.setForeground(Color.WHITE);
+        header.setForeground(Color.DARK_GRAY);
         header.setBorder(BorderFactory.createLineBorder(COLOR_SECUNDARIO));
 
-        // Resto del código sin cambios...
         // Sorter para búsqueda
         sorter = new TableRowSorter<>(modeloTabla);
         tablaClientes.setRowSorter(sorter);
@@ -102,7 +118,7 @@ public class ClientesView extends JFrame {
         tablaClientes.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (evt.getClickCount() == 2) {
-                    editarCliente();
+                    mostrarFormularioEdicion();
                 }
             }
         });
@@ -124,28 +140,29 @@ public class ClientesView extends JFrame {
         btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
         btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
         btnRefrescar = crearBoton("🔄 Refrescar", COLOR_PRIMARIO);
+        btnVolver = crearBoton("← Volver", COLOR_VOLVER);
 
-        btnNuevo.addActionListener(e -> nuevoCliente());
-        btnEditar.addActionListener(e -> editarCliente());
+        btnNuevo.addActionListener(e -> mostrarFormularioNuevo());
+        btnEditar.addActionListener(e -> mostrarFormularioEdicion());
         btnEliminar.addActionListener(e -> eliminarCliente());
         btnRefrescar.addActionListener(e -> cargarClientes());
+        btnVolver.addActionListener(e -> NavigationManager.getInstance().navigateBack());
 
         // Label de totales
         lblTotalClientes = new JLabel("Total: 0 clientes");
         lblTotalClientes.setFont(FUENTE_SUBTITULO);
-        lblTotalClientes.setForeground(Color.DARK_GRAY); // Color consistente
+        lblTotalClientes.setForeground(Color.DARK_GRAY);
     }
 
     private JButton crearBoton(String texto, Color color) {
         JButton boton = new JButton();
         boton.setLayout(new BorderLayout(5, 5));
-        boton.setBackground(Color.WHITE);
+        boton.setBackground(color);
+        boton.setForeground(color);
         boton.setFocusPainted(false);
 
         // Borde con el color original
-        boton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(color, 2),
-                BorderFactory.createEmptyBorder(10, 15, 10, 15)));
+        boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Separar el emoji del texto
@@ -154,7 +171,7 @@ public class ClientesView extends JFrame {
         String textoRestante = partes.length > 1 ? partes[1] : "";
 
         // Panel interno para el contenido
-        JPanel contenidoPanel = new JPanel(new BorderLayout(8, 0)); // Más espacio entre icono y texto
+        JPanel contenidoPanel = new JPanel(new BorderLayout(8, 0));
         contenidoPanel.setOpaque(false);
 
         // Icono - usar fuente específica para emojis con mejor alineación
@@ -169,22 +186,20 @@ public class ClientesView extends JFrame {
         lblTexto.setForeground(color.darker().darker());
         lblTexto.setVerticalAlignment(SwingConstants.CENTER);
 
-        // Para botones con solo emoji (como Refrescar)
+        // Para botones con solo emoji
         if (textoRestante.isEmpty()) {
             contenidoPanel.add(lblIcono, BorderLayout.CENTER);
         } else {
-            // Para botones con emoji + texto - usar BoxLayout para mejor alineación
-            // vertical
+            // Para botones con emoji + texto
             JPanel horizontalPanel = new JPanel();
             horizontalPanel.setLayout(new BoxLayout(horizontalPanel, BoxLayout.X_AXIS));
             horizontalPanel.setOpaque(false);
 
-            // Añadir espacio flexible antes del icono
             horizontalPanel.add(Box.createHorizontalStrut(5));
             horizontalPanel.add(lblIcono);
-            horizontalPanel.add(Box.createHorizontalStrut(8)); // Espacio entre icono y texto
+            horizontalPanel.add(Box.createHorizontalStrut(8));
             horizontalPanel.add(lblTexto);
-            horizontalPanel.add(Box.createHorizontalStrut(5)); // Espacio después del texto
+            horizontalPanel.add(Box.createHorizontalStrut(5));
 
             contenidoPanel.add(horizontalPanel, BorderLayout.CENTER);
         }
@@ -194,21 +209,21 @@ public class ClientesView extends JFrame {
         // Efecto hover - invertir colores
         boton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                boton.setBackground(color); // Fondo del color original
-                lblTexto.setForeground(Color.WHITE); // Texto blanco en hover
-                lblIcono.setForeground(Color.WHITE); // Icono blanco en hover
-                boton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(color.darker(), 2),
-                        BorderFactory.createEmptyBorder(10, 15, 10, 15)));
+                boton.setBackground(color);
+                if (lblTexto != null) {
+                    lblTexto.setForeground(color);
+                }
+                lblIcono.setForeground(color);
+                boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                boton.setBackground(Color.WHITE); // Vuelve a fondo blanco
-                lblTexto.setForeground(color.darker().darker()); // Texto oscuro otra vez
-                lblIcono.setForeground(color.darker().darker()); // Icono oscuro otra vez
-                boton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(color, 2),
-                        BorderFactory.createEmptyBorder(10, 15, 10, 15)));
+                boton.setBackground(color);
+                if (lblTexto != null) {
+                    lblTexto.setForeground(color.darker().darker());
+                }
+                lblIcono.setForeground(color.darker().darker());
+                boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
             }
         });
 
@@ -216,12 +231,24 @@ public class ClientesView extends JFrame {
     }
 
     private void setupLayout() {
-        JPanel mainPanel = new JPanel(new BorderLayout(0, 0));
-        mainPanel.setBackground(COLOR_FONDO);
+        // Crear el panel de lista (vista principal)
+        JPanel listaPanel = crearListaPanel();
+        cardPanel.add(listaPanel, "listaClientes");
+
+        // Inicialmente mostrar la lista
+        cardLayout.show(cardPanel, "listaClientes");
+
+        add(cardPanel);
+        pack();
+    }
+
+    private JPanel crearListaPanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
+        panel.setBackground(COLOR_FONDO);
 
         // Header
         JPanel headerPanel = createHeaderPanel();
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(headerPanel, BorderLayout.NORTH);
 
         // Panel central con tabla
         JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
@@ -241,10 +268,8 @@ public class ClientesView extends JFrame {
         JPanel footerPanel = createFooterPanel();
         centerPanel.add(footerPanel, BorderLayout.SOUTH);
 
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-
-        add(mainPanel);
-        pack();
+        panel.add(centerPanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel createHeaderPanel() {
@@ -282,14 +307,18 @@ public class ClientesView extends JFrame {
                 BorderFactory.createLineBorder(COLOR_BORDE, 1),
                 BorderFactory.createEmptyBorder(15, 20, 15, 20)));
 
-        // Panel de búsqueda
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        // Panel de volver a la izquierda
+        JPanel backPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        backPanel.setOpaque(false);
+        backPanel.add(btnVolver);
+
+        // Panel de búsqueda (centrado)
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         searchPanel.setOpaque(false);
 
-        // Icono de búsqueda con fuente correcta para emojis
         JLabel lblBuscar = new JLabel("🔍 Buscar:");
-        lblBuscar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 13)); // Fuente específica para emojis
-        lblBuscar.setForeground(Color.DARK_GRAY); // Color consistente
+        lblBuscar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 13));
+        lblBuscar.setForeground(Color.DARK_GRAY);
         searchPanel.add(lblBuscar);
         searchPanel.add(txtBuscar);
 
@@ -301,7 +330,8 @@ public class ClientesView extends JFrame {
         buttonsPanel.add(btnEliminar);
         buttonsPanel.add(btnRefrescar);
 
-        panel.add(searchPanel, BorderLayout.WEST);
+        panel.add(backPanel, BorderLayout.WEST);
+        panel.add(searchPanel, BorderLayout.CENTER);
         panel.add(buttonsPanel, BorderLayout.EAST);
 
         return panel;
@@ -317,6 +347,47 @@ public class ClientesView extends JFrame {
         panel.add(lblTotalClientes);
 
         return panel;
+    }
+
+    private void mostrarFormularioNuevo() {
+        clienteFormView = new ClienteFormView(cardLayout, cardPanel);
+        cardPanel.add(clienteFormView, "formularioCliente");
+        cardLayout.show(cardPanel, "formularioCliente");
+    }
+
+    private void mostrarFormularioEdicion() {
+        int filaSeleccionada = tablaClientes.getSelectedRow();
+
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Por favor, selecciona un cliente de la lista.",
+                    "Selección Requerida",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int filaModelo = tablaClientes.convertRowIndexToModel(filaSeleccionada);
+        Integer idCliente = (Integer) modeloTabla.getValueAt(filaModelo, 0);
+
+        Cliente cliente = controller.obtenerClientePorId(idCliente);
+
+        if (cliente != null) {
+            clienteFormView = new ClienteFormView(cardLayout, cardPanel, cliente);
+            cardPanel.add(clienteFormView, "formularioCliente");
+            cardLayout.show(cardPanel, "formularioCliente");
+        } else {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo cargar el cliente seleccionado.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void volverALista() {
+        cardLayout.show(cardPanel, "listaClientes");
+        cargarClientes(); // Refrescar la lista
     }
 
     private void cargarClientes() {
@@ -350,48 +421,6 @@ public class ClientesView extends JFrame {
         }
 
         actualizarTotalClientes();
-    }
-
-    private void nuevoCliente() {
-        ClienteFormView form = new ClienteFormView(this);
-        form.setVisible(true);
-
-        if (form.isGuardadoExitoso()) {
-            cargarClientes();
-        }
-    }
-
-    private void editarCliente() {
-        int filaSeleccionada = tablaClientes.getSelectedRow();
-
-        if (filaSeleccionada == -1) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Por favor, selecciona un cliente de la lista.",
-                    "Selección Requerida",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        int filaModelo = tablaClientes.convertRowIndexToModel(filaSeleccionada);
-        Integer idCliente = (Integer) modeloTabla.getValueAt(filaModelo, 0);
-
-        Cliente cliente = controller.obtenerClientePorId(idCliente);
-
-        if (cliente != null) {
-            ClienteFormView form = new ClienteFormView(this, cliente);
-            form.setVisible(true);
-
-            if (form.isGuardadoExitoso()) {
-                cargarClientes();
-            }
-        } else {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "No se pudo cargar el cliente seleccionado.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
     }
 
     private void eliminarCliente() {
