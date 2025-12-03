@@ -15,7 +15,6 @@ public class MainMenuView extends JFrame {
 
     // Colores y fuentes consistentes con EmpresaFormView
     private final Color COLOR_PRIMARIO = new Color(41, 128, 185);
-    private final Color COLOR_SECUNDARIO = new Color(52, 152, 219);
     private final Color COLOR_EXITO = new Color(46, 204, 113);
     private final Color COLOR_FONDO = new Color(245, 245, 245);
     private final Color COLOR_BORDE = new Color(220, 220, 220);

@@ -10,6 +10,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.List;
 
 /**
@@ -26,7 +28,6 @@ public class ClientesView extends JFrame {
     private JButton btnNuevo;
     private JButton btnEditar;
     private JButton btnEliminar;
-    private JButton btnRefrescar;
     private JButton btnVolver;
     private JLabel lblTotalClientes;
     private TableRowSorter<DefaultTableModel> sorter;
@@ -35,6 +36,7 @@ public class ClientesView extends JFrame {
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private ClienteFormView clienteFormView;
+    private JPanel listaPanel; // Referencia al panel de lista
 
     // Colores y fuentes
     private final Color COLOR_PRIMARIO = new Color(155, 89, 182);
@@ -139,13 +141,11 @@ public class ClientesView extends JFrame {
         btnNuevo = crearBoton("➕ Nuevo Cliente", COLOR_EXITO);
         btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
         btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
-        btnRefrescar = crearBoton("🔄 Refrescar", COLOR_PRIMARIO);
         btnVolver = crearBoton("← Volver", COLOR_VOLVER);
 
         btnNuevo.addActionListener(e -> mostrarFormularioNuevo());
         btnEditar.addActionListener(e -> mostrarFormularioEdicion());
         btnEliminar.addActionListener(e -> eliminarCliente());
-        btnRefrescar.addActionListener(e -> cargarClientes());
         btnVolver.addActionListener(e -> NavigationManager.getInstance().navigateBack());
 
         // Label de totales
@@ -232,7 +232,17 @@ public class ClientesView extends JFrame {
 
     private void setupLayout() {
         // Crear el panel de lista (vista principal)
-        JPanel listaPanel = crearListaPanel();
+        listaPanel = crearListaPanel();
+        
+        // NUEVO: Añadir listener para detectar cuando el panel se hace visible
+        listaPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                // Refrescar la lista cada vez que el panel se muestra
+                cargarClientes();
+            }
+        });
+        
         cardPanel.add(listaPanel, "listaClientes");
 
         // Inicialmente mostrar la lista
@@ -328,7 +338,6 @@ public class ClientesView extends JFrame {
         buttonsPanel.add(btnNuevo);
         buttonsPanel.add(btnEditar);
         buttonsPanel.add(btnEliminar);
-        buttonsPanel.add(btnRefrescar);
 
         panel.add(backPanel, BorderLayout.WEST);
         panel.add(searchPanel, BorderLayout.CENTER);
@@ -383,11 +392,6 @@ public class ClientesView extends JFrame {
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private void volverALista() {
-        cardLayout.show(cardPanel, "listaClientes");
-        cargarClientes(); // Refrescar la lista
     }
 
     private void cargarClientes() {

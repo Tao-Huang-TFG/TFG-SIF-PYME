@@ -28,7 +28,7 @@ public class ProductosView extends JFrame {
     private JButton btnNuevo;
     private JButton btnEditar;
     private JButton btnEliminar;
-    private JButton btnRefrescar;
+
     private JButton btnVolver;
     private JLabel lblTotalProductos;
     private TableRowSorter<DefaultTableModel> sorter;
@@ -82,7 +82,8 @@ public class ProductosView extends JFrame {
 
     private void initComponents() {
         // Tabla
-        String[] columnas = { "ID", "Código", "Nombre", "Descripción", "Precio", "Precio Base", "IVA %", "Retención %" };
+        String[] columnas = { "ID", "Código", "Nombre", "Descripción", "Precio", "Precio Base", "IVA %",
+                "Retención %" };
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -142,13 +143,11 @@ public class ProductosView extends JFrame {
         btnNuevo = crearBoton("➕ Nuevo Producto", COLOR_EXITO);
         btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
         btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
-        btnRefrescar = crearBoton("🔄 Refrescar", COLOR_PRIMARIO);
         btnVolver = crearBoton("← Volver", COLOR_VOLVER);
 
         btnNuevo.addActionListener(e -> mostrarFormularioNuevo());
         btnEditar.addActionListener(e -> mostrarFormularioEdicion());
         btnEliminar.addActionListener(e -> eliminarProducto());
-        btnRefrescar.addActionListener(e -> cargarProductos());
         btnVolver.addActionListener(e -> NavigationManager.getInstance().navigateBack());
 
         // Label de totales
@@ -228,6 +227,14 @@ public class ProductosView extends JFrame {
     private void setupLayout() {
         // Crear el panel de lista (vista principal)
         JPanel listaPanel = crearListaPanel();
+        listaPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentShown(java.awt.event.ComponentEvent e) {
+                // Refrescar la lista cada vez que el panel se muestra
+                cargarProductos();
+            }
+        });
+
         cardPanel.add(listaPanel, "listaProductos");
 
         // Inicialmente mostrar la lista
@@ -323,7 +330,6 @@ public class ProductosView extends JFrame {
         buttonsPanel.add(btnNuevo);
         buttonsPanel.add(btnEditar);
         buttonsPanel.add(btnEliminar);
-        buttonsPanel.add(btnRefrescar);
 
         panel.add(backPanel, BorderLayout.WEST);
         panel.add(searchPanel, BorderLayout.CENTER);
@@ -378,11 +384,6 @@ public class ProductosView extends JFrame {
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private void volverALista() {
-        cardLayout.show(cardPanel, "listaProductos");
-        cargarProductos(); // Refrescar la lista
     }
 
     private void cargarProductos() {

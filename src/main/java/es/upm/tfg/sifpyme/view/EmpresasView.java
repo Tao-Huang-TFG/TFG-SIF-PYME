@@ -26,7 +26,6 @@ public class EmpresasView extends JFrame {
     private JButton btnNuevo;
     private JButton btnEditar;
     private JButton btnEliminar;
-    private JButton btnRefrescar;
     private JButton btnVolver;
     private JButton btnEstablecerDefecto;
     private JLabel lblTotalEmpresas;
@@ -149,14 +148,12 @@ public class EmpresasView extends JFrame {
         btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
         btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
         btnEstablecerDefecto = crearBoton("⭐ Establecer Defecto", COLOR_WARNING);
-        btnRefrescar = crearBoton("🔄 Refrescar", COLOR_PRIMARIO);
         btnVolver = crearBoton("← Volver", COLOR_VOLVER);
 
         btnNuevo.addActionListener(e -> mostrarFormularioNuevo());
         btnEditar.addActionListener(e -> mostrarFormularioEdicion());
         btnEliminar.addActionListener(e -> eliminarEmpresa());
         btnEstablecerDefecto.addActionListener(e -> establecerEmpresaPorDefecto());
-        btnRefrescar.addActionListener(e -> cargarEmpresas());
         btnVolver.addActionListener(e -> NavigationManager.getInstance().navigateBack());
 
         // Label de totales
@@ -236,6 +233,13 @@ public class EmpresasView extends JFrame {
     private void setupLayout() {
         // Crear el panel de lista (vista principal)
         JPanel listaPanel = crearListaPanel();
+        listaPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentShown(java.awt.event.ComponentEvent e){
+                cargarEmpresas();
+            }
+        });
+
         cardPanel.add(listaPanel, "listaEmpresas");
 
         // Inicialmente mostrar la lista
@@ -332,7 +336,6 @@ public class EmpresasView extends JFrame {
         buttonsPanel.add(btnEditar);
         buttonsPanel.add(btnEliminar);
         buttonsPanel.add(btnEstablecerDefecto);
-        buttonsPanel.add(btnRefrescar);
 
         panel.add(backPanel, BorderLayout.WEST);
         panel.add(searchPanel, BorderLayout.CENTER);
