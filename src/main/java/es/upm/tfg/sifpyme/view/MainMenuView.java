@@ -1,5 +1,7 @@
 package es.upm.tfg.sifpyme.view;
 
+import es.upm.tfg.sifpyme.util.NavigationManager;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -17,6 +19,7 @@ public class MainMenuView extends JFrame {
     private final Color COLOR_EXITO = new Color(46, 204, 113);
     private final Color COLOR_FONDO = new Color(245, 245, 245);
     private final Color COLOR_BORDE = new Color(220, 220, 220);
+    private final Color COLOR_VOLVER = new Color(149, 165, 166);
 
     private final Font FUENTE_TITULO = new Font("Segoe UI", Font.BOLD, 28);
     private final Font FUENTE_SUBTITULO = new Font("Segoe UI", Font.PLAIN, 14);
@@ -30,16 +33,24 @@ public class MainMenuView extends JFrame {
     private JButton btnFacturas;
     private JButton btnConfiguracion;
     private JButton btnSalir;
+    private JButton btnVolver;
 
     public MainMenuView() {
         configurarVentana();
         initComponents();
         setupLayout();
+        configurarListeners();
     }
 
     private void configurarVentana() {
         setTitle("SifPyme - Sistema de Facturación");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Cambiado para usar navegación
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                confirmarSalida();
+            }
+        });
 
         setPreferredSize(new Dimension(1000, 700));
         setMinimumSize(new Dimension(900, 600));
@@ -71,6 +82,11 @@ public class MainMenuView extends JFrame {
         // Botón Salir
         btnSalir = crearBotonMenu("🚪", "Salir",
                 "Cerrar la aplicación", new Color(231, 76, 60));
+
+        // Botón Volver (inicialmente oculto en menú principal)
+        btnVolver = crearBotonMenu("←", "Volver al Menú Principal",
+                "Regresar al menú principal", COLOR_VOLVER);
+        btnVolver.setVisible(false); // Oculto en menú principal
     }
 
     private JButton crearBotonMenu(String icono, String texto, String descripcion, Color color) {
@@ -78,15 +94,13 @@ public class MainMenuView extends JFrame {
         boton.setLayout(new BorderLayout(10, 10));
 
         // Fondo blanco para máximo contraste
-        boton.setBackground(Color.WHITE);
+        boton.setBackground(color);
+        boton.setForeground(color);
         boton.setFont(FUENTE_BOTON);
         boton.setFocusPainted(false);
 
         // Borde con el color original
-        boton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(color, 3), // Borde más grueso
-                BorderFactory.createEmptyBorder(25, 20, 20, 20) // Más espacio arriba (25 en lugar de 20)
-        ));
+        boton.setBorder(BorderFactory.createLineBorder(color, 3));
         boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Panel interno para el contenido del botón
@@ -96,8 +110,8 @@ public class MainMenuView extends JFrame {
         // Icono - Añadido más espacio arriba y forzado centrado
         JLabel lblIcono = new JLabel(icono, SwingConstants.CENTER);
         lblIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
-        lblIcono.setBorder(new EmptyBorder(15, 0, 10, 0)); // Más espacio arriba (15 píxeles)
-        lblIcono.setVerticalAlignment(SwingConstants.CENTER); // Forzar centrado vertical
+        lblIcono.setBorder(new EmptyBorder(30, 0, 0, 0)); // Más espacio arriba (15 píxeles)
+        //lblIcono.setVerticalAlignment(SwingConstants.CENTER); // Forzar centrado vertical
         lblIcono.setHorizontalAlignment(SwingConstants.CENTER); // Forzar centrado horizontal
 
         // Texto principal - usa una versión más oscura del color para buen contraste
@@ -119,27 +133,6 @@ public class MainMenuView extends JFrame {
         contenidoPanel.add(textoPanel, BorderLayout.CENTER);
 
         boton.add(contenidoPanel, BorderLayout.CENTER);
-
-        // Efecto hover - invertir colores
-        boton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                boton.setBackground(color); // Fondo del color original
-                boton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(color.darker(), 3),
-                        BorderFactory.createEmptyBorder(25, 20, 20, 20) // Mantener el mismo espacio en hover
-                ));
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                boton.setBackground(Color.WHITE); // Vuelve a fondo blanco
-                lblTexto.setForeground(color.darker().darker()); // Texto oscuro otra vez
-                lblDescripcion.setForeground(color.darker().darker()); // Descripción oscura otra vez
-                boton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(color, 3),
-                        BorderFactory.createEmptyBorder(25, 20, 20, 20) // Mantener el mismo espacio normal
-                ));
-            }
-        });
 
         return boton;
     }
@@ -228,6 +221,13 @@ public class MainMenuView extends JFrame {
         gbc.gridx = 2;
         panel.add(btnSalir, gbc);
 
+        // Fila 3 - Botón Volver (ocupa todo el ancho)
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 3;
+        gbc.weighty = 0.3; // Menos peso vertical para el botón volver
+        panel.add(btnVolver, gbc);
+
         return panel;
     }
 
@@ -252,7 +252,60 @@ public class MainMenuView extends JFrame {
         return panel;
     }
 
-    // Métodos para asignar listeners (se implementarán cuando tengas la lógica)
+    private void configurarListeners() {
+        // Listener para Empresas
+        btnEmpresas.addActionListener(e -> {
+            EmpresasView empresasView = new EmpresasView();
+            NavigationManager.getInstance().navigateTo(empresasView);
+        });
+
+        // Listener para Clientes - usa NavigationManager
+        btnClientes.addActionListener(e -> {
+            ClientesView clientesView = new ClientesView();
+            NavigationManager.getInstance().navigateTo(clientesView);
+        });
+
+        // Listener para Productos - usa NavigationManager
+        btnProductos.addActionListener(e -> {
+            ProductosView productosView = new ProductosView();
+            NavigationManager.getInstance().navigateTo(productosView);
+        });
+
+        // Listener para Facturas
+        btnFacturas.addActionListener(e -> {
+            mostrarFuncionalidadNoDisponible("Gestión de Facturas");
+        });
+
+        // Listener para Configuración
+        btnConfiguracion.addActionListener(e -> {
+            mostrarFuncionalidadNoDisponible("Configuración del Sistema");
+        });
+
+        // Listener para Salir
+        btnSalir.addActionListener(e -> {
+            confirmarSalida();
+        });
+
+        // Listener para Volver
+        btnVolver.addActionListener(e -> {
+            NavigationManager.getInstance().navigateBack();
+        });
+    }
+
+    private void confirmarSalida() {
+        int confirmacion = JOptionPane.showConfirmDialog(
+                this,
+                "¿Estás seguro de que quieres salir de la aplicación?",
+                "Confirmar Salida",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            System.exit(0);
+        }
+    }
+
+    // Métodos para asignar listeners (mantenidos por compatibilidad)
     public void setEmpresasListener(ActionListener listener) {
         btnEmpresas.addActionListener(listener);
     }
@@ -277,6 +330,15 @@ public class MainMenuView extends JFrame {
         btnSalir.addActionListener(listener);
     }
 
+    public void setVolverListener(ActionListener listener) {
+        btnVolver.addActionListener(listener);
+    }
+
+    // Método para controlar la visibilidad del botón volver
+    public void setMostrarBotonVolver(boolean mostrar) {
+        btnVolver.setVisible(mostrar);
+    }
+
     // Método para mostrar mensajes de funcionalidad no implementada
     public void mostrarFuncionalidadNoDisponible(String modulo) {
         JOptionPane.showMessageDialog(
@@ -286,7 +348,7 @@ public class MainMenuView extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Método principal para testing
+    // Método principal para testing (modificado para usar NavigationManager)
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -296,24 +358,7 @@ public class MainMenuView extends JFrame {
             }
 
             MainMenuView menu = new MainMenuView();
-
-            // Listeners temporales para testing
-            menu.setEmpresasListener(e -> {
-                menu.mostrarFuncionalidadNoDisponible("Empresas");
-                // Cuando esté listo: new EmpresaFormView().setVisible(true);
-            });
-
-            menu.setClientesListener(e -> menu.mostrarFuncionalidadNoDisponible("Clientes"));
-
-            menu.setProductosListener(e -> menu.mostrarFuncionalidadNoDisponible("Productos"));
-
-            menu.setFacturasListener(e -> menu.mostrarFuncionalidadNoDisponible("Facturas"));
-
-            menu.setConfiguracionListener(e -> menu.mostrarFuncionalidadNoDisponible("Configuración"));
-
-            menu.setSalirListener(e -> System.exit(0));
-
-            menu.setVisible(true);
+            NavigationManager.getInstance().navigateToAndCloseCurrent(menu);
         });
     }
 }

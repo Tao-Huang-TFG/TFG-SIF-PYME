@@ -184,4 +184,14 @@ public class EmpresaController {
         
         return true;
     }
+
+    public boolean eliminarEmpresaporId(Integer idEmpresa) {
+                try {
+
+            return  empresaDAO.eliminar(idEmpresa);
+        } catch (Exception e) {
+            logger.error("Error al eliminar empresa por ID", e);
+            return false;
+        }
+    }
 }

@@ -1,8 +1,7 @@
 package es.upm.tfg.sifpyme.view;
 
-import es.upm.tfg.sifpyme.controller.ProductoController;
-import es.upm.tfg.sifpyme.model.entity.Producto;
-import es.upm.tfg.sifpyme.model.entity.TipoIva;
+import es.upm.tfg.sifpyme.controller.EmpresaController;
+import es.upm.tfg.sifpyme.model.entity.Empresa;
 import es.upm.tfg.sifpyme.util.NavigationManager;
 
 import javax.swing.*;
@@ -11,18 +10,17 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Vista para gestionar la lista de productos
+ * Vista para gestionar la lista de empresas
  */
-public class ProductosView extends JFrame {
+public class EmpresasView extends JFrame {
 
-    private final ProductoController controller;
+    private final EmpresaController controller;
 
     // Componentes
-    private JTable tablaProductos;
+    private JTable tablaEmpresas;
     private DefaultTableModel modeloTabla;
     private JTextField txtBuscar;
     private JButton btnNuevo;
@@ -30,20 +28,22 @@ public class ProductosView extends JFrame {
     private JButton btnEliminar;
     private JButton btnRefrescar;
     private JButton btnVolver;
-    private JLabel lblTotalProductos;
+    private JButton btnEstablecerDefecto;
+    private JLabel lblTotalEmpresas;
     private TableRowSorter<DefaultTableModel> sorter;
 
     // CardLayout para navegación interna
     private CardLayout cardLayout;
     private JPanel cardPanel;
-    private ProductoFormView productoFormView;
+    private EmpresaFormView empresaFormView;
 
     // Colores y fuentes
-    private final Color COLOR_PRIMARIO = new Color(52, 152, 219);
-    private final Color COLOR_SECUNDARIO = new Color(142, 68, 173);
+    private final Color COLOR_PRIMARIO = new Color(41, 128, 185);
+    private final Color COLOR_SECUNDARIO = new Color(52, 152, 219);
     private final Color COLOR_EXITO = new Color(46, 204, 113);
     private final Color COLOR_PELIGRO = new Color(231, 76, 60);
     private final Color COLOR_INFO = new Color(52, 152, 219);
+    private final Color COLOR_WARNING = new Color(241, 196, 15);
     private final Color COLOR_VOLVER = new Color(149, 165, 166);
     private final Color COLOR_FONDO = new Color(245, 245, 245);
     private final Color COLOR_BORDE = new Color(220, 220, 220);
@@ -53,19 +53,19 @@ public class ProductosView extends JFrame {
     private final Font FUENTE_BOTON = new Font("Segoe UI", Font.BOLD, 13);
     private final Font FUENTE_TABLA = new Font("Segoe UI", Font.PLAIN, 13);
 
-    public ProductosView() {
-        this.controller = new ProductoController();
+    public EmpresasView() {
+        this.controller = new EmpresaController();
         this.cardLayout = new CardLayout();
         this.cardPanel = new JPanel(cardLayout);
 
         configurarVentana();
         initComponents();
         setupLayout();
-        cargarProductos();
+        cargarEmpresas();
     }
 
     private void configurarVentana() {
-        setTitle("Gestión de Productos - SifPyme");
+        setTitle("Gestión de Empresas - SifPyme");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -82,32 +82,38 @@ public class ProductosView extends JFrame {
 
     private void initComponents() {
         // Tabla
-        String[] columnas = { "ID", "Código", "Nombre", "Descripción", "Precio", "Precio Base", "IVA %", "Retención %" };
+        String[] columnas = { "ID", "Nombre Comercial", "Razón Social", "NIF", "Ciudad", "Provincia", "Email", "Por Defecto" };
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
+            
+            @Override
+            public Class<?> getColumnClass(int column) {
+                if (column == 7) return Boolean.class;
+                return String.class;
+            }
         };
 
-        tablaProductos = new JTable(modeloTabla);
-        tablaProductos.setFont(FUENTE_TABLA);
-        tablaProductos.setRowHeight(35);
-        tablaProductos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tablaEmpresas = new JTable(modeloTabla);
+        tablaEmpresas.setFont(FUENTE_TABLA);
+        tablaEmpresas.setRowHeight(35);
+        tablaEmpresas.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        tablaProductos.setForeground(Color.DARK_GRAY);
-        tablaProductos.setSelectionForeground(Color.DARK_GRAY);
+        tablaEmpresas.setForeground(Color.DARK_GRAY);
+        tablaEmpresas.setSelectionForeground(Color.DARK_GRAY);
 
-        tablaProductos.getColumnModel().getColumn(0).setPreferredWidth(50);
-        tablaProductos.getColumnModel().getColumn(1).setPreferredWidth(100);
-        tablaProductos.getColumnModel().getColumn(2).setPreferredWidth(200);
-        tablaProductos.getColumnModel().getColumn(3).setPreferredWidth(250);
-        tablaProductos.getColumnModel().getColumn(4).setPreferredWidth(100);
-        tablaProductos.getColumnModel().getColumn(5).setPreferredWidth(100);
-        tablaProductos.getColumnModel().getColumn(6).setPreferredWidth(80);
-        tablaProductos.getColumnModel().getColumn(7).setPreferredWidth(100);
+        tablaEmpresas.getColumnModel().getColumn(0).setPreferredWidth(50);
+        tablaEmpresas.getColumnModel().getColumn(1).setPreferredWidth(200);
+        tablaEmpresas.getColumnModel().getColumn(2).setPreferredWidth(200);
+        tablaEmpresas.getColumnModel().getColumn(3).setPreferredWidth(100);
+        tablaEmpresas.getColumnModel().getColumn(4).setPreferredWidth(150);
+        tablaEmpresas.getColumnModel().getColumn(5).setPreferredWidth(150);
+        tablaEmpresas.getColumnModel().getColumn(6).setPreferredWidth(200);
+        tablaEmpresas.getColumnModel().getColumn(7).setPreferredWidth(100);
 
-        JTableHeader header = tablaProductos.getTableHeader();
+        JTableHeader header = tablaEmpresas.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 13));
         header.setBackground(COLOR_PRIMARIO);
         header.setForeground(Color.DARK_GRAY);
@@ -115,10 +121,10 @@ public class ProductosView extends JFrame {
 
         // Sorter para búsqueda
         sorter = new TableRowSorter<>(modeloTabla);
-        tablaProductos.setRowSorter(sorter);
+        tablaEmpresas.setRowSorter(sorter);
 
         // Double-click para editar
-        tablaProductos.addMouseListener(new java.awt.event.MouseAdapter() {
+        tablaEmpresas.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 if (evt.getClickCount() == 2) {
                     mostrarFormularioEdicion();
@@ -134,27 +140,29 @@ public class ProductosView extends JFrame {
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)));
         txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
-                buscarProductos();
+                buscarEmpresas();
             }
         });
 
         // Botones
-        btnNuevo = crearBoton("➕ Nuevo Producto", COLOR_EXITO);
+        btnNuevo = crearBoton("➕ Nueva Empresa", COLOR_EXITO);
         btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
         btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
+        btnEstablecerDefecto = crearBoton("⭐ Establecer Defecto", COLOR_WARNING);
         btnRefrescar = crearBoton("🔄 Refrescar", COLOR_PRIMARIO);
         btnVolver = crearBoton("← Volver", COLOR_VOLVER);
 
         btnNuevo.addActionListener(e -> mostrarFormularioNuevo());
         btnEditar.addActionListener(e -> mostrarFormularioEdicion());
-        btnEliminar.addActionListener(e -> eliminarProducto());
-        btnRefrescar.addActionListener(e -> cargarProductos());
+        btnEliminar.addActionListener(e -> eliminarEmpresa());
+        btnEstablecerDefecto.addActionListener(e -> establecerEmpresaPorDefecto());
+        btnRefrescar.addActionListener(e -> cargarEmpresas());
         btnVolver.addActionListener(e -> NavigationManager.getInstance().navigateBack());
 
         // Label de totales
-        lblTotalProductos = new JLabel("Total: 0 productos");
-        lblTotalProductos.setFont(FUENTE_SUBTITULO);
-        lblTotalProductos.setForeground(Color.DARK_GRAY);
+        lblTotalEmpresas = new JLabel("Total: 0 empresas");
+        lblTotalEmpresas.setFont(FUENTE_SUBTITULO);
+        lblTotalEmpresas.setForeground(Color.DARK_GRAY);
     }
 
     private JButton crearBoton(String texto, Color color) {
@@ -228,10 +236,10 @@ public class ProductosView extends JFrame {
     private void setupLayout() {
         // Crear el panel de lista (vista principal)
         JPanel listaPanel = crearListaPanel();
-        cardPanel.add(listaPanel, "listaProductos");
+        cardPanel.add(listaPanel, "listaEmpresas");
 
         // Inicialmente mostrar la lista
-        cardLayout.show(cardPanel, "listaProductos");
+        cardLayout.show(cardPanel, "listaEmpresas");
 
         add(cardPanel);
         pack();
@@ -255,7 +263,7 @@ public class ProductosView extends JFrame {
         centerPanel.add(toolbarPanel, BorderLayout.NORTH);
 
         // Tabla
-        JScrollPane scrollPane = new JScrollPane(tablaProductos);
+        JScrollPane scrollPane = new JScrollPane(tablaEmpresas);
         scrollPane.setBorder(BorderFactory.createLineBorder(COLOR_BORDE, 1));
         centerPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -272,11 +280,11 @@ public class ProductosView extends JFrame {
         panel.setBackground(COLOR_PRIMARIO);
         panel.setBorder(new EmptyBorder(20, 25, 20, 25));
 
-        JLabel lblTitle = new JLabel("Gestión de Productos");
+        JLabel lblTitle = new JLabel("Gestión de Empresas");
         lblTitle.setFont(FUENTE_TITULO);
         lblTitle.setForeground(Color.WHITE);
 
-        JLabel lblSubtitle = new JLabel("Administra tu catálogo de productos y servicios");
+        JLabel lblSubtitle = new JLabel("Administra las empresas desde las que facturas");
         lblSubtitle.setFont(FUENTE_SUBTITULO);
         lblSubtitle.setForeground(new Color(240, 240, 240));
 
@@ -285,7 +293,7 @@ public class ProductosView extends JFrame {
         textPanel.add(lblTitle);
         textPanel.add(lblSubtitle);
 
-        JLabel iconLabel = new JLabel("📦", SwingConstants.RIGHT);
+        JLabel iconLabel = new JLabel("🏢", SwingConstants.RIGHT);
         iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
         iconLabel.setForeground(Color.WHITE);
 
@@ -323,6 +331,7 @@ public class ProductosView extends JFrame {
         buttonsPanel.add(btnNuevo);
         buttonsPanel.add(btnEditar);
         buttonsPanel.add(btnEliminar);
+        buttonsPanel.add(btnEstablecerDefecto);
         buttonsPanel.add(btnRefrescar);
 
         panel.add(backPanel, BorderLayout.WEST);
@@ -339,157 +348,186 @@ public class ProductosView extends JFrame {
                 BorderFactory.createLineBorder(COLOR_BORDE, 1),
                 BorderFactory.createEmptyBorder(10, 15, 10, 15)));
 
-        panel.add(lblTotalProductos);
+        panel.add(lblTotalEmpresas);
 
         return panel;
     }
 
-    private void mostrarFormularioNuevo() {
-        productoFormView = new ProductoFormView(cardLayout, cardPanel);
-        cardPanel.add(productoFormView, "formularioProducto");
-        cardLayout.show(cardPanel, "formularioProducto");
+    public void mostrarFormularioNuevo() {
+        empresaFormView = new EmpresaFormView(cardLayout, cardPanel);
+        cardPanel.add(empresaFormView, "formularioEmpresa");
+        cardLayout.show(cardPanel, "formularioEmpresa");
     }
 
     private void mostrarFormularioEdicion() {
-        int filaSeleccionada = tablaProductos.getSelectedRow();
+        int filaSeleccionada = tablaEmpresas.getSelectedRow();
 
         if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Por favor, selecciona un producto de la lista.",
+                    "Por favor, selecciona una empresa de la lista.",
                     "Selección Requerida",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int filaModelo = tablaProductos.convertRowIndexToModel(filaSeleccionada);
-        Integer idProducto = (Integer) modeloTabla.getValueAt(filaModelo, 0);
+        int filaModelo = tablaEmpresas.convertRowIndexToModel(filaSeleccionada);
+        Integer idEmpresa = (Integer) modeloTabla.getValueAt(filaModelo, 0);
 
-        Producto producto = controller.obtenerProductoPorId(idProducto);
+        Empresa empresa = controller.obtenerEmpresaPorId(idEmpresa);
 
-        if (producto != null) {
-            productoFormView = new ProductoFormView(cardLayout, cardPanel, producto);
-            cardPanel.add(productoFormView, "formularioProducto");
-            cardLayout.show(cardPanel, "formularioProducto");
+        if (empresa != null) {
+            empresaFormView = new EmpresaFormView(cardLayout, cardPanel, empresa);
+            cardPanel.add(empresaFormView, "formularioEmpresa");
+            cardLayout.show(cardPanel, "formularioEmpresa");
         } else {
             JOptionPane.showMessageDialog(
                     this,
-                    "No se pudo cargar el producto seleccionado.",
+                    "No se pudo cargar la empresa seleccionada.",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void volverALista() {
-        cardLayout.show(cardPanel, "listaProductos");
-        cargarProductos(); // Refrescar la lista
-    }
-
-    private void cargarProductos() {
+    private void cargarEmpresas() {
         modeloTabla.setRowCount(0);
 
-        List<Producto> productos = controller.obtenerTodosLosProductos();
+        List<Empresa> empresas = controller.obtenerTodasLasEmpresas();
 
-        for (Producto producto : productos) {
-            // Obtener el porcentaje de IVA
-            String ivaStr = "";
-            if (producto.getIdTipoIva() != null) {
-                TipoIva tipoIva = controller.obtenerTipoIvaPorId(producto.getIdTipoIva());
-                if (tipoIva != null) {
-                    ivaStr = tipoIva.getPorcentaje() + "%";
-                }
-            }
-
+        for (Empresa empresa : empresas) {
             Object[] fila = {
-                    producto.getIdProducto(),
-                    producto.getCodigo() != null ? producto.getCodigo() : "",
-                    producto.getNombre(),
-                    producto.getDescripcion() != null ? truncarTexto(producto.getDescripcion(), 50) : "",
-                    formatearPrecio(producto.getPrecio()),
-                    formatearPrecio(producto.getPrecioBase()),
-                    ivaStr,
-                    formatearPrecio(producto.getTipoRetencion())
+                    empresa.getIdEmpresa(),
+                    empresa.getNombreComercial(),
+                    empresa.getRazonSocial(),
+                    empresa.getNif(),
+                    empresa.getCiudad(),
+                    empresa.getProvincia(),
+                    empresa.getEmail() != null ? empresa.getEmail() : "",
+                    empresa.getPorDefecto() != null && empresa.getPorDefecto()
             };
             modeloTabla.addRow(fila);
         }
 
-        actualizarTotalProductos();
+        actualizarTotalEmpresas();
     }
 
-    private String truncarTexto(String texto, int maxLength) {
-        if (texto.length() <= maxLength) {
-            return texto;
-        }
-        return texto.substring(0, maxLength) + "...";
-    }
-
-    private String formatearPrecio(BigDecimal valor) {
-        if (valor == null) {
-            return "";
-        }
-        return String.format("%.2f", valor);
-    }
-
-    private void buscarProductos() {
+    private void buscarEmpresas() {
         String termino = txtBuscar.getText().trim();
 
         if (termino.isEmpty()) {
             sorter.setRowFilter(null);
         } else {
-            RowFilter<DefaultTableModel, Object> rf = RowFilter.regexFilter("(?i)" + termino, 1, 2, 3);
+            RowFilter<DefaultTableModel, Object> rf = RowFilter.regexFilter("(?i)" + termino, 1, 2, 3, 4, 5, 6);
             sorter.setRowFilter(rf);
         }
 
-        actualizarTotalProductos();
+        actualizarTotalEmpresas();
     }
 
-    private void eliminarProducto() {
-        int filaSeleccionada = tablaProductos.getSelectedRow();
+    private void establecerEmpresaPorDefecto() {
+        int filaSeleccionada = tablaEmpresas.getSelectedRow();
 
         if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Por favor, selecciona un producto de la lista.",
+                    "Por favor, selecciona una empresa de la lista.",
                     "Selección Requerida",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int filaModelo = tablaProductos.convertRowIndexToModel(filaSeleccionada);
-        Integer idProducto = (Integer) modeloTabla.getValueAt(filaModelo, 0);
-        String nombreProducto = (String) modeloTabla.getValueAt(filaModelo, 2);
+        int filaModelo = tablaEmpresas.convertRowIndexToModel(filaSeleccionada);
+        Integer idEmpresa = (Integer) modeloTabla.getValueAt(filaModelo, 0);
+        String nombreEmpresa = (String) modeloTabla.getValueAt(filaModelo, 1);
 
         int confirmacion = JOptionPane.showConfirmDialog(
                 this,
-                "¿Estás seguro de que deseas eliminar el producto:\n" + nombreProducto + "?\n\n" +
+                "¿Establecer '" + nombreEmpresa + "' como empresa por defecto?",
+                "Confirmar",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            Empresa empresa = controller.obtenerEmpresaPorId(idEmpresa);
+            if (empresa != null) {
+                empresa.setPorDefecto(true);
+                boolean actualizado = controller.actualizarEmpresa(empresa);
+
+                if (actualizado) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Empresa establecida como predeterminada.",
+                            "Éxito",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    cargarEmpresas();
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Error al establecer empresa por defecto.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+
+    private void eliminarEmpresa() {
+        int filaSeleccionada = tablaEmpresas.getSelectedRow();
+
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Por favor, selecciona una empresa de la lista.",
+                    "Selección Requerida",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int filaModelo = tablaEmpresas.convertRowIndexToModel(filaSeleccionada);
+        Integer idEmpresa = (Integer) modeloTabla.getValueAt(filaModelo, 0);
+        String nombreEmpresa = (String) modeloTabla.getValueAt(filaModelo, 1);
+        Boolean esPorDefecto = (Boolean) modeloTabla.getValueAt(filaModelo, 7);
+
+        if (esPorDefecto) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No puedes eliminar la empresa por defecto.\nPrimero establece otra como predeterminada.",
+                    "Operación no permitida",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirmacion = JOptionPane.showConfirmDialog(
+                this,
+                "¿Estás seguro de que deseas eliminar la empresa:\n" + nombreEmpresa + "?\n\n" +
                         "Esta acción no se puede deshacer.",
                 "Confirmar Eliminación",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
 
         if (confirmacion == JOptionPane.YES_OPTION) {
-            boolean eliminado = controller.eliminarProducto(idProducto);
+            boolean eliminado = controller.eliminarEmpresaporId(idEmpresa);
 
             if (eliminado) {
                 JOptionPane.showMessageDialog(
                         this,
-                        "Producto eliminado exitosamente.",
+                        "Empresa eliminada exitosamente.",
                         "Éxito",
                         JOptionPane.INFORMATION_MESSAGE);
-                cargarProductos();
+                cargarEmpresas();
             } else {
                 JOptionPane.showMessageDialog(
                         this,
-                        "No se pudo eliminar el producto.\n" +
-                                "Puede que esté asociado a facturas existentes.",
+                        "No se pudo eliminar la empresa.\n" +
+                                "Puede que esté asociada a facturas existentes.",
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    private void actualizarTotalProductos() {
-        int total = tablaProductos.getRowCount();
-        lblTotalProductos.setText("Total: " + total + " producto" + (total != 1 ? "s" : ""));
+    private void actualizarTotalEmpresas() {
+        int total = tablaEmpresas.getRowCount();
+        lblTotalEmpresas.setText("Total: " + total + " empresa" + (total != 1 ? "s" : ""));
     }
 }

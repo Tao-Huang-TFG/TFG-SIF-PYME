@@ -11,11 +11,13 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Vista para el formulario de registro/edición de producto
+ * Panel para el formulario de registro/edición de producto
  */
-public class ProductoFormView extends JDialog {
+public class ProductoFormView extends JPanel {
 
     private final ProductoController controller;
+    private final CardLayout cardLayout;
+    private final JPanel cardPanel;
 
     // Componentes del formulario
     private JTextField txtCodigo;
@@ -30,10 +32,9 @@ public class ProductoFormView extends JDialog {
 
     private Producto productoEditar;
     private boolean modoEdicion;
-    private boolean guardadoExitoso = false;
 
     // Colores y fuentes consistentes
-    private final Color COLOR_PRIMARIO = new Color(155, 89, 182);
+    private final Color COLOR_PRIMARIO = new Color(52, 152, 219);
     private final Color COLOR_EXITO = new Color(46, 204, 113);
     private final Color COLOR_PELIGRO = new Color(231, 76, 60);
     private final Color COLOR_FONDO = new Color(245, 245, 245);
@@ -45,17 +46,17 @@ public class ProductoFormView extends JDialog {
     private final Font FUENTE_CAMPO = new Font("Segoe UI", Font.PLAIN, 14);
     private final Font FUENTE_BOTON = new Font("Segoe UI", Font.BOLD, 14);
 
-    public ProductoFormView(Frame parent) {
-        this(parent, null);
+    public ProductoFormView(CardLayout cardLayout, JPanel cardPanel) {
+        this(cardLayout, cardPanel, null);
     }
 
-    public ProductoFormView(Frame parent, Producto productoEditar) {
-        super(parent, true); // Modal
+    public ProductoFormView(CardLayout cardLayout, JPanel cardPanel, Producto productoEditar) {
         this.controller = new ProductoController();
+        this.cardLayout = cardLayout;
+        this.cardPanel = cardPanel;
         this.productoEditar = productoEditar;
         this.modoEdicion = (productoEditar != null);
 
-        configurarVentana();
         initComponents();
         setupLayout();
 
@@ -64,22 +65,12 @@ public class ProductoFormView extends JDialog {
         }
     }
 
-    private void configurarVentana() {
-        String titulo = modoEdicion ? "Editar Producto" : "Nuevo Producto";
-        setTitle(titulo + " - SifPyme");
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setPreferredSize(new Dimension(700, 650));
-        setMinimumSize(new Dimension(650, 600));
-        setResizable(false);
-        setLocationRelativeTo(getParent());
-    }
-
     private void initComponents() {
         configurarCamposTexto();
         configurarBotones();
 
         btnGuardar.addActionListener(e -> guardarProducto());
-        btnCancelar.addActionListener(e -> cancelar());
+        btnCancelar.addActionListener(e -> volverALista());
     }
 
     private void configurarCamposTexto() {
@@ -149,26 +140,23 @@ public class ProductoFormView extends JDialog {
     }
 
     private void setupLayout() {
-        JPanel mainPanel = new JPanel(new BorderLayout(0, 0));
-        mainPanel.setBackground(COLOR_FONDO);
+        setLayout(new BorderLayout(0, 0));
+        setBackground(COLOR_FONDO);
 
         // Header
         JPanel headerPanel = createHeaderPanel();
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        add(headerPanel, BorderLayout.NORTH);
 
         // Formulario
         JPanel formPanel = createFormPanel();
         JScrollPane scrollPane = new JScrollPane(formPanel);
         scrollPane.setBorder(null);
         scrollPane.setBackground(COLOR_FONDO);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.CENTER);
 
         // Botones
         JPanel buttonPanel = createButtonPanel();
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        add(mainPanel);
-        pack();
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private JPanel createHeaderPanel() {
@@ -454,8 +442,7 @@ public class ProductoFormView extends JDialog {
                     JOptionPane.INFORMATION_MESSAGE
                 );
 
-                guardadoExitoso = true;
-                dispose();
+                volverALista();
             } else {
                 String mensajeError = "Error al guardar el producto.\n";
                 if (producto.getCodigo() != null && 
@@ -556,11 +543,7 @@ public class ProductoFormView extends JDialog {
         return true;
     }
 
-    private void cancelar() {
-        dispose();
-    }
-
-    public boolean isGuardadoExitoso() {
-        return guardadoExitoso;
+    private void volverALista() {
+        cardLayout.show(cardPanel, "listaProductos");
     }
 }
