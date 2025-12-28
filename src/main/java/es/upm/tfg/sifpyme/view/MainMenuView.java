@@ -110,7 +110,8 @@ public class MainMenuView extends JFrame {
         JLabel lblIcono = new JLabel(icono, SwingConstants.CENTER);
         lblIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
         lblIcono.setBorder(new EmptyBorder(30, 0, 0, 0)); // Más espacio arriba (15 píxeles)
-        //lblIcono.setVerticalAlignment(SwingConstants.CENTER); // Forzar centrado vertical
+        // lblIcono.setVerticalAlignment(SwingConstants.CENTER); // Forzar centrado
+        // vertical
         lblIcono.setHorizontalAlignment(SwingConstants.CENTER); // Forzar centrado horizontal
 
         // Texto principal - usa una versión más oscura del color para buen contraste
@@ -271,8 +272,10 @@ public class MainMenuView extends JFrame {
         });
 
         // Listener para Facturas
+        // Listener para Facturas
         btnFacturas.addActionListener(e -> {
-            mostrarFuncionalidadNoDisponible("Gestión de Facturas");
+            FacturasView facturasView = new FacturasView();
+            NavigationManager.getInstance().navigateTo(facturasView);
         });
 
         // Listener para Configuración

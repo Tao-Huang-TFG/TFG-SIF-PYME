@@ -21,6 +21,7 @@ public abstract class BaseFormView<T> extends JPanel {
     protected Color COLOR_PRIMARIO = new Color(52, 152, 219);
     protected final Color COLOR_EXITO = new Color(46, 204, 113);
     protected final Color COLOR_PELIGRO = new Color(231, 76, 60);
+    protected final Color COLOR_INFO = new Color(52, 152, 219);
     protected final Color COLOR_FONDO = new Color(245, 245, 245);
     protected final Color COLOR_BORDE = new Color(220, 220, 220);
 
@@ -39,7 +40,7 @@ public abstract class BaseFormView<T> extends JPanel {
 
         // Permitir colores personalizados
         configurarColores();
-        
+
         initComponents();
         setupLayout();
 
@@ -48,10 +49,12 @@ public abstract class BaseFormView<T> extends JPanel {
         }
     }
 
-    // ==================== MÉTODOS ABSTRACTOS (deben implementarse) ====================
+    // ==================== MÉTODOS ABSTRACTOS (deben implementarse)
+    // ====================
 
     /**
-     * Retorna el título del formulario según el modo (ej: "Editar Cliente" o "Nuevo Cliente")
+     * Retorna el título del formulario según el modo (ej: "Editar Cliente" o "Nuevo
+     * Cliente")
      */
     protected abstract String getTituloFormulario();
 
@@ -87,17 +90,20 @@ public abstract class BaseFormView<T> extends JPanel {
 
     /**
      * Valida los campos del formulario
+     * 
      * @return true si todos los campos son válidos
      */
     protected abstract boolean validarCampos();
 
     /**
      * Guarda o actualiza la entidad en la base de datos
+     * 
      * @return true si se guardó correctamente
      */
     protected abstract boolean guardarEntidad();
 
-    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse) ====================
+    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse)
+    // ====================
 
     /**
      * Permite configurar colores personalizados por formulario
@@ -212,9 +218,8 @@ public abstract class BaseFormView<T> extends JPanel {
         JTextField campo = new JTextField(columnas);
         campo.setFont(FUENTE_CAMPO);
         campo.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
-            BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
+                BorderFactory.createLineBorder(COLOR_BORDE, 1),
+                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
         campo.setBackground(Color.WHITE);
         return campo;
     }
@@ -226,9 +231,8 @@ public abstract class BaseFormView<T> extends JPanel {
         JTextArea area = new JTextArea(filas, columnas);
         area.setFont(FUENTE_CAMPO);
         area.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
-            BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
+                BorderFactory.createLineBorder(COLOR_BORDE, 1),
+                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
         area.setLineWrap(true);
         area.setWrapStyleWord(true);
         area.setBackground(Color.WHITE);
@@ -252,9 +256,8 @@ public abstract class BaseFormView<T> extends JPanel {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
+                BorderFactory.createLineBorder(COLOR_BORDE, 1),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
 
         JLabel lblTitulo = new JLabel(titulo);
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 15));
@@ -274,8 +277,8 @@ public abstract class BaseFormView<T> extends JPanel {
     /**
      * Añade un campo al panel con su etiqueta
      */
-    protected void addFormField(JPanel panel, String label, JTextField field, 
-                                boolean required, int row) {
+    protected void addFormField(JPanel panel, String label, JTextField field,
+            boolean required, int row) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = row + 1;
@@ -302,8 +305,8 @@ public abstract class BaseFormView<T> extends JPanel {
     /**
      * Añade un área de texto al panel con su etiqueta
      */
-    protected void addFormFieldTextArea(JPanel panel, String label, JTextArea field, 
-                                       boolean required, int row) {
+    protected void addFormFieldTextArea(JPanel panel, String label, JTextArea field,
+            boolean required, int row) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = row + 1;
@@ -324,7 +327,7 @@ public abstract class BaseFormView<T> extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
         gbc.insets = new Insets(8, 0, 8, 0);
-        
+
         JScrollPane scrollPane = new JScrollPane(field);
         scrollPane.setBorder(field.getBorder());
         panel.add(scrollPane, gbc);
@@ -333,8 +336,8 @@ public abstract class BaseFormView<T> extends JPanel {
     /**
      * Añade un combo box al panel con su etiqueta
      */
-    protected <E> void addFormFieldCombo(JPanel panel, String label, JComboBox<E> combo, 
-                                        boolean required, int row) {
+    protected <E> void addFormFieldCombo(JPanel panel, String label, JComboBox<E> combo,
+            boolean required, int row) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = row + 1;
@@ -370,28 +373,25 @@ public abstract class BaseFormView<T> extends JPanel {
 
             if (success) {
                 JOptionPane.showMessageDialog(
-                    this,
-                    getMensajeExito(),
-                    "Éxito",
-                    JOptionPane.INFORMATION_MESSAGE
-                );
+                        this,
+                        getMensajeExito(),
+                        "Éxito",
+                        JOptionPane.INFORMATION_MESSAGE);
                 volverALista();
             } else {
                 JOptionPane.showMessageDialog(
-                    this,
-                    "Error al guardar el registro.\nPor favor, verifica los datos.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-                );
+                        this,
+                        "Error al guardar el registro.\nPor favor, verifica los datos.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(
-                this,
-                "Error inesperado: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            );
+                    this,
+                    "Error inesperado: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -404,10 +404,9 @@ public abstract class BaseFormView<T> extends JPanel {
      */
     protected void mostrarErroresValidacion(StringBuilder errores) {
         JOptionPane.showMessageDialog(
-            this,
-            "Por favor, corrige los siguientes errores:\n\n" + errores.toString(),
-            "Validación",
-            JOptionPane.WARNING_MESSAGE
-        );
+                this,
+                "Por favor, corrige los siguientes errores:\n\n" + errores.toString(),
+                "Validación",
+                JOptionPane.WARNING_MESSAGE);
     }
 }
