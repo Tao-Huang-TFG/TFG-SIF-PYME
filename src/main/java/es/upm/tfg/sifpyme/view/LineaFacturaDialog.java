@@ -315,6 +315,7 @@ public class LineaFacturaDialog extends JDialog {
 
         // Envolver el panel de campos en un scroll
         JScrollPane scrollPane = new JScrollPane(camposPanel);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         mainPanel.add(scrollPane, BorderLayout.CENTER);

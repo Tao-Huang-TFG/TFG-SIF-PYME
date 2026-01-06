@@ -92,6 +92,7 @@ public abstract class BaseFormView<T> extends JPanel {
         // Formulario con scroll
         JPanel formPanel = crearPanelCampos();
         JScrollPane scrollPane = new JScrollPane(formPanel);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(null);
         scrollPane.setBackground(UITheme.COLOR_FONDO);
         add(scrollPane, BorderLayout.CENTER);
@@ -206,6 +207,7 @@ public abstract class BaseFormView<T> extends JPanel {
         gbc.insets = new Insets(8, 0, 8, 0);
 
         JScrollPane scrollPane = new JScrollPane(field);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(field.getBorder());
         panel.add(scrollPane, gbc);
     }

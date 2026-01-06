@@ -253,6 +253,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         
         // Tabla con scroll
         JScrollPane scrollPane = new JScrollPane(tablaLineas);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1));
         panel.add(scrollPane, BorderLayout.CENTER);
         

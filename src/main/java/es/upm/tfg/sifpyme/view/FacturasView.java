@@ -211,6 +211,7 @@ public class FacturasView extends BaseListView<Factura> {
         textArea.setEditable(false);
         
         JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setPreferredSize(new Dimension(500, 400));
 
         JOptionPane.showMessageDialog(
