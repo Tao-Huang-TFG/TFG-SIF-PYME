@@ -13,9 +13,11 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Diálogo para agregar o editar una línea de factura
+ * Con búsqueda de productos por código o nombre
  */
 public class LineaFacturaDialog extends JDialog {
     
@@ -25,6 +27,7 @@ public class LineaFacturaDialog extends JDialog {
     private boolean confirmado = false;
     
     // Componentes
+    private JTextField txtBuscarProducto;
     private JComboBox<Producto> cmbProducto;
     private JTextField txtCantidad;
     private JTextField txtPrecio;
@@ -45,6 +48,7 @@ public class LineaFacturaDialog extends JDialog {
     private final Color COLOR_BORDE = new Color(220, 220, 220);
     
     private boolean calculando = false; // Flag para evitar bucles
+    private List<Producto> todosLosProductos; // Lista completa de productos
 
     public LineaFacturaDialog(JFrame parent, FacturaController controller, LineaFactura lineaEditar) {
         super(parent, lineaEditar == null ? "Agregar Línea" : "Editar Línea", true);
@@ -52,28 +56,41 @@ public class LineaFacturaDialog extends JDialog {
         this.productoController = new ProductoController();
         this.linea = lineaEditar != null ? lineaEditar : new LineaFactura();
         
+        // Cargar todos los productos
+        todosLosProductos = facturaController.obtenerProductos();
+        
         initComponents();
         setupLayout();
         configurarCalculoAutomatico();
-        cargarDatos();
         
         if (lineaEditar != null) {
             cargarLineaExistente();
         }
         
-        setSize(700, 600);
+        setSize(700, 650);
         setLocationRelativeTo(parent);
         setResizable(false);
     }
     
     private void initComponents() {
+        // Campo de búsqueda de productos
+        txtBuscarProducto = crearCampoTexto("");
+        txtBuscarProducto.setPreferredSize(new Dimension(300, 35));
+        
+        // Listener para búsqueda en tiempo real
+        txtBuscarProducto.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { buscarProductos(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { buscarProductos(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { buscarProductos(); }
+        });
+        
         // ComboBox de productos
         cmbProducto = new JComboBox<>();
         cmbProducto.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        List<Producto> productos = facturaController.obtenerProductos();
-        for (Producto p : productos) {
-            cmbProducto.addItem(p);
-        }
+        actualizarComboProductos(todosLosProductos);
         
         // Listener para auto-completar al seleccionar producto
         cmbProducto.addActionListener(e -> {
@@ -166,6 +183,36 @@ public class LineaFacturaDialog extends JDialog {
         gbc.insets = new Insets(8, 0, 8, 15);
         
         int fila = 0;
+        
+        // Campo de búsqueda
+        gbc.gridx = 0;
+        gbc.gridy = fila;
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        
+        JLabel lblBuscar = new JLabel("🔍 Buscar Producto:");
+        lblBuscar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblBuscar.setForeground(Color.DARK_GRAY);
+        camposPanel.add(lblBuscar, gbc);
+        
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        camposPanel.add(txtBuscarProducto, gbc);
+        
+        fila++;
+        
+        // Nota de ayuda para búsqueda
+        gbc.gridx = 1;
+        gbc.gridy = fila;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        JLabel lblAyuda = new JLabel("<html><i>Busca por código o nombre del producto</i></html>");
+        lblAyuda.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblAyuda.setForeground(new Color(100, 100, 100));
+        camposPanel.add(lblAyuda, gbc);
+        
+        fila++;
+        gbc.insets = new Insets(8, 0, 8, 15);
         
         // Producto
         agregarCampo(camposPanel, "Producto:", cmbProducto, true, fila++, gbc);
@@ -339,18 +386,68 @@ public class LineaFacturaDialog extends JDialog {
         calcular();
     }
     
-    private void cargarDatos() {
-        // Ya cargamos los productos en initComponents
+    /**
+     * Busca productos por código o nombre
+     */
+    private void buscarProductos() {
+        String termino = txtBuscarProducto.getText().trim().toLowerCase();
+        
+        if (termino.isEmpty()) {
+            // Mostrar todos los productos
+            actualizarComboProductos(todosLosProductos);
+            return;
+        }
+        
+        // Filtrar productos por código o nombre
+        List<Producto> productosFiltrados = todosLosProductos.stream()
+            .filter(p -> {
+                String codigo = p.getCodigo() != null ? p.getCodigo().toLowerCase() : "";
+                String nombre = p.getNombre().toLowerCase();
+                return codigo.contains(termino) || nombre.contains(termino);
+            })
+            .collect(Collectors.toList());
+        
+        actualizarComboProductos(productosFiltrados);
+    }
+    
+    /**
+     * Actualiza el combo de productos con la lista filtrada
+     */
+    private void actualizarComboProductos(List<Producto> productos) {
+        calculando = true; // Evitar que se disparen eventos durante la actualización
+        
+        Producto productoSeleccionado = (Producto) cmbProducto.getSelectedItem();
+        
+        cmbProducto.removeAllItems();
+        for (Producto p : productos) {
+            cmbProducto.addItem(p);
+        }
+        
+        // Intentar mantener la selección anterior si existe en la nueva lista
+        if (productoSeleccionado != null && productos.contains(productoSeleccionado)) {
+            cmbProducto.setSelectedItem(productoSeleccionado);
+        } else if (!productos.isEmpty()) {
+            cmbProducto.setSelectedIndex(0);
+        }
+        
+        calculando = false;
     }
     
     private void cargarLineaExistente() {
         calculando = true;
         
-        // Seleccionar producto
-        for (int i = 0; i < cmbProducto.getItemCount(); i++) {
-            if (cmbProducto.getItemAt(i).getIdProducto().equals(linea.getIdProducto())) {
-                cmbProducto.setSelectedIndex(i);
-                break;
+        // Cargar producto en el campo de búsqueda
+        Producto producto = facturaController.obtenerProductoPorId(linea.getIdProducto());
+        if (producto != null) {
+            // Mostrar el nombre del producto en el campo de búsqueda
+            txtBuscarProducto.setText(producto.getNombre());
+            
+            // Seleccionar producto en el combo
+            for (int i = 0; i < cmbProducto.getItemCount(); i++) {
+                if (cmbProducto.getItemAt(i).getIdProducto().equals(linea.getIdProducto())) {
+                    cmbProducto.setSelectedIndex(i);
+                    break;
+                }
             }
         }
         

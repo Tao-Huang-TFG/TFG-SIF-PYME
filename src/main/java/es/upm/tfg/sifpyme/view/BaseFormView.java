@@ -30,7 +30,7 @@ public abstract class BaseFormView<T> extends JPanel {
     protected final Font FUENTE_SUBTITULO = new Font("Segoe UI", Font.PLAIN, 13);
     protected final Font FUENTE_ETIQUETA = new Font("Segoe UI", Font.BOLD, 13);
     protected final Font FUENTE_CAMPO = new Font("Segoe UI", Font.PLAIN, 14);
-    protected final Font FUENTE_BOTON = new Font("Segoe UI", Font.BOLD, 14);
+    protected final Font FUENTE_BOTON = new Font("Segoe UI Symbol", Font.BOLD, 14);
 
     public BaseFormView(CardLayout cardLayout, JPanel cardPanel, T entidadEditar) {
         this.cardLayout = cardLayout;
@@ -215,63 +215,28 @@ public abstract class BaseFormView<T> extends JPanel {
      * Crea un campo de texto con estilo común
      */
     protected JTextField crearCampoTexto(int columnas) {
-        JTextField campo = new JTextField(columnas);
-        campo.setFont(FUENTE_CAMPO);
-        campo.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BORDE, 1),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
-        campo.setBackground(Color.WHITE);
-        return campo;
+        return UIHelper.crearCampoTexto(columnas);
     }
 
     /**
      * Crea un área de texto con estilo común
      */
     protected JTextArea crearAreaTexto(int filas, int columnas) {
-        JTextArea area = new JTextArea(filas, columnas);
-        area.setFont(FUENTE_CAMPO);
-        area.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BORDE, 1),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
-        area.setLineWrap(true);
-        area.setWrapStyleWord(true);
-        area.setBackground(Color.WHITE);
-        return area;
+       return UIHelper.crearAreaTexto(filas, columnas);
     }
 
     /**
      * Crea un combo box con estilo común
      */
     protected <E> JComboBox<E> crearComboBox() {
-        JComboBox<E> combo = new JComboBox<>();
-        combo.setFont(FUENTE_CAMPO);
-        combo.setBackground(Color.WHITE);
-        return combo;
+        return UIHelper.crearComboBox();
     }
 
     /**
      * Crea un panel de sección con título
      */
     protected JPanel crearSeccionPanel(String titulo) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BORDE, 1),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
-
-        JLabel lblTitulo = new JLabel(titulo);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblTitulo.setForeground(COLOR_PRIMARIO);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(0, 0, 15, 0);
-        panel.add(lblTitulo, gbc);
-
-        return panel;
+        return UIHelper.crearSeccionPanel(titulo, COLOR_PRIMARIO);
     }
 
     /**

@@ -130,21 +130,21 @@ public class FacturaFormView extends BaseFormView<Factura> {
         configurarAnchoColumnasLineas();
         
         // Botones de líneas
-        btnAgregarLinea = new JButton("➕ Agregar Línea");
+        btnAgregarLinea = new JButton("\u002B Agregar Línea");
         btnAgregarLinea.setBackground(COLOR_EXITO);
         btnAgregarLinea.setFont(FUENTE_BOTON);
         btnAgregarLinea.setFocusPainted(false);
         btnAgregarLinea.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnAgregarLinea.addActionListener(e -> agregarLinea());
         
-        btnEditarLinea = new JButton("✏️ Editar");
+        btnEditarLinea = new JButton("\u270E Editar");
         btnEditarLinea.setBackground(COLOR_INFO);
         btnEditarLinea.setFont(FUENTE_BOTON);
         btnEditarLinea.setFocusPainted(false);
         btnEditarLinea.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnEditarLinea.addActionListener(e -> editarLinea());
         
-        btnEliminarLinea = new JButton("🗑️ Eliminar");
+        btnEliminarLinea = new JButton("\u2716 Eliminar");
         btnEliminarLinea.setBackground(COLOR_PELIGRO);
         btnEliminarLinea.setFont(FUENTE_BOTON);
         btnEliminarLinea.setFocusPainted(false);

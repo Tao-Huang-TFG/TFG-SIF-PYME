@@ -12,7 +12,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 /**
- * Clase base abstracta para todas las vistas de lista (Clientes, Empresas, Productos)
+ * Clase base abstracta para todas las vistas de lista (Clientes, Empresas,
+ * Productos)
  * Implementa funcionalidad común: tabla, búsqueda, navegación, estilos
  */
 public abstract class BaseListView<T> extends JFrame {
@@ -52,97 +53,104 @@ public abstract class BaseListView<T> extends JFrame {
     public BaseListView() {
         this.cardLayout = new CardLayout();
         this.cardPanel = new JPanel(cardLayout);
-        
+
         configurarVentana();
         initComponents();
         setupLayout();
     }
 
-    // ==================== MÉTODOS ABSTRACTOS (deben implementarse) ====================
-    
+    // ==================== MÉTODOS ABSTRACTOS (deben implementarse)
+    // ====================
+
     /**
      * Retorna el título de la ventana (ej: "Gestión de Clientes - SifPyme")
      */
     protected abstract String getTituloVentana();
-    
+
     /**
      * Retorna el título del encabezado (ej: "Gestión de Clientes")
      */
     protected abstract String getTituloHeader();
-    
+
     /**
-     * Retorna el subtítulo del encabezado (ej: "Administra tu base de datos de clientes")
+     * Retorna el subtítulo del encabezado (ej: "Administra tu base de datos de
+     * clientes")
      */
     protected abstract String getSubtituloHeader();
-    
+
     /**
      * Retorna el icono emoji del encabezado (ej: "👥")
      */
     protected abstract String getIconoHeader();
-    
+
     /**
      * Retorna los nombres de las columnas de la tabla
      */
     protected abstract String[] getNombresColumnas();
-    
+
     /**
      * Retorna el nombre de la card para la lista (ej: "listaClientes")
      */
     protected abstract String getNombreCardLista();
-    
+
     /**
      * Retorna el nombre de la card para el formulario (ej: "formularioCliente")
      */
     protected abstract String getNombreCardFormulario();
-    
+
     /**
      * Retorna el nombre singular de la entidad (ej: "cliente")
      */
     protected abstract String getNombreEntidadSingular();
-    
+
     /**
      * Retorna el nombre plural de la entidad (ej: "clientes")
      */
     protected abstract String getNombreEntidadPlural();
-    
+
     /**
      * Carga todos los datos de la base de datos y los añade a la tabla
      */
     protected abstract void cargarDatos();
-    
+
     /**
      * Crea y retorna el panel del formulario para nuevo registro
      */
     protected abstract JPanel crearFormularioNuevo();
-    
+
     /**
      * Crea y retorna el panel del formulario para edición
+     * 
      * @param id ID del registro a editar
      */
     protected abstract JPanel crearFormularioEdicion(Integer id);
-    
+
     /**
      * Elimina un registro por su ID
+     * 
      * @param id ID del registro a eliminar
      * @return true si se eliminó correctamente
      */
     protected abstract boolean eliminarRegistro(Integer id);
-    
+
     /**
      * Configura los anchos preferidos de las columnas
      */
     protected abstract void configurarAnchoColumnas();
 
-    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse) ====================
-    
+    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse)
+    // ====================
+
     /**
-     * Permite agregar botones adicionales al toolbar (ej: btnEstablecerDefecto en Empresas)
+     * Permite agregar botones adicionales al toolbar (ej: btnEstablecerDefecto en
+     * Empresas)
+     * 
      * @param buttonsPanel Panel donde agregar los botones
      */
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
         // Por defecto no hace nada - las subclases pueden sobrescribirlo
     }
-    
+
     /**
      * Permite configurar colores personalizados por vista
      */
@@ -166,7 +174,7 @@ public abstract class BaseListView<T> extends JFrame {
         setMinimumSize(new Dimension(1000, 600));
         setResizable(true);
         setLocationRelativeTo(null);
-        
+
         // Permitir colores personalizados
         configurarColores();
     }
@@ -222,8 +230,8 @@ public abstract class BaseListView<T> extends JFrame {
         });
 
         // Botones
-        btnNuevo = crearBoton("➕ Nuevo " + getNombreEntidadSingular().substring(0, 1).toUpperCase() + 
-                             getNombreEntidadSingular().substring(1), COLOR_EXITO);
+        btnNuevo = crearBoton("➕ Nuevo " + getNombreEntidadSingular().substring(0, 1).toUpperCase() +
+                getNombreEntidadSingular().substring(1), COLOR_EXITO);
         btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
         btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
         btnVolver = crearBoton("← Volver", COLOR_VOLVER);
@@ -240,73 +248,45 @@ public abstract class BaseListView<T> extends JFrame {
     }
 
     protected JButton crearBoton(String texto, Color color) {
-        JButton boton = new JButton();
-        boton.setLayout(new BorderLayout(5, 5));
-        boton.setBackground(color);
-        boton.setForeground(color);
-        boton.setFocusPainted(false);
-        boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
+        // Extraer icono del texto (manteniendo compatibilidad)
         String[] partes = texto.split(" ", 2);
-        String emoji = partes[0];
+        String icono = partes[0];
         String textoRestante = partes.length > 1 ? partes[1] : "";
 
-        JPanel contenidoPanel = new JPanel(new BorderLayout(8, 0));
-        contenidoPanel.setOpaque(false);
+        // Mapear emojis a iconos Unicode
+        String iconoUnicode = mapearEmojiAUnicode(icono);
 
-        JLabel lblIcono = new JLabel(emoji);
-        lblIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
-        lblIcono.setVerticalAlignment(SwingConstants.CENTER);
-        lblIcono.setHorizontalAlignment(SwingConstants.CENTER);
+        return UIHelper.crearBoton(textoRestante, color, iconoUnicode);
+    }
 
-        JLabel lblTexto = new JLabel(textoRestante);
-        lblTexto.setFont(FUENTE_BOTON);
-        lblTexto.setForeground(color.darker().darker());
-        lblTexto.setVerticalAlignment(SwingConstants.CENTER);
-
-        if (textoRestante.isEmpty()) {
-            contenidoPanel.add(lblIcono, BorderLayout.CENTER);
-        } else {
-            JPanel horizontalPanel = new JPanel();
-            horizontalPanel.setLayout(new BoxLayout(horizontalPanel, BoxLayout.X_AXIS));
-            horizontalPanel.setOpaque(false);
-
-            horizontalPanel.add(Box.createHorizontalStrut(5));
-            horizontalPanel.add(lblIcono);
-            horizontalPanel.add(Box.createHorizontalStrut(8));
-            horizontalPanel.add(lblTexto);
-            horizontalPanel.add(Box.createHorizontalStrut(5));
-
-            contenidoPanel.add(horizontalPanel, BorderLayout.CENTER);
+    private String mapearEmojiAUnicode(String emoji) {
+        switch (emoji) {
+            case "➕":
+                return UITheme.ICONO_NUEVO;
+            case "✏️":
+                return UITheme.ICONO_EDITAR;
+            case "🗑️":
+                return UITheme.ICONO_ELIMINAR;
+            case "←":
+                return UITheme.ICONO_VOLVER;
+            case "🔍":
+                return UITheme.ICONO_BUSCAR;
+            case "👁️":
+                return UITheme.ICONO_VER;
+            case "⭐":
+                return UITheme.ICONO_ESTABLECER;
+            case "🔧":
+                return UITheme.ICONO_CONFIG;
+            case "🚪":
+                return UITheme.ICONO_SALIR;
+            default:
+                return emoji; // Mantener si no hay mapeo
         }
-
-        boton.add(contenidoPanel, BorderLayout.CENTER);
-
-        boton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                boton.setBackground(color);
-                if (lblTexto != null) {
-                    lblTexto.setForeground(color);
-                }
-                lblIcono.setForeground(color);
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                boton.setBackground(color);
-                if (lblTexto != null) {
-                    lblTexto.setForeground(color.darker().darker());
-                }
-                lblIcono.setForeground(color.darker().darker());
-            }
-        });
-
-        return boton;
     }
 
     private void setupLayout() {
         listaPanel = crearListaPanel();
-        
+
         // Listener para refrescar automáticamente cuando se muestra la lista
         listaPanel.addComponentListener(new ComponentAdapter() {
             @Override
@@ -314,7 +294,7 @@ public abstract class BaseListView<T> extends JFrame {
                 cargarDatos();
             }
         });
-        
+
         cardPanel.add(listaPanel, getNombreCardLista());
         cardLayout.show(cardPanel, getNombreCardLista());
 
@@ -397,7 +377,7 @@ public abstract class BaseListView<T> extends JFrame {
         buttonsPanel.add(btnNuevo);
         buttonsPanel.add(btnEditar);
         buttonsPanel.add(btnEliminar);
-        
+
         // Permitir botones adicionales
         agregarBotonesAdicionales(buttonsPanel);
 
@@ -490,8 +470,8 @@ public abstract class BaseListView<T> extends JFrame {
 
         int confirmacion = JOptionPane.showConfirmDialog(
                 this,
-                "¿Estás seguro de que deseas eliminar el " + getNombreEntidadSingular() + ":\n" + 
-                nombre + "?\n\nEsta acción no se puede deshacer.",
+                "¿Estás seguro de que deseas eliminar el " + getNombreEntidadSingular() + ":\n" +
+                        nombre + "?\n\nEsta acción no se puede deshacer.",
                 "Confirmar Eliminación",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
@@ -502,8 +482,8 @@ public abstract class BaseListView<T> extends JFrame {
             if (eliminado) {
                 JOptionPane.showMessageDialog(
                         this,
-                        getNombreEntidadSingular().substring(0, 1).toUpperCase() + 
-                        getNombreEntidadSingular().substring(1) + " eliminado exitosamente.",
+                        getNombreEntidadSingular().substring(0, 1).toUpperCase() +
+                                getNombreEntidadSingular().substring(1) + " eliminado exitosamente.",
                         "Éxito",
                         JOptionPane.INFORMATION_MESSAGE);
                 cargarDatos();
@@ -520,7 +500,7 @@ public abstract class BaseListView<T> extends JFrame {
 
     protected void actualizarTotal() {
         int total = tabla.getRowCount();
-        lblTotal.setText("Total: " + total + " " + 
-                        (total == 1 ? getNombreEntidadSingular() : getNombreEntidadPlural()));
+        lblTotal.setText("Total: " + total + " " +
+                (total == 1 ? getNombreEntidadSingular() : getNombreEntidadPlural()));
     }
 }
