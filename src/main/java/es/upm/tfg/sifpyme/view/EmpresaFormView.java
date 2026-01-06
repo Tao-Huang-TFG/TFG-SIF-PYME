@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 /**
  * Formulario para registro/edición de empresa
- * Ahora extiende de BaseFormView para reutilizar funcionalidad común
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
  */
 public class EmpresaFormView extends BaseFormView<Empresa> {
 
@@ -41,8 +41,8 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
     @Override
     protected void configurarColores() {
-        // Color azul oscuro para empresas
-        COLOR_PRIMARIO = new Color(41, 128, 185);
+        // Usar el color definido en UITheme para empresas
+        COLOR_PRIMARIO = UITheme.COLOR_EMPRESAS;
     }
 
     @Override
@@ -59,7 +59,8 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
     @Override
     protected String getIconoFormulario() {
-        return "🏢";
+        // Usar el icono centralizado de UITheme
+        return UITheme.ICONO_EMPRESAS;
     }
 
     @Override
@@ -69,28 +70,30 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
     @Override
     protected void inicializarCamposEspecificos() {
-        txtNombreComercial = crearCampoTexto(30);
-        txtRazonSocial = crearCampoTexto(30);
-        txtNif = crearCampoTexto(15);
-        txtDireccion = crearCampoTexto(40);
-        txtCodigoPostal = crearCampoTexto(10);
-        txtCiudad = crearCampoTexto(30);
-        txtProvincia = crearCampoTexto(30);
-        txtTelefono = crearCampoTexto(15);
-        txtEmail = crearCampoTexto(30);
-        txtWeb = crearCampoTexto(30);
-        txtTipoRetencionIrpf = crearCampoTexto(10);
+        // Usar UIHelper para crear campos consistentes
+        txtNombreComercial = UIHelper.crearCampoTexto(30);
+        txtRazonSocial = UIHelper.crearCampoTexto(30);
+        txtNif = UIHelper.crearCampoTexto(15);
+        txtDireccion = UIHelper.crearCampoTexto(40);
+        txtCodigoPostal = UIHelper.crearCampoTexto(10);
+        txtCiudad = UIHelper.crearCampoTexto(30);
+        txtProvincia = UIHelper.crearCampoTexto(30);
+        txtTelefono = UIHelper.crearCampoTexto(15);
+        txtEmail = UIHelper.crearCampoTexto(30);
+        txtWeb = UIHelper.crearCampoTexto(30);
+        txtTipoRetencionIrpf = UIHelper.crearCampoTexto(10);
         txtTipoRetencionIrpf.setText("15.00");
 
+        // Usar UITheme para fuentes
         chkPorDefecto = new JCheckBox("Establecer como empresa por defecto");
-        chkPorDefecto.setFont(FUENTE_CAMPO);
+        chkPorDefecto.setFont(UITheme.FUENTE_CAMPO);
         chkPorDefecto.setBackground(Color.WHITE);
     }
 
     @Override
     protected JPanel crearPanelCampos() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(COLOR_FONDO);
+        panel.setBackground(UITheme.COLOR_FONDO);
         panel.setBorder(new EmptyBorder(25, 30, 25, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -101,8 +104,8 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 15, 0);
 
-        // Panel de datos básicos
-        JPanel datosBasicos = crearSeccionPanel("Datos Básicos");
+        // Panel de datos básicos usando UIHelper
+        JPanel datosBasicos = UIHelper.crearSeccionPanel("Datos Básicos", COLOR_PRIMARIO);
         addFormField(datosBasicos, "Nombre Comercial:", txtNombreComercial, true, 0);
         addFormField(datosBasicos, "Razón Social:", txtRazonSocial, true, 1);
         addFormField(datosBasicos, "NIF:", txtNif, true, 2);
@@ -110,7 +113,7 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
         // Panel de dirección
         gbc.gridy = 1;
-        JPanel direccionPanel = crearSeccionPanel("Dirección");
+        JPanel direccionPanel = UIHelper.crearSeccionPanel("Dirección", COLOR_PRIMARIO);
         addFormField(direccionPanel, "Dirección:", txtDireccion, true, 0);
         addFormField(direccionPanel, "Código Postal:", txtCodigoPostal, true, 1);
         addFormField(direccionPanel, "Ciudad:", txtCiudad, true, 2);
@@ -119,7 +122,7 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
         // Panel de contacto
         gbc.gridy = 2;
-        JPanel contactoPanel = crearSeccionPanel("Contacto y Datos Fiscales");
+        JPanel contactoPanel = UIHelper.crearSeccionPanel("Contacto y Datos Fiscales", COLOR_PRIMARIO);
         addFormField(contactoPanel, "Teléfono:", txtTelefono, false, 0);
         addFormField(contactoPanel, "Email:", txtEmail, false, 1);
         addFormField(contactoPanel, "Sitio Web:", txtWeb, false, 2);

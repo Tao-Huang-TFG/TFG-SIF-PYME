@@ -10,6 +10,10 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Vista de lista de facturas
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
+ */
 public class FacturasView extends BaseListView<Factura> {
 
     private FacturaController controller;
@@ -22,8 +26,8 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void configurarColores() {
-        COLOR_PRIMARIO = new Color(46, 204, 113);
-        COLOR_SECUNDARIO = new Color(39, 174, 96);
+        COLOR_PRIMARIO = UITheme.COLOR_FACTURAS;
+        COLOR_SECUNDARIO = UITheme.COLOR_FACTURAS;
     }
 
     @Override
@@ -43,7 +47,7 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected String getIconoHeader() {
-        return "🧾";
+        return UITheme.ICONO_FACTURAS;
     }
 
     @Override
@@ -76,16 +80,16 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void configurarAnchoColumnas() {
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
-        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);  // Número
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(80);   // Serie
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(100);  // Fecha
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(200);  // Cliente
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);  // Subtotal
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(100);  // IVA
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(100);  // Total
-        tabla.getColumnModel().getColumn(8).setPreferredWidth(100);  // Estado
-        tabla.getColumnModel().getColumn(9).setPreferredWidth(120);  // Método Pago
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(50);
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(80);
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(200);
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(8).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(9).setPreferredWidth(120);
     }
 
     @Override
@@ -99,7 +103,6 @@ public class FacturasView extends BaseListView<Factura> {
         List<Factura> facturas = controller.obtenerTodasLasFacturas();
 
         for (Factura factura : facturas) {
-            // Obtener el cliente para mostrar su nombre
             String nombreCliente = "";
             if (factura.getIdCliente() != null) {
                 Factura facturaCompleta = controller.obtenerFacturaPorId(factura.getIdFactura());
@@ -147,10 +150,10 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
-        // Botón para ver/imprimir factura
-        JButton btnVer = crearBoton("👁️ Ver", new Color(52, 152, 219));
+        // Botón para ver/imprimir factura - REFACTORIZADO
+        JButton btnVer = UIHelper.crearBotonAccion("ver", "Ver");
         btnVer.addActionListener(e -> verFactura());
-        buttonsPanel.add(btnVer, 0); // Añadir al principio
+        buttonsPanel.add(btnVer, 0);
     }
 
     private void verFactura() {
@@ -181,7 +184,6 @@ public class FacturasView extends BaseListView<Factura> {
     }
 
     private void mostrarVistaPrevia(Factura factura) {
-        // TODO: Implementar vista previa/impresión de factura
         StringBuilder sb = new StringBuilder();
         sb.append("FACTURA ").append(factura.getNumeroCompleto()).append("\n\n");
         sb.append("Fecha: ").append(factura.getFechaEmision().format(DATE_FORMATTER)).append("\n");
@@ -205,7 +207,7 @@ public class FacturasView extends BaseListView<Factura> {
         sb.append("TOTAL: ").append(formatearMoneda(factura.getTotal())).append("\n");
 
         JTextArea textArea = new JTextArea(sb.toString());
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        textArea.setFont(UITheme.FUENTE_MONOSPACE);
         textArea.setEditable(false);
         
         JScrollPane scrollPane = new JScrollPane(textArea);

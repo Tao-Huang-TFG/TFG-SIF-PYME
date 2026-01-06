@@ -7,6 +7,7 @@ import java.awt.*;
 /**
  * Clase base abstracta para todos los formularios (Cliente, Empresa, Producto)
  * Implementa funcionalidad común: layout, botones, estilos, validación
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme para consistencia visual
  */
 public abstract class BaseFormView<T> extends JPanel {
 
@@ -17,20 +18,8 @@ public abstract class BaseFormView<T> extends JPanel {
     protected T entidadEditar;
     protected boolean modoEdicion;
 
-    // Colores comunes (pueden ser sobrescritos)
-    protected Color COLOR_PRIMARIO = new Color(52, 152, 219);
-    protected final Color COLOR_EXITO = new Color(46, 204, 113);
-    protected final Color COLOR_PELIGRO = new Color(231, 76, 60);
-    protected final Color COLOR_INFO = new Color(52, 152, 219);
-    protected final Color COLOR_FONDO = new Color(245, 245, 245);
-    protected final Color COLOR_BORDE = new Color(220, 220, 220);
-
-    // Fuentes comunes
-    protected final Font FUENTE_TITULO = new Font("Segoe UI", Font.BOLD, 24);
-    protected final Font FUENTE_SUBTITULO = new Font("Segoe UI", Font.PLAIN, 13);
-    protected final Font FUENTE_ETIQUETA = new Font("Segoe UI", Font.BOLD, 13);
-    protected final Font FUENTE_CAMPO = new Font("Segoe UI", Font.PLAIN, 14);
-    protected final Font FUENTE_BOTON = new Font("Segoe UI Symbol", Font.BOLD, 14);
+    // Colores del tema (pueden ser sobrescritos)
+    protected Color COLOR_PRIMARIO = UITheme.COLOR_INFO;
 
     public BaseFormView(CardLayout cardLayout, JPanel cardPanel, T entidadEditar) {
         this.cardLayout = cardLayout;
@@ -49,72 +38,24 @@ public abstract class BaseFormView<T> extends JPanel {
         }
     }
 
-    // ==================== MÉTODOS ABSTRACTOS (deben implementarse)
-    // ====================
+    // ==================== MÉTODOS ABSTRACTOS (deben implementarse) ====================
 
-    /**
-     * Retorna el título del formulario según el modo (ej: "Editar Cliente" o "Nuevo
-     * Cliente")
-     */
     protected abstract String getTituloFormulario();
-
-    /**
-     * Retorna el subtítulo del formulario según el modo
-     */
     protected abstract String getSubtituloFormulario();
-
-    /**
-     * Retorna el icono emoji del formulario (ej: "👤")
-     */
     protected abstract String getIconoFormulario();
-
-    /**
-     * Retorna el nombre de la card de la lista (ej: "listaClientes")
-     */
     protected abstract String getNombreCardLista();
-
-    /**
-     * Inicializa los campos específicos del formulario
-     */
     protected abstract void inicializarCamposEspecificos();
-
-    /**
-     * Crea y retorna el panel con los campos del formulario
-     */
     protected abstract JPanel crearPanelCampos();
-
-    /**
-     * Carga los datos de la entidad en los campos cuando está en modo edición
-     */
     protected abstract void cargarDatosEntidad();
-
-    /**
-     * Valida los campos del formulario
-     * 
-     * @return true si todos los campos son válidos
-     */
     protected abstract boolean validarCampos();
-
-    /**
-     * Guarda o actualiza la entidad en la base de datos
-     * 
-     * @return true si se guardó correctamente
-     */
     protected abstract boolean guardarEntidad();
 
-    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse)
-    // ====================
+    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse) ====================
 
-    /**
-     * Permite configurar colores personalizados por formulario
-     */
     protected void configurarColores() {
         // Por defecto usa los colores base - las subclases pueden sobrescribirlo
     }
 
-    /**
-     * Mensaje de éxito personalizado
-     */
     protected String getMensajeExito() {
         return modoEdicion ? "Registro actualizado exitosamente." : "Registro creado exitosamente.";
     }
@@ -130,27 +71,20 @@ public abstract class BaseFormView<T> extends JPanel {
     }
 
     protected void configurarBotones() {
+        String tipoGuardar = modoEdicion ? "actualizar" : "guardar";
         String textoGuardar = modoEdicion ? "Actualizar" : "Guardar";
-        btnGuardar = new JButton(textoGuardar);
-        btnGuardar.setBackground(COLOR_EXITO);
-        btnGuardar.setForeground(COLOR_EXITO);
-        btnGuardar.setFont(FUENTE_BOTON);
-        btnGuardar.setFocusPainted(false);
-        btnGuardar.setBorder(BorderFactory.createEmptyBorder(12, 30, 12, 30));
-        btnGuardar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        btnCancelar = new JButton("Cancelar");
-        btnCancelar.setBackground(COLOR_PELIGRO);
-        btnCancelar.setForeground(COLOR_PELIGRO);
-        btnCancelar.setFont(FUENTE_BOTON);
-        btnCancelar.setFocusPainted(false);
-        btnCancelar.setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
-        btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        btnGuardar = UIHelper.crearBotonAccion(tipoGuardar, textoGuardar);
+        btnCancelar = UIHelper.crearBotonAccion("cancelar", "Cancelar");
+        
+        Dimension tamanoBoton = new Dimension(140, 40);
+        btnGuardar.setPreferredSize(tamanoBoton);
+        btnCancelar.setPreferredSize(tamanoBoton);
     }
 
     private void setupLayout() {
         setLayout(new BorderLayout(0, 0));
-        setBackground(COLOR_FONDO);
+        setBackground(UITheme.COLOR_FONDO);
 
         // Header
         add(createHeaderPanel(), BorderLayout.NORTH);
@@ -159,7 +93,7 @@ public abstract class BaseFormView<T> extends JPanel {
         JPanel formPanel = crearPanelCampos();
         JScrollPane scrollPane = new JScrollPane(formPanel);
         scrollPane.setBorder(null);
-        scrollPane.setBackground(COLOR_FONDO);
+        scrollPane.setBackground(UITheme.COLOR_FONDO);
         add(scrollPane, BorderLayout.CENTER);
 
         // Botones
@@ -172,11 +106,11 @@ public abstract class BaseFormView<T> extends JPanel {
         panel.setBorder(new EmptyBorder(20, 25, 20, 25));
 
         JLabel lblTitle = new JLabel(getTituloFormulario());
-        lblTitle.setFont(FUENTE_TITULO);
+        lblTitle.setFont(UITheme.FUENTE_TITULO);
         lblTitle.setForeground(Color.WHITE);
 
         JLabel lblSubtitle = new JLabel(getSubtituloFormulario());
-        lblSubtitle.setFont(FUENTE_SUBTITULO);
+        lblSubtitle.setFont(UITheme.FUENTE_SUBTITULO);
         lblSubtitle.setForeground(new Color(240, 240, 240));
 
         JPanel textPanel = new JPanel(new GridLayout(2, 1, 2, 2));
@@ -185,7 +119,7 @@ public abstract class BaseFormView<T> extends JPanel {
         textPanel.add(lblSubtitle);
 
         JLabel iconLabel = new JLabel(getIconoFormulario(), SwingConstants.RIGHT);
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+        iconLabel.setFont(UITheme.FUENTE_ICONO_TEXTO);
         iconLabel.setForeground(Color.WHITE);
 
         panel.add(textPanel, BorderLayout.WEST);
@@ -196,12 +130,8 @@ public abstract class BaseFormView<T> extends JPanel {
 
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 20));
-        panel.setBackground(COLOR_FONDO);
+        panel.setBackground(UITheme.COLOR_FONDO);
         panel.setBorder(new EmptyBorder(10, 20, 20, 20));
-
-        Dimension tamanoBoton = new Dimension(140, 40);
-        btnCancelar.setPreferredSize(tamanoBoton);
-        btnGuardar.setPreferredSize(tamanoBoton);
 
         panel.add(btnCancelar);
         panel.add(btnGuardar);
@@ -211,37 +141,22 @@ public abstract class BaseFormView<T> extends JPanel {
 
     // ==================== MÉTODOS AUXILIARES COMUNES ====================
 
-    /**
-     * Crea un campo de texto con estilo común
-     */
     protected JTextField crearCampoTexto(int columnas) {
         return UIHelper.crearCampoTexto(columnas);
     }
 
-    /**
-     * Crea un área de texto con estilo común
-     */
     protected JTextArea crearAreaTexto(int filas, int columnas) {
        return UIHelper.crearAreaTexto(filas, columnas);
     }
 
-    /**
-     * Crea un combo box con estilo común
-     */
     protected <E> JComboBox<E> crearComboBox() {
         return UIHelper.crearComboBox();
     }
 
-    /**
-     * Crea un panel de sección con título
-     */
     protected JPanel crearSeccionPanel(String titulo) {
         return UIHelper.crearSeccionPanel(titulo, COLOR_PRIMARIO);
     }
 
-    /**
-     * Añade un campo al panel con su etiqueta
-     */
     protected void addFormField(JPanel panel, String label, JTextField field,
             boolean required, int row) {
         GridBagConstraints gbc = new GridBagConstraints();
@@ -251,10 +166,10 @@ public abstract class BaseFormView<T> extends JPanel {
         gbc.insets = new Insets(8, 0, 8, 15);
 
         JLabel lbl = new JLabel(label);
-        lbl.setFont(FUENTE_ETIQUETA);
+        lbl.setFont(UITheme.FUENTE_ETIQUETA);
         if (required) {
             lbl.setText(label + " *");
-            lbl.setForeground(COLOR_PELIGRO);
+            lbl.setForeground(UITheme.COLOR_PELIGRO);
         } else {
             lbl.setForeground(Color.DARK_GRAY);
         }
@@ -267,9 +182,6 @@ public abstract class BaseFormView<T> extends JPanel {
         panel.add(field, gbc);
     }
 
-    /**
-     * Añade un área de texto al panel con su etiqueta
-     */
     protected void addFormFieldTextArea(JPanel panel, String label, JTextArea field,
             boolean required, int row) {
         GridBagConstraints gbc = new GridBagConstraints();
@@ -279,10 +191,10 @@ public abstract class BaseFormView<T> extends JPanel {
         gbc.insets = new Insets(8, 0, 8, 15);
 
         JLabel lbl = new JLabel(label);
-        lbl.setFont(FUENTE_ETIQUETA);
+        lbl.setFont(UITheme.FUENTE_ETIQUETA);
         if (required) {
             lbl.setText(label + " *");
-            lbl.setForeground(COLOR_PELIGRO);
+            lbl.setForeground(UITheme.COLOR_PELIGRO);
         } else {
             lbl.setForeground(Color.DARK_GRAY);
         }
@@ -298,9 +210,6 @@ public abstract class BaseFormView<T> extends JPanel {
         panel.add(scrollPane, gbc);
     }
 
-    /**
-     * Añade un combo box al panel con su etiqueta
-     */
     protected <E> void addFormFieldCombo(JPanel panel, String label, JComboBox<E> combo,
             boolean required, int row) {
         GridBagConstraints gbc = new GridBagConstraints();
@@ -310,10 +219,10 @@ public abstract class BaseFormView<T> extends JPanel {
         gbc.insets = new Insets(8, 0, 8, 15);
 
         JLabel lbl = new JLabel(label);
-        lbl.setFont(FUENTE_ETIQUETA);
+        lbl.setFont(UITheme.FUENTE_ETIQUETA);
         if (required) {
             lbl.setText(label + " *");
-            lbl.setForeground(COLOR_PELIGRO);
+            lbl.setForeground(UITheme.COLOR_PELIGRO);
         } else {
             lbl.setForeground(Color.DARK_GRAY);
         }
@@ -364,9 +273,6 @@ public abstract class BaseFormView<T> extends JPanel {
         cardLayout.show(cardPanel, getNombreCardLista());
     }
 
-    /**
-     * Muestra un diálogo de validación con errores
-     */
     protected void mostrarErroresValidacion(StringBuilder errores) {
         JOptionPane.showMessageDialog(
                 this,

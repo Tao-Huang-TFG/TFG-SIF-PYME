@@ -4,24 +4,25 @@ import es.upm.tfg.sifpyme.controller.ClienteController;
 import es.upm.tfg.sifpyme.model.entity.Cliente;
 
 import javax.swing.*;
-
-import java.awt.Color;
 import java.util.List;
 
+/**
+ * Vista de lista de clientes
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
+ */
 public class ClientesView extends BaseListView<Cliente> {
 
-    private  ClienteController controller;
+    private ClienteController controller;
 
     public ClientesView() {
         this.controller = new ClienteController();
-
         cargarDatos();
     }
 
     @Override
     protected void configurarColores() {
-        COLOR_PRIMARIO = new Color(155, 89, 182);
-        COLOR_SECUNDARIO = new Color(142, 68, 173);
+        COLOR_PRIMARIO = UITheme.COLOR_CLIENTES;
+        COLOR_SECUNDARIO = UITheme.COLOR_CLIENTES;
     }
 
     @Override
@@ -29,7 +30,7 @@ public class ClientesView extends BaseListView<Cliente> {
         return "Gestión de Clientes - SifPyme";
     }
     
-     @Override
+    @Override
     protected String getTituloHeader() {
         return "Gestión de Clientes";
     }
@@ -39,14 +40,16 @@ public class ClientesView extends BaseListView<Cliente> {
         return "Administra tu base de datos de clientes";
     }
 
-     @Override
+    @Override
     protected String getIconoHeader() {
-        return "👥";
+        return UITheme.ICONO_CLIENTES;
     }
 
     @Override
     protected String[] getNombresColumnas() {
-        return new String[]{ "ID", "Nombre Fiscal", "NIF", "Dirección", "Teléfono", "Email" };
+        return new String[]{ 
+            "ID", "Nombre Fiscal", "NIF", "Dirección", "Teléfono", "Email" 
+        };
     }
 
     @Override
@@ -81,18 +84,23 @@ public class ClientesView extends BaseListView<Cliente> {
 
     @Override
     protected void cargarDatos() {
+        // Verificar que el controller no sea null
+        if (controller == null) {
+            controller = new ClienteController();
+        }
+        
         modeloTabla.setRowCount(0);
 
         List<Cliente> clientes = controller.obtenerTodosLosClientes();
 
         for (Cliente cliente : clientes) {
             Object[] fila = {
-                    cliente.getIdCliente(),
-                    cliente.getNombreFiscal(),
-                    cliente.getNif(),
-                    cliente.getDireccion() != null ? cliente.getDireccion() : "",
-                    cliente.getTelefono() != null ? cliente.getTelefono() : "",
-                    cliente.getEmail() != null ? cliente.getEmail() : ""
+                cliente.getIdCliente(),
+                cliente.getNombreFiscal(),
+                cliente.getNif(),
+                cliente.getDireccion() != null ? cliente.getDireccion() : "",
+                cliente.getTelefono() != null ? cliente.getTelefono() : "",
+                cliente.getEmail() != null ? cliente.getEmail() : ""
             };
             modeloTabla.addRow(fila);
         }
@@ -100,7 +108,7 @@ public class ClientesView extends BaseListView<Cliente> {
         actualizarTotal();
     }
 
-     @Override
+    @Override
     protected JPanel crearFormularioNuevo() {
         return new ClienteFormView(cardLayout, cardPanel);
     }

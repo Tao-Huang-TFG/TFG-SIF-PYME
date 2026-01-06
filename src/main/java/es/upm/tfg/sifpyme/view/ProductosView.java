@@ -5,10 +5,13 @@ import es.upm.tfg.sifpyme.model.entity.Producto;
 import es.upm.tfg.sifpyme.model.entity.TipoIva;
 
 import javax.swing.*;
-import java.awt.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Vista de lista de productos
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
+ */
 public class ProductosView extends BaseListView<Producto> {
 
     private ProductoController controller;
@@ -20,8 +23,8 @@ public class ProductosView extends BaseListView<Producto> {
 
     @Override
     protected void configurarColores() {
-        COLOR_PRIMARIO = new Color(52, 152, 219);
-        COLOR_SECUNDARIO = new Color(142, 68, 173);
+        COLOR_PRIMARIO = UITheme.COLOR_PRODUCTOS;
+        COLOR_SECUNDARIO = UITheme.COLOR_PRODUCTOS;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class ProductosView extends BaseListView<Producto> {
 
     @Override
     protected String getIconoHeader() {
-        return "📦";
+        return UITheme.ICONO_PRODUCTOS;
     }
 
     @Override
@@ -154,16 +157,5 @@ public class ProductosView extends BaseListView<Producto> {
             return "";
         }
         return String.format("%.2f", valor);
-    }
-
-    @Override
-    protected void buscar() {
-        String termino = txtBuscar.getText().trim();
-
-        if (termino.isEmpty()) {
-            sorter.setRowFilter(null);
-        } 
-
-        actualizarTotal();
     }
 }

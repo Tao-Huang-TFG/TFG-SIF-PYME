@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 /**
  * Diálogo para agregar o editar una línea de factura
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
  * Con búsqueda de productos por código o nombre
  */
 public class LineaFacturaDialog extends JDialog {
@@ -42,10 +43,6 @@ public class LineaFacturaDialog extends JDialog {
     
     private JButton btnAceptar;
     private JButton btnCancelar;
-    
-    private final Color COLOR_PRIMARIO = new Color(46, 204, 113);
-    private final Color COLOR_FONDO = new Color(245, 245, 245);
-    private final Color COLOR_BORDE = new Color(220, 220, 220);
     
     private boolean calculando = false; // Flag para evitar bucles
     private List<Producto> todosLosProductos; // Lista completa de productos
@@ -73,8 +70,8 @@ public class LineaFacturaDialog extends JDialog {
     }
     
     private void initComponents() {
-        // Campo de búsqueda de productos
-        txtBuscarProducto = crearCampoTexto("");
+        // Campo de búsqueda de productos usando UIHelper
+        txtBuscarProducto = UIHelper.crearCampoTexto(25);
         txtBuscarProducto.setPreferredSize(new Dimension(300, 35));
         
         // Listener para búsqueda en tiempo real
@@ -87,9 +84,8 @@ public class LineaFacturaDialog extends JDialog {
             public void changedUpdate(DocumentEvent e) { buscarProductos(); }
         });
         
-        // ComboBox de productos
-        cmbProducto = new JComboBox<>();
-        cmbProducto.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        // ComboBox de productos usando UIHelper
+        cmbProducto = UIHelper.crearComboBox();
         actualizarComboProductos(todosLosProductos);
         
         // Listener para auto-completar al seleccionar producto
@@ -100,70 +96,59 @@ public class LineaFacturaDialog extends JDialog {
             }
         });
         
-        // Campos de texto
-        txtCantidad = crearCampoTexto("1");
-        txtPrecio = crearCampoTexto("0.00");
-        txtDescuento = crearCampoTexto("0");
-        txtPorcentajeIva = crearCampoTexto("21.00");
-        txtPorcentajeRetencion = crearCampoTexto("0");
+        // Campos de texto usando UIHelper
+        txtCantidad = UIHelper.crearCampoTexto(10);
+        txtCantidad.setText("1");
+        
+        txtPrecio = UIHelper.crearCampoTexto(10);
+        txtPrecio.setText("0.00");
+        
+        txtDescuento = UIHelper.crearCampoTexto(5);
+        txtDescuento.setText("0");
+        
+        txtPorcentajeIva = UIHelper.crearCampoTexto(5);
+        txtPorcentajeIva.setText("21.00");
+        
+        txtPorcentajeRetencion = UIHelper.crearCampoTexto(5);
+        txtPorcentajeRetencion.setText("0");
         
         // Labels de resultados
-        Font fuenteResultados = new Font("Segoe UI", Font.BOLD, 14);
         lblSubtotal = new JLabel("0,00 €");
         lblImporteIva = new JLabel("0,00 €");
         lblImporteRetencion = new JLabel("0,00 €");
         lblTotal = new JLabel("0,00 €");
         
-        lblSubtotal.setFont(fuenteResultados);
-        lblImporteIva.setFont(fuenteResultados);
-        lblImporteRetencion.setFont(fuenteResultados);
-        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblTotal.setForeground(COLOR_PRIMARIO);
+        lblSubtotal.setFont(UITheme.FUENTE_RESULTADOS);
+        lblImporteIva.setFont(UITheme.FUENTE_RESULTADOS);
+        lblImporteRetencion.setFont(UITheme.FUENTE_RESULTADOS);
+        lblTotal.setFont(UITheme.FUENTE_TOTAL);
+        lblTotal.setForeground(UITheme.COLOR_FACTURAS);
         
-        // Botones
-        btnAceptar = new JButton("✓ Aceptar");
-        btnAceptar.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnAceptar.setBackground(new Color(46, 204, 113));
-        btnAceptar.setForeground(Color.WHITE);
-        btnAceptar.setFocusPainted(false);
-        btnAceptar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Botones usando UIHelper
+        btnAceptar = UIHelper.crearBotonAccion("guardar", "Aceptar");
         btnAceptar.addActionListener(e -> aceptar());
         
-        btnCancelar = new JButton("✗ Cancelar");
-        btnCancelar.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnCancelar.setBackground(new Color(231, 76, 60));
-        btnCancelar.setForeground(Color.WHITE);
-        btnCancelar.setFocusPainted(false);
-        btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnCancelar = UIHelper.crearBotonAccion("cancelar", "Cancelar");
         btnCancelar.addActionListener(e -> dispose());
-    }
-    
-    private JTextField crearCampoTexto(String valorInicial) {
-        JTextField campo = new JTextField(valorInicial, 15);
-        campo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        campo.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
-        return campo;
     }
     
     private void setupLayout() {
         JPanel mainPanel = new JPanel(new BorderLayout(0, 15));
-        mainPanel.setBackground(COLOR_FONDO);
+        mainPanel.setBackground(UITheme.COLOR_FONDO);
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         
-        // Header
+        // Header usando el estilo de UITheme
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(COLOR_PRIMARIO);
+        headerPanel.setBackground(UITheme.COLOR_FACTURAS);
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
         
         JLabel lblTitulo = new JLabel("Línea de Factura");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitulo.setFont(UITheme.FUENTE_TITULO);
         lblTitulo.setForeground(Color.WHITE);
         
-        JLabel lblIcono = new JLabel("📝");
-        lblIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+        JLabel lblIcono = new JLabel(UITheme.ICONO_FACTURAS);
+        lblIcono.setFont(UITheme.FUENTE_ICONO_MEDIANO);
+        lblIcono.setForeground(Color.WHITE);
         
         headerPanel.add(lblTitulo, BorderLayout.WEST);
         headerPanel.add(lblIcono, BorderLayout.EAST);
@@ -174,7 +159,7 @@ public class LineaFacturaDialog extends JDialog {
         JPanel camposPanel = new JPanel(new GridBagLayout());
         camposPanel.setBackground(Color.WHITE);
         camposPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
+            BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
             BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
         
@@ -190,8 +175,8 @@ public class LineaFacturaDialog extends JDialog {
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
         
-        JLabel lblBuscar = new JLabel("🔍 Buscar Producto:");
-        lblBuscar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        JLabel lblBuscar = new JLabel(UITheme.ICONO_BUSCAR + " Buscar Producto:");
+        lblBuscar.setFont(UITheme.FUENTE_ETIQUETA);
         lblBuscar.setForeground(Color.DARK_GRAY);
         camposPanel.add(lblBuscar, gbc);
         
@@ -207,7 +192,7 @@ public class LineaFacturaDialog extends JDialog {
         gbc.gridy = fila;
         gbc.insets = new Insets(0, 0, 8, 0);
         JLabel lblAyuda = new JLabel("<html><i>Busca por código o nombre del producto</i></html>");
-        lblAyuda.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblAyuda.setFont(UITheme.FUENTE_SUBTITULO);
         lblAyuda.setForeground(new Color(100, 100, 100));
         camposPanel.add(lblAyuda, gbc);
         
@@ -267,7 +252,7 @@ public class LineaFacturaDialog extends JDialog {
         
         // Panel de botones
         JPanel botonesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        botonesPanel.setBackground(COLOR_FONDO);
+        botonesPanel.setBackground(UITheme.COLOR_FONDO);
         botonesPanel.add(btnCancelar);
         botonesPanel.add(btnAceptar);
         
@@ -284,10 +269,10 @@ public class LineaFacturaDialog extends JDialog {
         gbc.fill = GridBagConstraints.NONE;
         
         JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lbl.setFont(UITheme.FUENTE_ETIQUETA);
         if (requerido) {
             lbl.setText(label + " *");
-            lbl.setForeground(new Color(231, 76, 60));
+            lbl.setForeground(UITheme.COLOR_PELIGRO);
         } else {
             lbl.setForeground(Color.DARK_GRAY);
         }
@@ -306,8 +291,8 @@ public class LineaFacturaDialog extends JDialog {
         gbc.weightx = 0;
         
         JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lbl.setForeground(COLOR_PRIMARIO);
+        lbl.setFont(UITheme.FUENTE_ETIQUETA);
+        lbl.setForeground(UITheme.COLOR_FACTURAS);
         panel.add(lbl, gbc);
         
         gbc.gridx = 1;

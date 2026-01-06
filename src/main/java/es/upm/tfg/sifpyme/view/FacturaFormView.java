@@ -15,6 +15,7 @@ import java.util.List;
 
 /**
  * Formulario para crear/editar facturas
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
  * Incluye tabla de líneas interactiva
  */
 public class FacturaFormView extends BaseFormView<Factura> {
@@ -66,7 +67,8 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     @Override
     protected void configurarColores() {
-        COLOR_PRIMARIO = new Color(46, 204, 113);
+        // Usar el color definido en UITheme para facturas
+        COLOR_PRIMARIO = UITheme.COLOR_FACTURAS;
     }
 
     @Override
@@ -83,7 +85,8 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     @Override
     protected String getIconoFormulario() {
-        return "🧾";
+        // Usar el icono centralizado de UITheme
+        return UITheme.ICONO_FACTURAS;
     }
 
     @Override
@@ -93,22 +96,22 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     @Override
     protected void inicializarCamposEspecificos() {
-        // Encabezado
-        cmbEmpresa = crearComboBox();
-        cmbCliente = crearComboBox();
-        txtSerie = crearCampoTexto(10);
-        txtNumero = crearCampoTexto(15);
-        txtFecha = crearCampoTexto(15);
+        // Encabezado usando UIHelper
+        cmbEmpresa = UIHelper.crearComboBox();
+        cmbCliente = UIHelper.crearComboBox();
+        txtSerie = UIHelper.crearCampoTexto(10);
+        txtNumero = UIHelper.crearCampoTexto(15);
+        txtFecha = UIHelper.crearCampoTexto(15);
         txtFecha.setText(LocalDate.now().format(DATE_FORMATTER));
         
-        cmbMetodoPago = crearComboBox();
+        cmbMetodoPago = UIHelper.crearComboBox();
         cmbMetodoPago.addItem("Transferencia");
         cmbMetodoPago.addItem("Tarjeta");
         cmbMetodoPago.addItem("Efectivo");
         cmbMetodoPago.addItem("PayPal");
         cmbMetodoPago.addItem("Bizum");
         
-        txtObservaciones = crearAreaTexto(3, 30);
+        txtObservaciones = UIHelper.crearAreaTexto(3, 30);
         
         // Tabla de líneas
         String[] columnasLineas = {
@@ -123,32 +126,21 @@ public class FacturaFormView extends BaseFormView<Factura> {
         };
         
         tablaLineas = new JTable(modeloLineas);
-        tablaLineas.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tablaLineas.setRowHeight(30);
+        tablaLineas.setFont(UITheme.FUENTE_TABLA);
+        tablaLineas.setRowHeight(35);
         tablaLineas.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tablaLineas.setForeground(Color.DARK_GRAY);
         
         configurarAnchoColumnasLineas();
         
-        // Botones de líneas
-        btnAgregarLinea = new JButton("\u002B Agregar Línea");
-        btnAgregarLinea.setBackground(COLOR_EXITO);
-        btnAgregarLinea.setFont(FUENTE_BOTON);
-        btnAgregarLinea.setFocusPainted(false);
-        btnAgregarLinea.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Botones de líneas usando UIHelper
+        btnAgregarLinea = UIHelper.crearBoton("Agregar Línea", UITheme.COLOR_EXITO, UITheme.ICONO_AGREGAR);
         btnAgregarLinea.addActionListener(e -> agregarLinea());
         
-        btnEditarLinea = new JButton("\u270E Editar");
-        btnEditarLinea.setBackground(COLOR_INFO);
-        btnEditarLinea.setFont(FUENTE_BOTON);
-        btnEditarLinea.setFocusPainted(false);
-        btnEditarLinea.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnEditarLinea = UIHelper.crearBotonAccion("editar", "Editar");
         btnEditarLinea.addActionListener(e -> editarLinea());
         
-        btnEliminarLinea = new JButton("\u2716 Eliminar");
-        btnEliminarLinea.setBackground(COLOR_PELIGRO);
-        btnEliminarLinea.setFont(FUENTE_BOTON);
-        btnEliminarLinea.setFocusPainted(false);
-        btnEliminarLinea.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnEliminarLinea = UIHelper.crearBotonAccion("eliminar", "Eliminar");
         btnEliminarLinea.addActionListener(e -> eliminarLinea());
         
         // Labels de totales
@@ -157,11 +149,11 @@ public class FacturaFormView extends BaseFormView<Factura> {
         lblTotalRetencion = new JLabel("0,00 €");
         lblTotal = new JLabel("0,00 €");
         
-        Font fuenteTotales = new Font("Segoe UI", Font.BOLD, 14);
-        lblSubtotal.setFont(fuenteTotales);
-        lblTotalIva.setFont(fuenteTotales);
-        lblTotalRetencion.setFont(fuenteTotales);
-        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        // Usar fuentes de UITheme
+        lblSubtotal.setFont(UITheme.FUENTE_ETIQUETA);
+        lblTotalIva.setFont(UITheme.FUENTE_ETIQUETA);
+        lblTotalRetencion.setFont(UITheme.FUENTE_ETIQUETA);
+        lblTotal.setFont(UITheme.FUENTE_TITULO_SECUNDARIO);
         lblTotal.setForeground(COLOR_PRIMARIO);
         
         // Listener para cambio de empresa -> actualizar número
@@ -172,7 +164,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
     @Override
     protected JPanel crearPanelCampos() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(COLOR_FONDO);
+        panel.setBackground(UITheme.COLOR_FONDO);
         panel.setBorder(new EmptyBorder(25, 30, 25, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -183,7 +175,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 15, 0);
 
-        // Panel de encabezado
+        // Panel de encabezado usando UIHelper
         panel.add(crearPanelEncabezado(), gbc);
 
         // Panel de líneas
@@ -202,7 +194,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
     }
 
     private JPanel crearPanelEncabezado() {
-        JPanel panel = crearSeccionPanel("Datos de la Factura");
+        JPanel panel = UIHelper.crearSeccionPanel("Datos de la Factura", COLOR_PRIMARIO);
         
         addFormFieldCombo(panel, "Empresa:", cmbEmpresa, true, 0);
         addFormFieldCombo(panel, "Cliente:", cmbCliente, true, 1);
@@ -215,8 +207,8 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.insets = new Insets(8, 0, 8, 15);
         
         JLabel lblSerie = new JLabel("Serie: *");
-        lblSerie.setFont(FUENTE_ETIQUETA);
-        lblSerie.setForeground(COLOR_PELIGRO);
+        lblSerie.setFont(UITheme.FUENTE_ETIQUETA);
+        lblSerie.setForeground(UITheme.COLOR_PELIGRO);
         panel.add(lblSerie, gbc);
         
         gbc.gridx = 1;
@@ -228,8 +220,8 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.gridx = 1;
         gbc.insets = new Insets(8, 150, 8, 0);
         JLabel lblNumero = new JLabel("Número: *");
-        lblNumero.setFont(FUENTE_ETIQUETA);
-        lblNumero.setForeground(COLOR_PELIGRO);
+        lblNumero.setFont(UITheme.FUENTE_ETIQUETA);
+        lblNumero.setForeground(UITheme.COLOR_PELIGRO);
         panel.add(lblNumero, gbc);
         
         gbc.gridx = 1;
@@ -249,19 +241,19 @@ public class FacturaFormView extends BaseFormView<Factura> {
         JPanel panel = new JPanel(new BorderLayout(0, 10));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
+            BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
             BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
         
-        // Título
+        // Título usando fuentes de UITheme
         JLabel lblTitulo = new JLabel("Líneas de Factura");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTitulo.setFont(UITheme.FUENTE_SUBTITULO_NEGRITA);
         lblTitulo.setForeground(COLOR_PRIMARIO);
         panel.add(lblTitulo, BorderLayout.NORTH);
         
         // Tabla con scroll
         JScrollPane scrollPane = new JScrollPane(tablaLineas);
-        scrollPane.setBorder(BorderFactory.createLineBorder(COLOR_BORDE, 1));
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1));
         panel.add(scrollPane, BorderLayout.CENTER);
         
         // Botones
@@ -279,7 +271,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
+            BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
             BorderFactory.createEmptyBorder(15, 20, 15, 20)
         ));
         
@@ -291,7 +283,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.gridx = 0;
         gbc.gridy = 0;
         JLabel lbl1 = new JLabel("Subtotal:");
-        lbl1.setFont(FUENTE_ETIQUETA);
+        lbl1.setFont(UITheme.FUENTE_ETIQUETA);
         panel.add(lbl1, gbc);
         
         gbc.gridx = 1;
@@ -301,7 +293,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.gridx = 0;
         gbc.gridy = 1;
         JLabel lbl2 = new JLabel("Total IVA:");
-        lbl2.setFont(FUENTE_ETIQUETA);
+        lbl2.setFont(UITheme.FUENTE_ETIQUETA);
         panel.add(lbl2, gbc);
         
         gbc.gridx = 1;
@@ -311,7 +303,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.gridx = 0;
         gbc.gridy = 2;
         JLabel lbl3 = new JLabel("Total Retención:");
-        lbl3.setFont(FUENTE_ETIQUETA);
+        lbl3.setFont(UITheme.FUENTE_ETIQUETA);
         panel.add(lbl3, gbc);
         
         gbc.gridx = 1;
@@ -333,7 +325,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.fill = GridBagConstraints.NONE;
         gbc.insets = new Insets(5, 10, 5, 10);
         JLabel lblTotalLabel = new JLabel("TOTAL:");
-        lblTotalLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTotalLabel.setFont(UITheme.FUENTE_TITULO_SECUNDARIO);
         lblTotalLabel.setForeground(COLOR_PRIMARIO);
         panel.add(lblTotalLabel, gbc);
         
@@ -357,8 +349,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         tablaLineas.getColumnModel().getColumn(10).setPreferredWidth(90);  // Total
     }
 
-    // Continúa en el siguiente método...
-    
+    // Métodos auxiliares
     private void cargarCombos() {
         // Cargar empresas
         List<Empresa> empresas = controller.obtenerEmpresas();
@@ -515,7 +506,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         }
     }
 
-    // Métodos para gestionar líneas - PARTE 2
+    // Métodos para gestionar líneas
     private void agregarLinea() {
         LineaFacturaDialog dialog = new LineaFacturaDialog(
             (JFrame) SwingUtilities.getWindowAncestor(this),

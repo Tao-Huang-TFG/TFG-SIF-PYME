@@ -15,6 +15,7 @@ import java.util.List;
 
 /**
  * Formulario para registro/edición de producto
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
  * Con cálculo automático de Precio <-> PrecioBase según el IVA seleccionado
  */
 public class ProductoFormView extends BaseFormView<Producto> {
@@ -46,7 +47,8 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     @Override
     protected void configurarColores() {
-        COLOR_PRIMARIO = new Color(52, 152, 219);
+        // Usar el color definido en UITheme para productos
+        COLOR_PRIMARIO = UITheme.COLOR_PRODUCTOS;
     }
 
     @Override
@@ -63,7 +65,8 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     @Override
     protected String getIconoFormulario() {
-        return "📦";
+        // Usar el icono centralizado de UITheme
+        return UITheme.ICONO_PRODUCTOS;
     }
 
     @Override
@@ -73,19 +76,19 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     @Override
     protected void inicializarCamposEspecificos() {
-        txtCodigo = crearCampoTexto(20);
-        txtNombre = crearCampoTexto(30);
+        // Usar UIHelper para crear campos consistentes
+        txtCodigo = UIHelper.crearCampoTexto(20);
+        txtNombre = UIHelper.crearCampoTexto(30);
         
-        txtDescripcion = crearAreaTexto(3, 30);
+        txtDescripcion = UIHelper.crearAreaTexto(3, 30);
         
-        txtPrecio = crearCampoTexto(15);
-        txtPrecioBase = crearCampoTexto(15);
-        txtTipoRetencion = crearCampoTexto(10);
+        txtPrecio = UIHelper.crearCampoTexto(15);
+        txtPrecioBase = UIHelper.crearCampoTexto(15);
+        txtTipoRetencion = UIHelper.crearCampoTexto(10);
         txtTipoRetencion.setText("0.00");
         
-        // ComboBox de tipos de IVA
-        cmbTipoIva = crearComboBox();
-        
+        // ComboBox de tipos de IVA usando UIHelper
+        cmbTipoIva = UIHelper.crearComboBox();
         
         // Configurar listeners para cálculo automático
         configurarCalculoAutomatico();
@@ -216,7 +219,7 @@ public class ProductoFormView extends BaseFormView<Producto> {
     @Override
     protected JPanel crearPanelCampos() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(COLOR_FONDO);
+        panel.setBackground(UITheme.COLOR_FONDO);
         panel.setBorder(new EmptyBorder(25, 30, 25, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -227,8 +230,8 @@ public class ProductoFormView extends BaseFormView<Producto> {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 15, 0);
 
-        // Panel de datos básicos
-        JPanel datosPanel = crearSeccionPanel("Información del Producto");
+        // Panel de datos básicos usando UIHelper
+        JPanel datosPanel = UIHelper.crearSeccionPanel("Información del Producto", COLOR_PRIMARIO);
         addFormField(datosPanel, "Código:", txtCodigo, false, 0);
         addFormField(datosPanel, "Nombre:", txtNombre, true, 1);
         addFormFieldTextArea(datosPanel, "Descripción:", txtDescripcion, false, 2);
@@ -247,8 +250,8 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
         // Nota informativa adicional
         JLabel lblNota = new JLabel("<html><i>* El sistema calculará automáticamente el precio con/sin IVA según el que introduzcas</i></html>");
-        lblNota.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        lblNota.setForeground(new Color(52, 152, 219));
+        lblNota.setFont(UITheme.FUENTE_SUBTITULO);
+        lblNota.setForeground(COLOR_PRIMARIO);
         gbc.gridy = 2;
         gbc.insets = new Insets(5, 0, 0, 0);
         panel.add(lblNota, gbc);
@@ -263,12 +266,13 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     /**
      * Crea un panel de sección con título y texto de ayuda
+     * REFACTORIZADO: Usa UITheme para colores y fuentes
      */
     private JPanel crearSeccionPanelConAyuda(String titulo, String textoAyuda) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDE, 1),
+            BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
             BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
 
@@ -280,15 +284,15 @@ public class ProductoFormView extends BaseFormView<Producto> {
         gbc.insets = new Insets(0, 0, 10, 0);
 
         JLabel lblTitulo = new JLabel(titulo);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTitulo.setFont(UITheme.FUENTE_SUBTITULO_NEGRITA);
         lblTitulo.setForeground(COLOR_PRIMARIO);
         panel.add(lblTitulo, gbc);
 
-        // Texto de ayuda
+        // Texto de ayuda usando fuentes de UITheme
         gbc.gridy = 1;
         gbc.insets = new Insets(0, 0, 15, 0);
         JLabel lblAyuda = new JLabel("<html>" + textoAyuda + "</html>");
-        lblAyuda.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblAyuda.setFont(UITheme.FUENTE_SUBTITULO);
         lblAyuda.setForeground(new Color(100, 100, 100));
         panel.add(lblAyuda, gbc);
 

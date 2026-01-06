@@ -12,9 +12,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 /**
- * Clase base abstracta para todas las vistas de lista (Clientes, Empresas,
- * Productos)
+ * Clase base abstracta para todas las vistas de lista (Clientes, Empresas, Productos)
  * Implementa funcionalidad común: tabla, búsqueda, navegación, estilos
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme para consistencia visual
  */
 public abstract class BaseListView<T> extends JFrame {
 
@@ -35,20 +35,8 @@ public abstract class BaseListView<T> extends JFrame {
     protected JPanel listaPanel;
 
     // Colores comunes (pueden ser sobrescritos)
-    protected Color COLOR_PRIMARIO = new Color(52, 152, 219);
-    protected Color COLOR_SECUNDARIO = new Color(142, 68, 173);
-    protected final Color COLOR_EXITO = new Color(46, 204, 113);
-    protected final Color COLOR_PELIGRO = new Color(231, 76, 60);
-    protected final Color COLOR_INFO = new Color(52, 152, 219);
-    protected final Color COLOR_VOLVER = new Color(149, 165, 166);
-    protected final Color COLOR_FONDO = new Color(245, 245, 245);
-    protected final Color COLOR_BORDE = new Color(220, 220, 220);
-
-    // Fuentes comunes
-    protected final Font FUENTE_TITULO = new Font("Segoe UI", Font.BOLD, 24);
-    protected final Font FUENTE_SUBTITULO = new Font("Segoe UI", Font.PLAIN, 13);
-    protected final Font FUENTE_BOTON = new Font("Segoe UI", Font.BOLD, 13);
-    protected final Font FUENTE_TABLA = new Font("Segoe UI", Font.PLAIN, 13);
+    protected Color COLOR_PRIMARIO = UITheme.COLOR_INFO;
+    protected Color COLOR_SECUNDARIO = UITheme.COLOR_INFO;
 
     public BaseListView() {
         this.cardLayout = new CardLayout();
@@ -59,101 +47,29 @@ public abstract class BaseListView<T> extends JFrame {
         setupLayout();
     }
 
-    // ==================== MÉTODOS ABSTRACTOS (deben implementarse)
-    // ====================
+    // ==================== MÉTODOS ABSTRACTOS (deben implementarse) ====================
 
-    /**
-     * Retorna el título de la ventana (ej: "Gestión de Clientes - SifPyme")
-     */
     protected abstract String getTituloVentana();
-
-    /**
-     * Retorna el título del encabezado (ej: "Gestión de Clientes")
-     */
     protected abstract String getTituloHeader();
-
-    /**
-     * Retorna el subtítulo del encabezado (ej: "Administra tu base de datos de
-     * clientes")
-     */
     protected abstract String getSubtituloHeader();
-
-    /**
-     * Retorna el icono emoji del encabezado (ej: "👥")
-     */
     protected abstract String getIconoHeader();
-
-    /**
-     * Retorna los nombres de las columnas de la tabla
-     */
     protected abstract String[] getNombresColumnas();
-
-    /**
-     * Retorna el nombre de la card para la lista (ej: "listaClientes")
-     */
     protected abstract String getNombreCardLista();
-
-    /**
-     * Retorna el nombre de la card para el formulario (ej: "formularioCliente")
-     */
     protected abstract String getNombreCardFormulario();
-
-    /**
-     * Retorna el nombre singular de la entidad (ej: "cliente")
-     */
     protected abstract String getNombreEntidadSingular();
-
-    /**
-     * Retorna el nombre plural de la entidad (ej: "clientes")
-     */
     protected abstract String getNombreEntidadPlural();
-
-    /**
-     * Carga todos los datos de la base de datos y los añade a la tabla
-     */
     protected abstract void cargarDatos();
-
-    /**
-     * Crea y retorna el panel del formulario para nuevo registro
-     */
     protected abstract JPanel crearFormularioNuevo();
-
-    /**
-     * Crea y retorna el panel del formulario para edición
-     * 
-     * @param id ID del registro a editar
-     */
     protected abstract JPanel crearFormularioEdicion(Integer id);
-
-    /**
-     * Elimina un registro por su ID
-     * 
-     * @param id ID del registro a eliminar
-     * @return true si se eliminó correctamente
-     */
     protected abstract boolean eliminarRegistro(Integer id);
-
-    /**
-     * Configura los anchos preferidos de las columnas
-     */
     protected abstract void configurarAnchoColumnas();
 
-    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse)
-    // ====================
+    // ==================== MÉTODOS OPCIONALES (pueden sobrescribirse) ====================
 
-    /**
-     * Permite agregar botones adicionales al toolbar (ej: btnEstablecerDefecto en
-     * Empresas)
-     * 
-     * @param buttonsPanel Panel donde agregar los botones
-     */
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
         // Por defecto no hace nada - las subclases pueden sobrescribirlo
     }
 
-    /**
-     * Permite configurar colores personalizados por vista
-     */
     protected void configurarColores() {
         // Por defecto usa los colores base - las subclases pueden sobrescribirlo
     }
@@ -190,7 +106,7 @@ public abstract class BaseListView<T> extends JFrame {
         };
 
         tabla = new JTable(modeloTabla);
-        tabla.setFont(FUENTE_TABLA);
+        tabla.setFont(UITheme.FUENTE_TABLA);
         tabla.setRowHeight(35);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tabla.setForeground(Color.DARK_GRAY);
@@ -199,7 +115,7 @@ public abstract class BaseListView<T> extends JFrame {
         configurarAnchoColumnas();
 
         JTableHeader header = tabla.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        header.setFont(UITheme.FUENTE_ETIQUETA);
         header.setBackground(COLOR_PRIMARIO);
         header.setForeground(Color.DARK_GRAY);
         header.setBorder(BorderFactory.createLineBorder(COLOR_SECUNDARIO));
@@ -217,24 +133,23 @@ public abstract class BaseListView<T> extends JFrame {
             }
         });
 
-        // Campo de búsqueda
-        txtBuscar = new JTextField(25);
-        txtBuscar.setFont(FUENTE_TABLA);
-        txtBuscar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BORDE, 1),
-                BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+        // Campo de búsqueda - REFACTORIZADO
+        txtBuscar = UIHelper.crearCampoTexto(25);
         txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 buscar();
             }
         });
 
-        // Botones
-        btnNuevo = crearBoton("➕ Nuevo " + getNombreEntidadSingular().substring(0, 1).toUpperCase() +
-                getNombreEntidadSingular().substring(1), COLOR_EXITO);
-        btnEditar = crearBoton("✏️ Editar", COLOR_INFO);
-        btnEliminar = crearBoton("🗑️ Eliminar", COLOR_PELIGRO);
-        btnVolver = crearBoton("← Volver", COLOR_VOLVER);
+        // Botones - REFACTORIZADO usando UIHelper
+        String nombreEntidad = getNombreEntidadSingular();
+        String nombreCapitalizado = nombreEntidad.substring(0, 1).toUpperCase() + 
+                                   nombreEntidad.substring(1);
+        
+        btnNuevo = UIHelper.crearBotonAccion("nuevo", "Nuevo " + nombreCapitalizado);
+        btnEditar = UIHelper.crearBotonAccion("editar", "Editar");
+        btnEliminar = UIHelper.crearBotonAccion("eliminar", "Eliminar");
+        btnVolver = UIHelper.crearBotonAccion("volver", "Volver");
 
         btnNuevo.addActionListener(e -> mostrarFormularioNuevo());
         btnEditar.addActionListener(e -> mostrarFormularioEdicion());
@@ -243,45 +158,8 @@ public abstract class BaseListView<T> extends JFrame {
 
         // Label de totales
         lblTotal = new JLabel("Total: 0 " + getNombreEntidadPlural());
-        lblTotal.setFont(FUENTE_SUBTITULO);
+        lblTotal.setFont(UITheme.FUENTE_SUBTITULO);
         lblTotal.setForeground(Color.DARK_GRAY);
-    }
-
-    protected JButton crearBoton(String texto, Color color) {
-        // Extraer icono del texto (manteniendo compatibilidad)
-        String[] partes = texto.split(" ", 2);
-        String icono = partes[0];
-        String textoRestante = partes.length > 1 ? partes[1] : "";
-
-        // Mapear emojis a iconos Unicode
-        String iconoUnicode = mapearEmojiAUnicode(icono);
-
-        return UIHelper.crearBoton(textoRestante, color, iconoUnicode);
-    }
-
-    private String mapearEmojiAUnicode(String emoji) {
-        switch (emoji) {
-            case "➕":
-                return UITheme.ICONO_NUEVO;
-            case "✏️":
-                return UITheme.ICONO_EDITAR;
-            case "🗑️":
-                return UITheme.ICONO_ELIMINAR;
-            case "←":
-                return UITheme.ICONO_VOLVER;
-            case "🔍":
-                return UITheme.ICONO_BUSCAR;
-            case "👁️":
-                return UITheme.ICONO_VER;
-            case "⭐":
-                return UITheme.ICONO_ESTABLECER;
-            case "🔧":
-                return UITheme.ICONO_CONFIG;
-            case "🚪":
-                return UITheme.ICONO_SALIR;
-            default:
-                return emoji; // Mantener si no hay mapeo
-        }
     }
 
     private void setupLayout() {
@@ -304,18 +182,18 @@ public abstract class BaseListView<T> extends JFrame {
 
     private JPanel crearListaPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 0));
-        panel.setBackground(COLOR_FONDO);
+        panel.setBackground(UITheme.COLOR_FONDO);
 
         panel.add(createHeaderPanel(), BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
-        centerPanel.setBackground(COLOR_FONDO);
+        centerPanel.setBackground(UITheme.COLOR_FONDO);
         centerPanel.setBorder(new EmptyBorder(20, 25, 20, 25));
 
         centerPanel.add(createToolbarPanel(), BorderLayout.NORTH);
 
         JScrollPane scrollPane = new JScrollPane(tabla);
-        scrollPane.setBorder(BorderFactory.createLineBorder(COLOR_BORDE, 1));
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1));
         centerPanel.add(scrollPane, BorderLayout.CENTER);
 
         centerPanel.add(createFooterPanel(), BorderLayout.SOUTH);
@@ -330,11 +208,11 @@ public abstract class BaseListView<T> extends JFrame {
         panel.setBorder(new EmptyBorder(20, 25, 20, 25));
 
         JLabel lblTitle = new JLabel(getTituloHeader());
-        lblTitle.setFont(FUENTE_TITULO);
+        lblTitle.setFont(UITheme.FUENTE_TITULO);
         lblTitle.setForeground(Color.WHITE);
 
         JLabel lblSubtitle = new JLabel(getSubtituloHeader());
-        lblSubtitle.setFont(FUENTE_SUBTITULO);
+        lblSubtitle.setFont(UITheme.FUENTE_SUBTITULO);
         lblSubtitle.setForeground(new Color(240, 240, 240));
 
         JPanel textPanel = new JPanel(new GridLayout(2, 1, 2, 2));
@@ -343,7 +221,7 @@ public abstract class BaseListView<T> extends JFrame {
         textPanel.add(lblSubtitle);
 
         JLabel iconLabel = new JLabel(getIconoHeader(), SwingConstants.RIGHT);
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
+        iconLabel.setFont(UITheme.FUENTE_ICONO_GRANDE);
         iconLabel.setForeground(Color.WHITE);
 
         panel.add(textPanel, BorderLayout.WEST);
@@ -356,7 +234,7 @@ public abstract class BaseListView<T> extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(15, 0));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BORDE, 1),
+                BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
                 BorderFactory.createEmptyBorder(15, 20, 15, 20)));
 
         JPanel backPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -366,8 +244,8 @@ public abstract class BaseListView<T> extends JFrame {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         searchPanel.setOpaque(false);
 
-        JLabel lblBuscar = new JLabel("🔍 Buscar:");
-        lblBuscar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 13));
+        JLabel lblBuscar = new JLabel(UITheme.ICONO_BUSCAR + " Buscar:");
+        lblBuscar.setFont(UITheme.FUENTE_ICONO_TEXTO);
         lblBuscar.setForeground(Color.DARK_GRAY);
         searchPanel.add(lblBuscar);
         searchPanel.add(txtBuscar);
@@ -392,7 +270,7 @@ public abstract class BaseListView<T> extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BORDE, 1),
+                BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
                 BorderFactory.createEmptyBorder(10, 15, 10, 15)));
 
         panel.add(lblTotal);
@@ -502,5 +380,10 @@ public abstract class BaseListView<T> extends JFrame {
         int total = tabla.getRowCount();
         lblTotal.setText("Total: " + total + " " +
                 (total == 1 ? getNombreEntidadSingular() : getNombreEntidadPlural()));
+    }
+    
+    // Método auxiliar para crear botones adicionales (usado por subclases)
+    protected JButton crearBoton(String texto, Color color) {
+        return UIHelper.crearBoton(texto, color, "");
     }
 }

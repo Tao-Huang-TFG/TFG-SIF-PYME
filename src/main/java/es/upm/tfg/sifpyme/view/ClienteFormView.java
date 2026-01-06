@@ -9,7 +9,7 @@ import java.awt.*;
 
 /**
  * Formulario para registro/edición de cliente
- * Ahora solo contiene la lógica específica de clientes
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
  */
 public class ClienteFormView extends BaseFormView<Cliente> {
 
@@ -33,8 +33,8 @@ public class ClienteFormView extends BaseFormView<Cliente> {
 
     @Override
     protected void configurarColores() {
-        // Color morado para clientes
-        COLOR_PRIMARIO = new Color(155, 89, 182);
+        // Usar el color definido en UITheme para clientes
+        COLOR_PRIMARIO = UITheme.COLOR_CLIENTES;
     }
 
     @Override
@@ -51,7 +51,8 @@ public class ClienteFormView extends BaseFormView<Cliente> {
 
     @Override
     protected String getIconoFormulario() {
-        return "👤";
+        // Usar el icono centralizado de UITheme
+        return UITheme.ICONO_CLIENTES;
     }
 
     @Override
@@ -61,21 +62,22 @@ public class ClienteFormView extends BaseFormView<Cliente> {
 
     @Override
     protected void inicializarCamposEspecificos() {
-        txtNombreFiscal = crearCampoTexto(30);
-        txtNif = crearCampoTexto(15);
-        txtDireccion = crearCampoTexto(40);
-        txtTelefono = crearCampoTexto(15);
-        txtEmail = crearCampoTexto(30);
+        // Usar UIHelper para crear campos consistentes
+        txtNombreFiscal = UIHelper.crearCampoTexto(30);
+        txtNif = UIHelper.crearCampoTexto(15);
+        txtDireccion = UIHelper.crearCampoTexto(40);
+        txtTelefono = UIHelper.crearCampoTexto(15);
+        txtEmail = UIHelper.crearCampoTexto(30);
     }
 
     @Override
     protected JPanel crearPanelCampos() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(COLOR_FONDO);
+        panel.setBackground(UITheme.COLOR_FONDO);
         panel.setBorder(new EmptyBorder(25, 30, 25, 30));
 
-        // Panel de datos
-        JPanel datosPanel = crearSeccionPanel("Información del Cliente");
+        // Panel de datos usando UIHelper
+        JPanel datosPanel = UIHelper.crearSeccionPanel("Información del Cliente", COLOR_PRIMARIO);
 
         addFormField(datosPanel, "Nombre Fiscal:", txtNombreFiscal, true, 0);
         addFormField(datosPanel, "NIF:", txtNif, true, 1);

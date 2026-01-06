@@ -33,7 +33,7 @@ public class UIHelper {
         // Añadir icono si está presente
         if (iconoUnicode != null && !iconoUnicode.isEmpty()) {
             JLabel lblIcono = new JLabel(iconoUnicode);
-            lblIcono.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 16));
+            lblIcono.setFont(UITheme.FUENTE_ICONO_PEQUENO);
             lblIcono.setVerticalAlignment(SwingConstants.CENTER);
             contenido.add(lblIcono, BorderLayout.WEST);
         }
@@ -64,10 +64,14 @@ public class UIHelper {
         
         switch (tipoAccion.toLowerCase()) {
             case "guardar":
+                color = UITheme.COLOR_EXITO;
+                icono = UITheme.ICONO_GUARDAR;
+                texto = texto != null ? texto : "Guardar";
+                break;
             case "nuevo":
             case "agregar":
                 color = UITheme.COLOR_EXITO;
-                icono = UITheme.ICONO_GUARDAR;
+                icono = UITheme.ICONO_AGREGAR;
                 texto = texto != null ? texto : "Guardar";
                 break;
                 
@@ -158,7 +162,7 @@ public class UIHelper {
         panel.setBorder(crearBordeSeccion());
         
         JLabel lblTitulo = new JLabel(titulo);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTitulo.setFont(UITheme.FUENTE_SUBTITULO_NEGRITA);
         lblTitulo.setForeground(colorPrimario);
         
         GridBagConstraints gbc = new GridBagConstraints();

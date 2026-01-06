@@ -7,6 +7,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Vista de lista de empresas
+ * REFACTORIZADO: Ahora usa UIHelper y UITheme
+ */
 public class EmpresasView extends BaseListView<Empresa> {
 
     private EmpresaController controller;
@@ -18,8 +22,8 @@ public class EmpresasView extends BaseListView<Empresa> {
 
     @Override
     protected void configurarColores() {
-        COLOR_PRIMARIO = new Color(41, 128, 185);
-        COLOR_SECUNDARIO = new Color(52, 152, 219);
+        COLOR_PRIMARIO = UITheme.COLOR_EMPRESAS;
+        COLOR_SECUNDARIO = UITheme.COLOR_EMPRESAS;
     }
 
     @Override
@@ -39,12 +43,15 @@ public class EmpresasView extends BaseListView<Empresa> {
 
     @Override
     protected String getIconoHeader() {
-        return "🏢";
+        return UITheme.ICONO_EMPRESAS;
     }
 
     @Override
     protected String[] getNombresColumnas() {
-        return new String[]{ "ID", "Nombre Comercial", "Razón Social", "NIF", "Ciudad", "Provincia", "Email", "Por Defecto" };
+        return new String[]{ 
+            "ID", "Nombre Comercial", "Razón Social", "NIF", 
+            "Ciudad", "Provincia", "Email", "Por Defecto" 
+        };
     }
 
     @Override
@@ -81,7 +88,6 @@ public class EmpresasView extends BaseListView<Empresa> {
 
     @Override
     protected void cargarDatos() {
-        // Verificar que el controller no sea null
         if (controller == null) {
             controller = new EmpresaController();
         }
@@ -128,13 +134,16 @@ public class EmpresasView extends BaseListView<Empresa> {
 
     @Override
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
-        // Botón para establecer empresa por defecto
-        JButton btnEstablecerDefecto = crearBoton("⭐ Establecer Defecto", new Color(241, 196, 15));
+        // Botón para establecer empresa por defecto - REFACTORIZADO
+        JButton btnEstablecerDefecto = UIHelper.crearBoton(
+            "Establecer Defecto", 
+            new Color(241, 196, 15), 
+            UITheme.ICONO_ESTABLECER
+        );
         btnEstablecerDefecto.addActionListener(e -> establecerEmpresaPorDefecto());
         buttonsPanel.add(btnEstablecerDefecto);
     }
 
-    // Método específico para EmpresasView
     private void establecerEmpresaPorDefecto() {
         int filaSeleccionada = tabla.getSelectedRow();
 
@@ -207,6 +216,6 @@ public class EmpresasView extends BaseListView<Empresa> {
             return;
         }
 
-        super.eliminar(); // Llama al método base para confirmar y eliminar
+        super.eliminar();
     }
 }
