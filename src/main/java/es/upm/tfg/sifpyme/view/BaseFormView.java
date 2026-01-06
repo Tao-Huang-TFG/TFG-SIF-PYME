@@ -246,11 +246,6 @@ public abstract class BaseFormView<T> extends JPanel {
             boolean success = guardarEntidad();
 
             if (success) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        getMensajeExito(),
-                        "Éxito",
-                        JOptionPane.INFORMATION_MESSAGE);
                 volverALista();
             } else {
                 JOptionPane.showMessageDialog(

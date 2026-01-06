@@ -182,14 +182,7 @@ public class Empresa {
 
     @Override
     public String toString() {
-        return "Empresa{" +
-                "idEmpresa=" + idEmpresa +
-                ", nombreComercial='" + nombreComercial + '\'' +
-                ", nif='" + nif + '\'' +
-                ", ciudad='" + ciudad + '\'' +
-                ", activo=" + activo +
-                ", porDefecto=" + porDefecto +
-                '}';
+        return nombreComercial + " (" + nif + ")";
     }
 
 }
