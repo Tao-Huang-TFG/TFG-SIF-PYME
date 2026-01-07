@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class FacturaFormView extends BaseFormView<Factura> {
 
-    private final FacturaController controller;
+    private FacturaController controller;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     // Campos de encabezado
@@ -96,6 +96,9 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     @Override
     protected void inicializarCamposEspecificos() {
+        //Inicializar el controller PRIMERO
+        this.controller = new FacturaController();
+
         // Encabezado usando UIHelper
         cmbEmpresa = UIHelper.crearComboBox();
         cmbCliente = UIHelper.crearComboBox();
