@@ -2,10 +2,11 @@ package es.upm.tfg.sifpyme.view;
 
 import es.upm.tfg.sifpyme.controller.FacturaController;
 import es.upm.tfg.sifpyme.model.entity.Factura;
-import es.upm.tfg.sifpyme.model.entity.LineaFactura;
+import es.upm.tfg.sifpyme.service.FacturaPDFService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -13,14 +14,17 @@ import java.util.List;
 /**
  * Vista de lista de facturas
  * REFACTORIZADO: Ahora usa UIHelper y UITheme
+ * ACTUALIZADO: Incluye generación de PDFs
  */
 public class FacturasView extends BaseListView<Factura> {
 
     private FacturaController controller;
+    private FacturaPDFService pdfService;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public FacturasView() {
         this.controller = new FacturaController();
+        this.pdfService = new FacturaPDFService();
         cargarDatos();
     }
 
@@ -150,13 +154,20 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
-        // Botón para ver/imprimir factura - REFACTORIZADO
-        JButton btnVer = UIHelper.crearBotonAccion("ver", "Ver");
-        btnVer.addActionListener(e -> verFactura());
-        buttonsPanel.add(btnVer, 0);
+        // Botón para generar PDF - ACTUALIZADO
+        JButton btnGenerarPDF = UIHelper.crearBoton(
+            "Generar PDF", 
+            new Color(231, 76, 60), 
+            UITheme.ICONO_PDF
+        );
+        btnGenerarPDF.addActionListener(e -> generarPDF());
+        buttonsPanel.add(btnGenerarPDF, 0);
     }
 
-    private void verFactura() {
+    /**
+     * Genera un PDF de la factura seleccionada
+     */
+    private void generarPDF() {
         int filaSeleccionada = tabla.getSelectedRow();
 
         if (filaSeleccionada == -1) {
@@ -172,53 +183,159 @@ public class FacturasView extends BaseListView<Factura> {
         Integer id = (Integer) modeloTabla.getValueAt(filaModelo, 0);
 
         Factura factura = controller.obtenerFacturaPorId(id);
-        if (factura != null) {
-            mostrarVistaPrevia(factura);
-        } else {
+        if (factura == null) {
             JOptionPane.showMessageDialog(
                 this,
                 "No se pudo cargar la factura seleccionada.",
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Crear el diálogo de selección de carpeta
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar Factura PDF");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        
+        // Sugerir nombre de archivo
+        String nombreArchivo = String.format("Factura_%s_%s.pdf", 
+            factura.getSerie(), 
+            factura.getNumeroFactura());
+        fileChooser.setSelectedFile(new File(nombreArchivo));
+        
+        // Filtro para archivos PDF
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.isDirectory() || f.getName().toLowerCase().endsWith(".pdf");
+            }
+            
+            @Override
+            public String getDescription() {
+                return "Archivos PDF (*.pdf)";
+            }
+        });
+
+        int result = fileChooser.showSaveDialog(this);
+        
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File archivo = fileChooser.getSelectedFile();
+            
+            // Asegurar que tenga extensión .pdf
+            if (!archivo.getName().toLowerCase().endsWith(".pdf")) {
+                archivo = new File(archivo.getAbsolutePath() + ".pdf");
+            }
+            
+            // Verificar si el archivo ya existe
+            if (archivo.exists()) {
+                int confirmacion = JOptionPane.showConfirmDialog(
+                    this,
+                    "El archivo ya existe. ¿Deseas sobrescribirlo?",
+                    "Confirmar Sobrescritura",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                
+                if (confirmacion != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+            
+            // Generar el PDF en un hilo separado para no bloquear la UI
+            generarPDFEnSegundoPlano(factura, archivo.getAbsolutePath());
         }
     }
 
-    private void mostrarVistaPrevia(Factura factura) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("FACTURA ").append(factura.getNumeroCompleto()).append("\n\n");
-        sb.append("Fecha: ").append(factura.getFechaEmision().format(DATE_FORMATTER)).append("\n");
-        sb.append("Cliente: ").append(factura.getCliente().getNombreFiscal()).append("\n");
-        sb.append("NIF: ").append(factura.getCliente().getNif()).append("\n\n");
+    /**
+     * Genera el PDF en un hilo separado y muestra un diálogo de progreso
+     */
+    private void generarPDFEnSegundoPlano(Factura factura, String rutaDestino) {
+        // Crear diálogo de progreso
+        JDialog dialogoProgreso = new JDialog(this, "Generando PDF", true);
+        dialogoProgreso.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialogoProgreso.setSize(350, 120);
+        dialogoProgreso.setLocationRelativeTo(this);
+        dialogoProgreso.setResizable(false);
         
-        sb.append("LÍNEAS DE FACTURA:\n");
-        sb.append("─────────────────────────────────\n");
-        for (LineaFactura linea : factura.getLineas()) {
-            sb.append(linea.getProducto().getNombre())
-              .append(" x ").append(linea.getCantidad())
-              .append(" = ").append(formatearMoneda(linea.getTotalLinea())).append("\n");
-        }
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        sb.append("\n─────────────────────────────────\n");
-        sb.append("Subtotal: ").append(formatearMoneda(factura.getSubtotal())).append("\n");
-        sb.append("IVA: ").append(formatearMoneda(factura.getTotalIva())).append("\n");
-        if (factura.getTotalRetencion().compareTo(BigDecimal.ZERO) > 0) {
-            sb.append("Retención: -").append(formatearMoneda(factura.getTotalRetencion())).append("\n");
-        }
-        sb.append("TOTAL: ").append(formatearMoneda(factura.getTotal())).append("\n");
+        JLabel lblMensaje = new JLabel("Generando factura PDF...");
+        lblMensaje.setFont(UITheme.FUENTE_ETIQUETA);
+        lblMensaje.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        
+        panel.add(lblMensaje, BorderLayout.NORTH);
+        panel.add(progressBar, BorderLayout.CENTER);
+        
+        dialogoProgreso.add(panel);
+        
+        // Worker para generar el PDF
+        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                return pdfService.generarPDF(factura, rutaDestino);
+            }
+            
+            @Override
+            protected void done() {
+                dialogoProgreso.dispose();
+                
+                try {
+                    String ruta = get();
+                    
+                    // Preguntar si desea abrir el PDF
+                    int respuesta = JOptionPane.showConfirmDialog(
+                        FacturasView.this,
+                        "PDF generado exitosamente en:\n" + ruta + "\n\n¿Deseas abrir el archivo?",
+                        "PDF Generado",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE);
+                    
+                    if (respuesta == JOptionPane.YES_OPTION) {
+                        abrirPDF(ruta);
+                    }
+                    
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(
+                        FacturasView.this,
+                        "Error al generar el PDF:\n" + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        
+        worker.execute();
+        dialogoProgreso.setVisible(true);
+    }
 
-        JTextArea textArea = new JTextArea(sb.toString());
-        textArea.setFont(UITheme.FUENTE_MONOSPACE);
-        textArea.setEditable(false);
-        
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setPreferredSize(new Dimension(500, 400));
-
-        JOptionPane.showMessageDialog(
-            this,
-            scrollPane,
-            "Vista Previa - " + factura.getNumeroCompleto(),
-            JOptionPane.PLAIN_MESSAGE);
+    /**
+     * Abre el PDF generado con la aplicación predeterminada del sistema
+     */
+    private void abrirPDF(String ruta) {
+        try {
+            File archivo = new File(ruta);
+            if (archivo.exists()) {
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(archivo);
+                } else {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "No se puede abrir el archivo automáticamente.\n" +
+                        "Por favor, abre el archivo manualmente desde:\n" + ruta,
+                        "Información",
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Error al abrir el PDF:\n" + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private String formatearMoneda(BigDecimal valor) {

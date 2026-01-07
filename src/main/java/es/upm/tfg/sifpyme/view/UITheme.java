@@ -66,6 +66,7 @@ public class UITheme {
     public static final String ICONO_SALIR = "\u21AA"; // ↪
     public static final String ICONO_AGREGAR = "\u002B"; // +
     public static final String ICONO_ESTABLECER = "\u2605"; // ★
+    public static final String ICONO_PDF = "📄"; // Emoji PDF
 
     // ==================== MÉTODOS AUXILIARES ====================
 
