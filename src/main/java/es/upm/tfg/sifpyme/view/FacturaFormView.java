@@ -54,8 +54,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     public FacturaFormView(CardLayout cardLayout, JPanel cardPanel, Factura facturaEditar) {
         super(cardLayout, cardPanel, facturaEditar);
-        this.controller = new FacturaController();
-        this.lineasFactura = new ArrayList<>();
+        
         
         cargarCombos();
         
@@ -522,6 +521,10 @@ public class FacturaFormView extends BaseFormView<Factura> {
         
         if (dialog.isConfirmado()) {
             LineaFactura nuevaLinea = dialog.getLinea();
+            if(lineasFactura == null)
+            {
+                lineasFactura = new ArrayList<>();
+            }
             nuevaLinea.setNumeroLinea(lineasFactura.size() + 1);
             lineasFactura.add(nuevaLinea);
             actualizarTablaLineas();

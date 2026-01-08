@@ -2,6 +2,7 @@ package es.upm.tfg.sifpyme.view;
 
 import es.upm.tfg.sifpyme.controller.FacturaController;
 import es.upm.tfg.sifpyme.model.entity.Factura;
+import es.upm.tfg.sifpyme.model.entity.LineaFactura;
 import es.upm.tfg.sifpyme.service.FacturaPDFService;
 
 import javax.swing.*;
@@ -14,7 +15,7 @@ import java.util.List;
 /**
  * Vista de lista de facturas
  * REFACTORIZADO: Ahora usa UIHelper y UITheme
- * ACTUALIZADO: Incluye generación de PDFs
+ * CORREGIDO: Carga completa de facturas con sus líneas para edición
  */
 public class FacturasView extends BaseListView<Factura> {
 
@@ -57,8 +58,8 @@ public class FacturasView extends BaseListView<Factura> {
     @Override
     protected String[] getNombresColumnas() {
         return new String[]{ 
-            "ID", "Número", "Serie", "Fecha", "Cliente", 
-            "Subtotal", "IVA", "Total", "Estado", "Método Pago"
+            "Serie", "Número", "Fecha", "Cliente", 
+            "Subtotal", "IVA", "Total", "Emisor", "Método Pago"
         };
     }
 
@@ -84,16 +85,15 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void configurarAnchoColumnas() {
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(50);
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(80);
         tabla.getColumnModel().getColumn(1).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(80);
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(200);
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(200);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(6).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(7).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(8).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(9).setPreferredWidth(120);
+        tabla.getColumnModel().getColumn(8).setPreferredWidth(170);
     }
 
     @Override
@@ -116,15 +116,14 @@ public class FacturasView extends BaseListView<Factura> {
             }
 
             Object[] fila = {
-                factura.getIdFactura(),
-                factura.getNumeroFactura(),
                 factura.getSerie(),
+                factura.getNumeroFactura(),
                 factura.getFechaEmision().format(DATE_FORMATTER),
                 nombreCliente,
                 formatearMoneda(factura.getSubtotal()),
                 formatearMoneda(factura.getTotalIva()),
                 formatearMoneda(factura.getTotal()),
-                factura.getEstado(),
+                factura.getEmpresa(),
                 factura.getMetodoPago()
             };
             modeloTabla.addRow(fila);
@@ -140,10 +139,31 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected JPanel crearFormularioEdicion(Integer id) {
+        // CORREGIDO: Cargar la factura COMPLETA con todas sus relaciones y líneas
         Factura factura = controller.obtenerFacturaPorId(id);
+        
         if (factura != null) {
+            // Verificar que las líneas se hayan cargado correctamente
+            if (factura.getLineas() == null || factura.getLineas().isEmpty()) {
+                System.err.println("ADVERTENCIA: La factura " + id + " no tiene líneas cargadas");
+                // Intentar recargar
+                factura = controller.obtenerFacturaPorId(id);
+            }
+            
+            // Debug: mostrar cuántas líneas se cargaron
+            int numLineas = factura.getLineas() != null ? factura.getLineas().size() : 0;
+            System.out.println("DEBUG: Cargando factura " + id + " con " + numLineas + " líneas");
+            
             return new FacturaFormView(cardLayout, cardPanel, factura);
         }
+        
+        JOptionPane.showMessageDialog(
+            this,
+            "Error: No se pudo cargar la factura completa.\nVerifique la conexión a la base de datos.",
+            "Error de Carga",
+            JOptionPane.ERROR_MESSAGE
+        );
+        
         return null;
     }
 
@@ -154,12 +174,11 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
-        // Botón para generar PDF - ACTUALIZADO
+        // Botón para generar PDF
         JButton btnGenerarPDF = UIHelper.crearBoton(
             "Generar PDF", 
-            new Color(231, 76, 60), 
-            UITheme.ICONO_PDF
-        );
+            new Color(231, 76, 60),
+        UITheme.ICONO_PDF);
         btnGenerarPDF.addActionListener(e -> generarPDF());
         buttonsPanel.add(btnGenerarPDF, 0);
     }
@@ -189,20 +208,20 @@ public class FacturasView extends BaseListView<Factura> {
                 "No se pudo cargar la factura seleccionada.",
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
-            return;
+                return; 
         }
 
-        // Crear el diálogo de selección de carpeta
+        //Crear el diálogo de selección de carpeta
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Guardar Factura PDF");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        
+
         // Sugerir nombre de archivo
         String nombreArchivo = String.format("Factura_%s_%s.pdf", 
             factura.getSerie(), 
             factura.getNumeroFactura());
         fileChooser.setSelectedFile(new File(nombreArchivo));
-        
+
         // Filtro para archivos PDF
         fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
             @Override
@@ -217,7 +236,7 @@ public class FacturasView extends BaseListView<Factura> {
         });
 
         int result = fileChooser.showSaveDialog(this);
-        
+
         if (result == JFileChooser.APPROVE_OPTION) {
             File archivo = fileChooser.getSelectedFile();
             
@@ -311,7 +330,7 @@ public class FacturasView extends BaseListView<Factura> {
         dialogoProgreso.setVisible(true);
     }
 
-    /**
+/**
      * Abre el PDF generado con la aplicación predeterminada del sistema
      */
     private void abrirPDF(String ruta) {

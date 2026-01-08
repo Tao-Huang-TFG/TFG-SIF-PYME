@@ -301,6 +301,17 @@ public abstract class BaseListView<T> extends JFrame {
 
         JPanel formulario = crearFormularioEdicion(id);
         if (formulario != null) {
+            // CORREGIDO: Remover el panel antiguo antes de añadir uno nuevo
+            // para evitar reutilizar paneles con estado obsoleto
+            Component[] components = cardPanel.getComponents();
+            for (Component comp : components) {
+                if (comp.getName() != null && comp.getName().equals(getNombreCardFormulario())) {
+                    cardPanel.remove(comp);
+                    break;
+                }
+            }
+            
+            formulario.setName(getNombreCardFormulario()); // Marcar el panel
             cardPanel.add(formulario, getNombreCardFormulario());
             cardLayout.show(cardPanel, getNombreCardFormulario());
         } else {
@@ -311,6 +322,7 @@ public abstract class BaseListView<T> extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+    
 
     protected void buscar() {
         String termino = txtBuscar.getText().trim();
