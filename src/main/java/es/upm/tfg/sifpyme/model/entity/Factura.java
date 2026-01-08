@@ -2,7 +2,6 @@ package es.upm.tfg.sifpyme.model.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -12,20 +11,15 @@ import java.util.Objects;
  */
 public class Factura {
     
-    private Integer idFactura;
+    private String idFactura;  // Ahora es String (ej: "2025-001")
     private Integer idEmpresa;
     private Integer idCliente;
-    private String numeroFactura;
-    private String serie;
     private LocalDate fechaEmision;
     private String metodoPago;
     private BigDecimal subtotal;
     private BigDecimal totalIva;
     private BigDecimal totalRetencion;
     private BigDecimal total;
-    private String observaciones;
-    private String estado;
-    private LocalDateTime fechaCreacion;
     
     // Relaciones
     private Empresa empresa;
@@ -39,26 +33,23 @@ public class Factura {
         this.totalIva = BigDecimal.ZERO;
         this.totalRetencion = BigDecimal.ZERO;
         this.total = BigDecimal.ZERO;
-        this.estado = "EMITIDA";
         this.lineas = new ArrayList<>();
     }
     
-    public Factura(Integer idEmpresa, Integer idCliente, String serie, 
-                   String numeroFactura, String metodoPago) {
+    public Factura(String idFactura, Integer idEmpresa, Integer idCliente, String metodoPago) {
         this();
+        this.idFactura = idFactura;
         this.idEmpresa = idEmpresa;
         this.idCliente = idCliente;
-        this.serie = serie;
-        this.numeroFactura = numeroFactura;
         this.metodoPago = metodoPago;
     }
     
     // Getters y Setters
-    public Integer getIdFactura() {
+    public String getIdFactura() {
         return idFactura;
     }
     
-    public void setIdFactura(Integer idFactura) {
+    public void setIdFactura(String idFactura) {
         this.idFactura = idFactura;
     }
     
@@ -76,22 +67,6 @@ public class Factura {
     
     public void setIdCliente(Integer idCliente) {
         this.idCliente = idCliente;
-    }
-    
-    public String getNumeroFactura() {
-        return numeroFactura;
-    }
-    
-    public void setNumeroFactura(String numeroFactura) {
-        this.numeroFactura = numeroFactura;
-    }
-    
-    public String getSerie() {
-        return serie;
-    }
-    
-    public void setSerie(String serie) {
-        this.serie = serie;
     }
     
     public LocalDate getFechaEmision() {
@@ -142,30 +117,6 @@ public class Factura {
         this.total = total;
     }
     
-    public String getObservaciones() {
-        return observaciones;
-    }
-    
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
-    
-    public String getEstado() {
-        return estado;
-    }
-    
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-    
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-    
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-    
     public Empresa getEmpresa() {
         return empresa;
     }
@@ -205,11 +156,6 @@ public class Factura {
         linea.setIdFactura(this.idFactura);
     }
     
-    // Método para obtener el número de factura completo
-    public String getNumeroCompleto() {
-        return serie + "-" + numeroFactura;
-    }
-    
     // Métodos de utilidad
     @Override
     public boolean equals(Object o) {
@@ -226,6 +172,6 @@ public class Factura {
     
     @Override
     public String toString() {
-        return getNumeroCompleto() + " - " + fechaEmision;
+        return idFactura + " - " + fechaEmision;
     }
 }

@@ -9,39 +9,35 @@ import java.util.Objects;
 public class Producto {
     
     private Integer idProducto;
-    private Integer idTipoIva;
+    private BigDecimal tipoIva;
     private String codigo;
     private String nombre;
-    private String descripcion;
     private BigDecimal precio;
     private BigDecimal precioBase;
     private BigDecimal tipoRetencion;
     
-    // Relación con TipoIva (opcional, para facilitar el uso)
-    private TipoIva tipoIva;
-    
     // Constructores
     public Producto() {
+        this.tipoIva = new BigDecimal("21.00");
         this.tipoRetencion = BigDecimal.ZERO;
     }
     
-    public Producto(Integer idProducto, Integer idTipoIva, String codigo, 
-                    String nombre, String descripcion, BigDecimal precio, 
-                    BigDecimal precioBase, BigDecimal tipoRetencion) {
+    public Producto(Integer idProducto, BigDecimal tipoIva, String codigo, 
+                    String nombre, BigDecimal precio, BigDecimal precioBase, 
+                    BigDecimal tipoRetencion) {
         this.idProducto = idProducto;
-        this.idTipoIva = idTipoIva;
+        this.tipoIva = tipoIva != null ? tipoIva : new BigDecimal("21.00");
         this.codigo = codigo;
         this.nombre = nombre;
-        this.descripcion = descripcion;
         this.precio = precio;
         this.precioBase = precioBase;
         this.tipoRetencion = tipoRetencion != null ? tipoRetencion : BigDecimal.ZERO;
     }
     
-    public Producto(String nombre, BigDecimal precio, Integer idTipoIva) {
+    public Producto(String nombre, BigDecimal precio, BigDecimal tipoIva) {
         this.nombre = nombre;
         this.precio = precio;
-        this.idTipoIva = idTipoIva;
+        this.tipoIva = tipoIva != null ? tipoIva : new BigDecimal("21.00");
         this.tipoRetencion = BigDecimal.ZERO;
     }
     
@@ -54,12 +50,12 @@ public class Producto {
         this.idProducto = idProducto;
     }
     
-    public Integer getIdTipoIva() {
-        return idTipoIva;
+    public BigDecimal getTipoIva() {
+        return tipoIva;
     }
     
-    public void setIdTipoIva(Integer idTipoIva) {
-        this.idTipoIva = idTipoIva;
+    public void setTipoIva(BigDecimal tipoIva) {
+        this.tipoIva = tipoIva;
     }
     
     public String getCodigo() {
@@ -76,14 +72,6 @@ public class Producto {
     
     public void setNombre(String nombre) {
         this.nombre = nombre;
-    }
-    
-    public String getDescripcion() {
-        return descripcion;
-    }
-    
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
     }
     
     public BigDecimal getPrecio() {
@@ -108,17 +96,6 @@ public class Producto {
     
     public void setTipoRetencion(BigDecimal tipoRetencion) {
         this.tipoRetencion = tipoRetencion;
-    }
-    
-    public TipoIva getTipoIva() {
-        return tipoIva;
-    }
-    
-    public void setTipoIva(TipoIva tipoIva) {
-        this.tipoIva = tipoIva;
-        if (tipoIva != null) {
-            this.idTipoIva = tipoIva.getIdTipoIva();
-        }
     }
     
     // Método de utilidad para obtener el precio efectivo

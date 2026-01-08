@@ -9,9 +9,10 @@ import java.util.Objects;
 public class LineaFactura {
     
     private Integer idLinea;
-    private Integer idFactura;
+    private String idFactura;  // Ahora es String
     private Integer idProducto;
     private BigDecimal cantidad;
+    private BigDecimal precioBase;
     private BigDecimal precioUnitario;
     private BigDecimal descuento;
     private BigDecimal subtotalLinea;
@@ -32,7 +33,7 @@ public class LineaFactura {
         this.importeRetencion = BigDecimal.ZERO;
     }
     
-    public LineaFactura(Integer idFactura, Integer idProducto, BigDecimal cantidad,
+    public LineaFactura(String idFactura, Integer idProducto, BigDecimal cantidad,
                        BigDecimal precioUnitario, BigDecimal porcentajeIva) {
         this();
         this.idFactura = idFactura;
@@ -51,11 +52,11 @@ public class LineaFactura {
         this.idLinea = idLinea;
     }
     
-    public Integer getIdFactura() {
+    public String getIdFactura() {
         return idFactura;
     }
     
-    public void setIdFactura(Integer idFactura) {
+    public void setIdFactura(String idFactura) {
         this.idFactura = idFactura;
     }
     
@@ -73,6 +74,14 @@ public class LineaFactura {
     
     public void setCantidad(BigDecimal cantidad) {
         this.cantidad = cantidad;
+    }
+    
+    public BigDecimal getPrecioBase() {
+        return precioBase;
+    }
+    
+    public void setPrecioBase(BigDecimal precioBase) {
+        this.precioBase = precioBase;
     }
     
     public BigDecimal getPrecioUnitario() {
