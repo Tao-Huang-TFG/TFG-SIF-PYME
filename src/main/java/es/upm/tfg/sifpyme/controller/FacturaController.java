@@ -33,18 +33,23 @@ public class FacturaController {
      */
     public boolean guardarFactura(Factura factura) {
         try {
-            logger.info("Guardando factura: {}-{}", factura.getSerie(), factura.getNumeroFactura());
+            // Generar ID automático si no viene proporcionado
+            if (factura.getIdFactura() == null || factura.getIdFactura().trim().isEmpty()) {
+                String nuevoId = facturaDAO.generarSiguienteId();
+                factura.setIdFactura(nuevoId);
+                logger.info("Generando nuevo ID de factura: {}", nuevoId);
+            }
+            
+            logger.info("Guardando factura: {}", factura.getIdFactura());
             
             if (!validarFactura(factura)) {
                 logger.warn("Validación de factura fallida");
                 return false;
             }
             
-            // Verificar número duplicado
-            if (facturaDAO.existeNumero(factura.getIdEmpresa(), 
-                    factura.getSerie(), factura.getNumeroFactura(), null)) {
-                logger.warn("Ya existe una factura con el número: {}-{}", 
-                    factura.getSerie(), factura.getNumeroFactura());
+            // Verificar ID duplicado
+            if (facturaDAO.existeId(factura.getIdFactura(), null)) {
+                logger.warn("Ya existe una factura con el ID: {}", factura.getIdFactura());
                 return false;
             }
             
@@ -52,10 +57,10 @@ public class FacturaController {
             calculadoraService.recalcularFacturaCompleta(factura);
             
             // Guardar la factura
-            Integer idGenerado = facturaDAO.insertar(factura);
+            boolean guardado = facturaDAO.insertar(factura);
             
-            if (idGenerado != null && idGenerado > 0) {
-                logger.info("Factura guardada exitosamente con ID: {}", idGenerado);
+            if (guardado) {
+                logger.info("Factura guardada exitosamente: {}", factura.getIdFactura());
                 return true;
             } else {
                 logger.error("Error al guardar la factura");
@@ -79,12 +84,10 @@ public class FacturaController {
                 return false;
             }
             
-            // Verificar número duplicado (excluyendo la factura actual)
-            if (facturaDAO.existeNumero(factura.getIdEmpresa(), 
-                    factura.getSerie(), factura.getNumeroFactura(), 
-                    factura.getIdFactura())) {
-                logger.warn("Ya existe otra factura con el número: {}-{}", 
-                    factura.getSerie(), factura.getNumeroFactura());
+            // Verificar que la factura existe
+            Factura existente = facturaDAO.obtenerPorId(factura.getIdFactura());
+            if (existente == null) {
+                logger.warn("Factura no encontrada: {}", factura.getIdFactura());
                 return false;
             }
             
@@ -110,11 +113,11 @@ public class FacturaController {
     /**
      * Elimina una factura
      */
-    public boolean eliminarFactura(Integer id) {
+    public boolean eliminarFactura(String id) {
         try {
             logger.info("Eliminando factura ID: {}", id);
             
-            if (id == null || id <= 0) {
+            if (id == null || id.trim().isEmpty()) {
                 logger.warn("ID de factura inválido");
                 return false;
             }
@@ -147,7 +150,14 @@ public class FacturaController {
      */
     public List<Factura> obtenerTodasLasFacturas() {
         try {
-            return facturaDAO.obtenerTodas();
+            List<Factura> facturas = facturaDAO.obtenerTodas();
+            
+            // Cargar datos relacionados
+            for (Factura factura : facturas) {
+                cargarDatosRelacionados(factura);
+            }
+            
+            return facturas;
         } catch (Exception e) {
             logger.error("Error al obtener facturas", e);
             return List.of();
@@ -157,26 +167,12 @@ public class FacturaController {
     /**
      * Obtiene una factura por su ID, con todas sus líneas y relaciones
      */
-    public Factura obtenerFacturaPorId(Integer id) {
+    public Factura obtenerFacturaPorId(String id) {
         try {
             Factura factura = facturaDAO.obtenerPorId(id);
             
             if (factura != null) {
-                // Cargar empresa
-                Empresa empresa = empresaDAO.obtenerPorId(factura.getIdEmpresa());
-                factura.setEmpresa(empresa);
-                
-                // Cargar cliente
-                Cliente cliente = clienteDAO.obtenerPorId(factura.getIdCliente());
-                factura.setCliente(cliente);
-                
-                // Cargar productos en las líneas
-                if (factura.getLineas() != null) {
-                    for (LineaFactura linea : factura.getLineas()) {
-                        Producto producto = productoDAO.obtenerPorId(linea.getIdProducto());
-                        linea.setProducto(producto);
-                    }
-                }
+                cargarDatosRelacionados(factura);
             }
             
             return factura;
@@ -194,9 +190,55 @@ public class FacturaController {
             if (termino == null || termino.trim().isEmpty()) {
                 return obtenerTodasLasFacturas();
             }
-            return facturaDAO.buscar(termino.trim());
+            
+            List<Factura> facturas = facturaDAO.buscar(termino.trim());
+            
+            // Cargar datos relacionados
+            for (Factura factura : facturas) {
+                cargarDatosRelacionados(factura);
+            }
+            
+            return facturas;
         } catch (Exception e) {
             logger.error("Error al buscar facturas", e);
+            return List.of();
+        }
+    }
+    
+    /**
+     * Obtiene facturas por cliente
+     */
+    public List<Factura> obtenerFacturasPorCliente(Integer idCliente) {
+        try {
+            List<Factura> facturas = facturaDAO.obtenerPorCliente(idCliente);
+            
+            // Cargar datos relacionados
+            for (Factura factura : facturas) {
+                cargarDatosRelacionados(factura);
+            }
+            
+            return facturas;
+        } catch (Exception e) {
+            logger.error("Error al obtener facturas por cliente", e);
+            return List.of();
+        }
+    }
+    
+    /**
+     * Obtiene facturas por empresa
+     */
+    public List<Factura> obtenerFacturasPorEmpresa(Integer idEmpresa) {
+        try {
+            List<Factura> facturas = facturaDAO.obtenerPorEmpresa(idEmpresa);
+            
+            // Cargar datos relacionados
+            for (Factura factura : facturas) {
+                cargarDatosRelacionados(factura);
+            }
+            
+            return facturas;
+        } catch (Exception e) {
+            logger.error("Error al obtener facturas por empresa", e);
             return List.of();
         }
     }
@@ -214,14 +256,14 @@ public class FacturaController {
     }
     
     /**
-     * Obtiene el siguiente número de factura para una empresa y serie
+     * Genera un nuevo ID de factura
      */
-    public String obtenerSiguienteNumero(Integer idEmpresa, String serie) {
+    public String generarNuevoIdFactura() {
         try {
-            return facturaDAO.obtenerSiguienteNumero(idEmpresa, serie);
+            return facturaDAO.generarSiguienteId();
         } catch (Exception e) {
-            logger.error("Error al obtener siguiente número", e);
-            return "000001";
+            logger.error("Error al generar nuevo ID de factura", e);
+            return "FAC000001";
         }
     }
     
@@ -312,11 +354,41 @@ public class FacturaController {
     }
     
     /**
+     * Carga los datos relacionados de una factura
+     */
+    private void cargarDatosRelacionados(Factura factura) {
+        try {
+            // Cargar empresa
+            if (factura.getIdEmpresa() != null) {
+                Empresa empresa = empresaDAO.obtenerPorId(factura.getIdEmpresa());
+                factura.setEmpresa(empresa);
+            }
+            
+            // Cargar cliente
+            if (factura.getIdCliente() != null) {
+                Cliente cliente = clienteDAO.obtenerPorId(factura.getIdCliente());
+                factura.setCliente(cliente);
+            }
+            
+            // NOTA: Las líneas ya no tienen referencia a productos individuales
+            // en el nuevo esquema simplificado
+            // Las líneas contienen directamente los datos de IVA y retención
+        } catch (Exception e) {
+            logger.error("Error al cargar datos relacionados de factura", e);
+        }
+    }
+    
+    /**
      * Valida los datos de una factura
      */
     private boolean validarFactura(Factura factura) {
         if (factura == null) {
             logger.warn("Factura es null");
+            return false;
+        }
+        
+        if (factura.getIdFactura() == null || factura.getIdFactura().trim().isEmpty()) {
+            logger.warn("ID de factura vacío");
             return false;
         }
         
@@ -327,16 +399,6 @@ public class FacturaController {
         
         if (factura.getIdCliente() == null) {
             logger.warn("Cliente no especificado");
-            return false;
-        }
-        
-        if (factura.getSerie() == null || factura.getSerie().trim().isEmpty()) {
-            logger.warn("Serie vacía");
-            return false;
-        }
-        
-        if (factura.getNumeroFactura() == null || factura.getNumeroFactura().trim().isEmpty()) {
-            logger.warn("Número de factura vacío");
             return false;
         }
         
@@ -352,16 +414,16 @@ public class FacturaController {
         
         // Validar cada línea
         for (LineaFactura linea : factura.getLineas()) {
-            if (linea.getIdProducto() == null) {
-                logger.warn("Línea sin producto");
-                return false;
-            }
             if (linea.getCantidad() == null || linea.getCantidad().signum() <= 0) {
                 logger.warn("Cantidad inválida");
                 return false;
             }
             if (linea.getPrecioUnitario() == null || linea.getPrecioUnitario().signum() < 0) {
                 logger.warn("Precio unitario inválido");
+                return false;
+            }
+            if (linea.getPorcentajeIva() == null || linea.getPorcentajeIva().signum() < 0) {
+                logger.warn("Porcentaje de IVA inválido");
                 return false;
             }
         }

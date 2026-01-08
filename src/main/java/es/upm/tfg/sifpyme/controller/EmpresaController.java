@@ -167,21 +167,6 @@ public class EmpresaController {
             return false;
         }
         
-        if (empresa.getCodigoPostal() == null || empresa.getCodigoPostal().trim().isEmpty()) {
-            logger.warn("Código postal vacío");
-            return false;
-        }
-        
-        if (empresa.getCiudad() == null || empresa.getCiudad().trim().isEmpty()) {
-            logger.warn("Ciudad vacía");
-            return false;
-        }
-        
-        if (empresa.getProvincia() == null || empresa.getProvincia().trim().isEmpty()) {
-            logger.warn("Provincia vacía");
-            return false;
-        }
-        
         return true;
     }
 

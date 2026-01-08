@@ -1,13 +1,12 @@
 package es.upm.tfg.sifpyme.controller;
 
 import es.upm.tfg.sifpyme.model.dao.ProductoDAO;
-import es.upm.tfg.sifpyme.model.dao.TipoIvaDAO;
 import es.upm.tfg.sifpyme.model.entity.Producto;
-import es.upm.tfg.sifpyme.model.entity.TipoIva;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 /**
@@ -17,11 +16,9 @@ public class ProductoController {
     
     private static final Logger logger = LoggerFactory.getLogger(ProductoController.class);
     private final ProductoDAO productoDAO;
-    private final TipoIvaDAO tipoIvaDAO;
     
     public ProductoController() {
         this.productoDAO = new ProductoDAO();
-        this.tipoIvaDAO = new TipoIvaDAO();
     }
     
     /**
@@ -36,6 +33,9 @@ public class ProductoController {
                 logger.warn("Validación de producto fallida");
                 return false;
             }
+            
+            // Aplicar valores por defecto si es necesario
+            aplicarValoresPorDefecto(producto);
             
             // Verificar código duplicado si se proporciona
             if (producto.getCodigo() != null && !producto.getCodigo().trim().isEmpty()) {
@@ -149,7 +149,11 @@ public class ProductoController {
      */
     public Producto obtenerProductoPorId(Integer id) {
         try {
-            return productoDAO.obtenerPorId(id);
+            Producto producto = productoDAO.obtenerPorId(id);
+            if (producto != null) {
+                aplicarValoresPorDefecto(producto);
+            }
+            return producto;
         } catch (Exception e) {
             logger.error("Error al obtener producto por ID", e);
             return null;
@@ -161,7 +165,11 @@ public class ProductoController {
      */
     public Producto obtenerProductoPorCodigo(String codigo) {
         try {
-            return productoDAO.obtenerPorCodigo(codigo);
+            Producto producto = productoDAO.obtenerPorCodigo(codigo);
+            if (producto != null) {
+                aplicarValoresPorDefecto(producto);
+            }
+            return producto;
         } catch (Exception e) {
             logger.error("Error al obtener producto por código", e);
             return null;
@@ -196,27 +204,34 @@ public class ProductoController {
     }
     
     /**
-     * Obtiene todos los tipos de IVA disponibles
+     * Calcula el precio final de un producto basado en su precio base e IVA
      */
-    public List<TipoIva> obtenerTiposIva() {
-        try {
-            return tipoIvaDAO.obtenerTodos();
-        } catch (Exception e) {
-            logger.error("Error al obtener tipos de IVA", e);
-            return List.of();
+    public BigDecimal calcularPrecioFinal(Producto producto) {
+        if (producto == null) {
+            return BigDecimal.ZERO;
         }
-    }
-    
-    /**
-     * Obtiene un tipo de IVA por su ID
-     */
-    public TipoIva obtenerTipoIvaPorId(Integer id) {
-        try {
-            return tipoIvaDAO.obtenerPorId(id);
-        } catch (Exception e) {
-            logger.error("Error al obtener tipo de IVA por ID", e);
-            return null;
+        
+        BigDecimal precioBase = producto.getPrecioBase();
+        BigDecimal tipoIva = producto.getTipoIva();
+        
+        if (precioBase == null) {
+            precioBase = producto.getPrecio();
         }
+        
+        if (precioBase == null) {
+            return BigDecimal.ZERO;
+        }
+        
+        if (tipoIva == null) {
+            tipoIva = new BigDecimal("21.00"); // IVA por defecto
+        }
+        
+        // Precio final = precio base * (1 + tipo_iva/100)
+        BigDecimal incrementoIva = precioBase
+            .multiply(tipoIva)
+            .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        
+        return precioBase.add(incrementoIva);
     }
     
     /**
@@ -250,6 +265,15 @@ public class ProductoController {
             return false;
         }
         
+        // Validar tipo de IVA
+        if (producto.getTipoIva() != null) {
+            if (producto.getTipoIva().compareTo(BigDecimal.ZERO) < 0 || 
+                producto.getTipoIva().compareTo(new BigDecimal("100")) > 0) {
+                logger.warn("El tipo de IVA debe estar entre 0 y 100");
+                return false;
+            }
+        }
+        
         // Validar tipo de retención
         if (producto.getTipoRetencion() != null) {
             if (producto.getTipoRetencion().compareTo(BigDecimal.ZERO) < 0 || 
@@ -260,5 +284,48 @@ public class ProductoController {
         }
         
         return true;
+    }
+    
+    /**
+     * Aplica valores por defecto si es necesario
+     */
+    private void aplicarValoresPorDefecto(Producto producto) {
+        if (producto.getTipoIva() == null) {
+            producto.setTipoIva(new BigDecimal("21.00")); // IVA general por defecto
+        }
+        
+        if (producto.getTipoRetencion() == null) {
+            producto.setTipoRetencion(BigDecimal.ZERO); // Sin retención por defecto
+        }
+        
+        // Si solo tenemos precio, calcular precio base
+        if (producto.getPrecio() != null && producto.getPrecioBase() == null) {
+            // Asumimos que el precio ya incluye IVA
+            producto.setPrecioBase(producto.getPrecio());
+        }
+        
+        // Si solo tenemos precio base, calcular precio con IVA
+        if (producto.getPrecioBase() != null && producto.getPrecio() == null) {
+            BigDecimal precioConIva = calcularPrecioConIva(
+                producto.getPrecioBase(), 
+                producto.getTipoIva()
+            );
+            producto.setPrecio(precioConIva);
+        }
+    }
+    
+    /**
+     * Calcula el precio con IVA a partir del precio base
+     */
+    private BigDecimal calcularPrecioConIva(BigDecimal precioBase, BigDecimal tipoIva) {
+        if (precioBase == null || tipoIva == null) {
+            return precioBase != null ? precioBase : BigDecimal.ZERO;
+        }
+        
+        BigDecimal incrementoIva = precioBase
+            .multiply(tipoIva)
+            .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        
+        return precioBase.add(incrementoIva);
     }
 }
