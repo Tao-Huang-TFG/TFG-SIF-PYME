@@ -154,18 +154,12 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
             txtRazonSocial.setText(entidadEditar.getRazonSocial());
             txtNif.setText(entidadEditar.getNif());
             txtDireccion.setText(entidadEditar.getDireccion());
-            txtCodigoPostal.setText(entidadEditar.getCodigoPostal());
-            txtCiudad.setText(entidadEditar.getCiudad());
-            txtProvincia.setText(entidadEditar.getProvincia());
 
             if (entidadEditar.getTelefono() != null) {
                 txtTelefono.setText(entidadEditar.getTelefono());
             }
             if (entidadEditar.getEmail() != null) {
                 txtEmail.setText(entidadEditar.getEmail());
-            }
-            if (entidadEditar.getWeb() != null) {
-                txtWeb.setText(entidadEditar.getWeb());
             }
             if (entidadEditar.getTipoRetencionIrpf() != null) {
                 txtTipoRetencionIrpf.setText(entidadEditar.getTipoRetencionIrpf().toString());
@@ -228,18 +222,12 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
             empresa.setRazonSocial(txtRazonSocial.getText().trim());
             empresa.setNif(txtNif.getText().trim().toUpperCase());
             empresa.setDireccion(txtDireccion.getText().trim());
-            empresa.setCodigoPostal(txtCodigoPostal.getText().trim());
-            empresa.setCiudad(txtCiudad.getText().trim());
-            empresa.setProvincia(txtProvincia.getText().trim());
 
             String telefono = txtTelefono.getText().trim();
             empresa.setTelefono(telefono.isEmpty() ? null : telefono);
 
             String email = txtEmail.getText().trim();
             empresa.setEmail(email.isEmpty() ? null : email);
-
-            String web = txtWeb.getText().trim();
-            empresa.setWeb(web.isEmpty() ? null : web);
 
             try {
                 BigDecimal retencion = new BigDecimal(txtTipoRetencionIrpf.getText().trim());
@@ -249,7 +237,6 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
             }
 
             empresa.setPorDefecto(chkPorDefecto.isSelected());
-            empresa.setActivo(true);
 
             boolean success = modoEdicion ? 
                 controller.actualizarEmpresa(empresa) : 

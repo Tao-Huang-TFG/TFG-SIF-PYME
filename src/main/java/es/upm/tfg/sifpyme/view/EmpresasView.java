@@ -102,8 +102,6 @@ public class EmpresasView extends BaseListView<Empresa> {
                 empresa.getNombreComercial(),
                 empresa.getRazonSocial(),
                 empresa.getNif(),
-                empresa.getCiudad(),
-                empresa.getProvincia(),
                 empresa.getEmail() != null ? empresa.getEmail() : "",
                 empresa.getPorDefecto() != null && empresa.getPorDefecto()
             };
