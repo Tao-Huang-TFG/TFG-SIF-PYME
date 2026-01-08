@@ -9,19 +9,16 @@ import es.upm.tfg.sifpyme.model.entity.LineaFactura;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Servicio para generar PDFs de facturas con diseño profesional
- * Similar al ejemplo proporcionado
  */
 public class FacturaPDFService {
 
@@ -85,7 +82,6 @@ public class FacturaPDFService {
         }
 
         Document document = new Document(PageSize.A4, 40, 40, 50, 50);
-        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
         
         document.open();
         
@@ -95,7 +91,7 @@ public class FacturaPDFService {
         agregarDatosFactura(document, factura);
         agregarTablaLineas(document, factura);
         agregarTotales(document, factura);
-        agregarPiePagina(document, factura);
+        agregarPiePagina(document);
         
         document.close();
         
@@ -131,8 +127,9 @@ public class FacturaPDFService {
         facturaTitulo.setAlignment(Element.ALIGN_RIGHT);
         cellFactura.addElement(facturaTitulo);
         
+        // CAMBIO: Usar id_factura en lugar de serie + numero_factura
         Paragraph numeroFactura = new Paragraph(
-            factura.getSerie() + "-" + factura.getNumeroFactura(), 
+            factura.getIdFactura(), 
             fuenteSubtitulo
         );
         numeroFactura.setAlignment(Element.ALIGN_RIGHT);
@@ -166,6 +163,14 @@ public class FacturaPDFService {
         emisorInfo.append("Domicilio: ").append(empresa.getDireccion()).append("\n");
         emisorInfo.append("NIF: ").append(empresa.getNif());
         
+        // CAMBIO: Campos eliminados en el nuevo esquema
+        if (empresa.getTelefono() != null && !empresa.getTelefono().isEmpty()) {
+            emisorInfo.append("\nTeléfono: ").append(empresa.getTelefono());
+        }
+        if (empresa.getEmail() != null && !empresa.getEmail().isEmpty()) {
+            emisorInfo.append("\nEmail: ").append(empresa.getEmail());
+        }
+        
         PdfPCell cellEmisorDatos = new PdfPCell(new Phrase(emisorInfo.toString(), fuenteNormal));
         cellEmisorDatos.setPadding(10);
         cellEmisorDatos.setBorder(Rectangle.LEFT | Rectangle.RIGHT | Rectangle.BOTTOM);
@@ -179,6 +184,13 @@ public class FacturaPDFService {
             receptorInfo.append("Domicilio: ").append(cliente.getDireccion()).append("\n");
         }
         receptorInfo.append("NIF: ").append(cliente.getNif());
+        
+        if (cliente.getTelefono() != null && !cliente.getTelefono().isEmpty()) {
+            receptorInfo.append("\nTeléfono: ").append(cliente.getTelefono());
+        }
+        if (cliente.getEmail() != null && !cliente.getEmail().isEmpty()) {
+            receptorInfo.append("\nEmail: ").append(cliente.getEmail());
+        }
         
         PdfPCell cellReceptorDatos = new PdfPCell(new Phrase(receptorInfo.toString(), fuenteNormal));
         cellReceptorDatos.setPadding(10);
@@ -201,7 +213,8 @@ public class FacturaPDFService {
         table.addCell(crearCelda("Método de Pago", true));
         
         // Datos
-        table.addCell(crearCelda(factura.getSerie() + "-" + factura.getNumeroFactura(), false));
+        // CAMBIO: Usar id_factura directamente
+        table.addCell(crearCelda(factura.getIdFactura(), false));
         table.addCell(crearCelda(factura.getFechaEmision().format(DATE_FORMATTER), false));
         table.addCell(crearCelda(factura.getMetodoPago(), false));
         
@@ -216,7 +229,7 @@ public class FacturaPDFService {
         table.setSpacingAfter(10);
         
         // Headers con fondo de color
-        String[] headers = {"Artículo", "Cantidad", "Precio (€)", "IVA (%)", "Descuento (%)", "Total (€)"};
+        String[] headers = {"Descripción", "Cantidad", "Precio (€)", "IVA (%)", "Descuento (%)", "Total (€)"};
         for (String header : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(header, fuenteTablaHeader));
             cell.setBackgroundColor(COLOR_PRIMARIO);
@@ -226,11 +239,13 @@ public class FacturaPDFService {
         }
         
         // Líneas de factura
+        int numeroLinea = 1;
         for (LineaFactura linea : factura.getLineas()) {
-            // Artículo
-            PdfPCell cellProducto = new PdfPCell(new Phrase(linea.getProducto().getNombre(), fuenteTabla));
-            cellProducto.setPadding(8);
-            table.addCell(cellProducto);
+            // CAMBIO: Ya no tenemos referencia a producto, usar descripción general
+            // Usar "Línea X" como descripción
+            PdfPCell cellDescripcion = new PdfPCell(new Phrase("Línea " + numeroLinea, fuenteTabla));
+            cellDescripcion.setPadding(8);
+            table.addCell(cellDescripcion);
             
             // Cantidad
             table.addCell(crearCeldaNumero(formatearNumero(linea.getCantidad())));
@@ -246,6 +261,8 @@ public class FacturaPDFService {
             
             // Total
             table.addCell(crearCeldaNumero(formatearMoneda(linea.getTotalLinea())));
+            
+            numeroLinea++;
         }
         
         document.add(table);
@@ -273,7 +290,7 @@ public class FacturaPDFService {
         if (factura.getSubtotal().compareTo(BigDecimal.ZERO) > 0) {
             porcentajeIva = factura.getTotalIva()
                 .multiply(new BigDecimal("100"))
-                .divide(factura.getSubtotal(), 2, BigDecimal.ROUND_HALF_UP);
+                .divide(factura.getSubtotal(), 2, RoundingMode.HALF_UP);
         }
         
         // Fila de datos
@@ -317,18 +334,7 @@ public class FacturaPDFService {
         document.add(tableFinal);
     }
 
-    private void agregarPiePagina(Document document, Factura factura) throws DocumentException {
-        if (factura.getObservaciones() != null && !factura.getObservaciones().trim().isEmpty()) {
-            document.add(new Paragraph(" ", fuenteNormal)); // Espacio
-            
-            Paragraph observaciones = new Paragraph("Observaciones:", fuenteNormalBold);
-            observaciones.setSpacingBefore(15);
-            document.add(observaciones);
-            
-            Paragraph obs = new Paragraph(factura.getObservaciones(), fuenteNormal);
-            document.add(obs);
-        }
-        
+    private void agregarPiePagina(Document document) throws DocumentException {
         // Información adicional
         document.add(new Paragraph(" ", fuenteNormal));
         
@@ -378,5 +384,24 @@ public class FacturaPDFService {
     private String formatearNumero(BigDecimal valor) {
         if (valor == null) return "0.00";
         return String.format("%.2f", valor).replace(",", ".");
+    }
+    
+    /**
+     * Método mejorado para generar nombre de archivo
+     */
+    public String generarNombreArchivo(Factura factura) {
+        // Formato: Factura_{id_factura}_{fecha}.pdf
+        return String.format("Factura_%s_%s.pdf", 
+            factura.getIdFactura(),
+            factura.getFechaEmision().format(DATE_FORMATTER));
+    }
+    
+    /**
+     * Método sobrecargado con ruta por defecto
+     */
+    public String generarPDF(Factura factura) throws DocumentException, IOException {
+        String nombreArchivo = generarNombreArchivo(factura);
+        String rutaDestino = System.getProperty("user.home") + "/Downloads/" + nombreArchivo;
+        return generarPDF(factura, rutaDestino);
     }
 }
