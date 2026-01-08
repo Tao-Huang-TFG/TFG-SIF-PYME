@@ -16,12 +16,13 @@ public class ProductoDAO {
     
     private static final Logger logger = LoggerFactory.getLogger(ProductoDAO.class);
     
+    // Consultas SQL actualizadas según el nuevo esquema
     private static final String SQL_INSERT = 
-        "INSERT INTO Producto (id_tipo_iva, codigo, nombre, descripcion, precio, precio_base, tipo_retencion) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO Producto (tipo_iva, codigo, nombre, precio, precio_base, tipo_retencion) " +
+        "VALUES (?, ?, ?, ?, ?, ?)";
     
     private static final String SQL_UPDATE = 
-        "UPDATE Producto SET id_tipo_iva = ?, codigo = ?, nombre = ?, descripcion = ?, " +
+        "UPDATE Producto SET tipo_iva = ?, codigo = ?, nombre = ?, " +
         "precio = ?, precio_base = ?, tipo_retencion = ? WHERE id_producto = ?";
     
     private static final String SQL_SELECT_ALL = 
@@ -39,8 +40,7 @@ public class ProductoDAO {
     private static final String SQL_SEARCH = 
         "SELECT * FROM Producto WHERE " +
         "LOWER(nombre) LIKE LOWER(?) OR " +
-        "LOWER(codigo) LIKE LOWER(?) OR " +
-        "LOWER(descripcion) LIKE LOWER(?) " +
+        "LOWER(codigo) LIKE LOWER(?) " +
         "ORDER BY nombre";
     
     private static final String SQL_COUNT = 
@@ -84,7 +84,7 @@ public class ProductoDAO {
              PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
             
             setProductoParameters(stmt, producto);
-            stmt.setInt(8, producto.getIdProducto());
+            stmt.setInt(7, producto.getIdProducto());
             
             int filasAfectadas = stmt.executeUpdate();
             
@@ -168,7 +168,7 @@ public class ProductoDAO {
     }
     
     /**
-     * Busca productos por nombre, código o descripción
+     * Busca productos por nombre o código
      */
     public List<Producto> buscar(String termino) {
         List<Producto> productos = new ArrayList<>();
@@ -179,7 +179,6 @@ public class ProductoDAO {
             String terminoBusqueda = "%" + termino + "%";
             stmt.setString(1, terminoBusqueda);
             stmt.setString(2, terminoBusqueda);
-            stmt.setString(3, terminoBusqueda);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -238,7 +237,7 @@ public class ProductoDAO {
     }
     
     /**
-     * Verifica si existe un producto con el código dado (excluyendo un ID específico)
+     * Verifica si existe un producto con el código dado
      */
     public boolean existeCodigo(String codigo, Integer excludeId) {
         if (codigo == null || codigo.trim().isEmpty()) {
@@ -275,13 +274,12 @@ public class ProductoDAO {
      */
     private void setProductoParameters(PreparedStatement stmt, Producto producto) 
             throws SQLException {
-        stmt.setObject(1, producto.getIdTipoIva());
+        stmt.setBigDecimal(1, producto.getTipoIva());
         stmt.setString(2, producto.getCodigo());
         stmt.setString(3, producto.getNombre());
-        stmt.setString(4, producto.getDescripcion());
-        stmt.setBigDecimal(5, producto.getPrecio());
-        stmt.setBigDecimal(6, producto.getPrecioBase());
-        stmt.setBigDecimal(7, producto.getTipoRetencion());
+        stmt.setBigDecimal(4, producto.getPrecio());
+        stmt.setBigDecimal(5, producto.getPrecioBase());
+        stmt.setBigDecimal(6, producto.getTipoRetencion());
     }
     
     /**
@@ -291,10 +289,9 @@ public class ProductoDAO {
         Producto producto = new Producto();
         
         producto.setIdProducto(rs.getInt("id_producto"));
-        producto.setIdTipoIva((Integer) rs.getObject("id_tipo_iva"));
+        producto.setTipoIva(rs.getBigDecimal("tipo_iva"));
         producto.setCodigo(rs.getString("codigo"));
         producto.setNombre(rs.getString("nombre"));
-        producto.setDescripcion(rs.getString("descripcion"));
         producto.setPrecio(rs.getBigDecimal("precio"));
         producto.setPrecioBase(rs.getBigDecimal("precio_base"));
         producto.setTipoRetencion(rs.getBigDecimal("tipo_retencion"));

@@ -17,18 +17,16 @@ public class EmpresaDAO {
     
     private static final Logger logger = LoggerFactory.getLogger(EmpresaDAO.class);
     
-    // Consultas SQL
+    // Consultas SQL actualizadas según el nuevo esquema
     private static final String SQL_INSERT = 
         "INSERT INTO Empresa (nombre_comercial, razon_social, nif, direccion, " +
-        "codigo_postal, ciudad, provincia, pais, telefono, email, web, " +
-        "tipo_retencion_irpf, activo, por_defecto) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "telefono, email, tipo_retencion_irpf, por_defecto) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     
     private static final String SQL_UPDATE = 
         "UPDATE Empresa SET nombre_comercial = ?, razon_social = ?, nif = ?, " +
-        "direccion = ?, codigo_postal = ?, ciudad = ?, provincia = ?, pais = ?, " +
-        "telefono = ?, email = ?, web = ?, tipo_retencion_irpf = ?, " +
-        "activo = ?, por_defecto = ? WHERE id_empresa = ?";
+        "direccion = ?, telefono = ?, email = ?, tipo_retencion_irpf = ?, " +
+        "por_defecto = ? WHERE id_empresa = ?";
     
     private static final String SQL_SELECT_ALL = 
         "SELECT * FROM Empresa ORDER BY nombre_comercial";
@@ -37,7 +35,7 @@ public class EmpresaDAO {
         "SELECT * FROM Empresa WHERE id_empresa = ?";
     
     private static final String SQL_SELECT_POR_DEFECTO = 
-        "SELECT * FROM Empresa WHERE por_defecto = TRUE AND activo = TRUE LIMIT 1";
+        "SELECT * FROM Empresa WHERE por_defecto = TRUE LIMIT 1";
     
     private static final String SQL_DESACTIVAR_POR_DEFECTO = 
         "UPDATE Empresa SET por_defecto = FALSE WHERE por_defecto = TRUE";
@@ -45,11 +43,11 @@ public class EmpresaDAO {
     private static final String SQL_DELETE = 
         "DELETE FROM Empresa WHERE id_empresa = ?";
     
+    private static final String SQL_EXISTS_NIF = 
+        "SELECT COUNT(*) FROM Empresa WHERE nif = ? AND (? IS NULL OR id_empresa != ?)";
+    
     /**
      * Inserta una nueva empresa en la base de datos
-     * 
-     * @param empresa La empresa a insertar
-     * @return El ID generado o null si hubo error
      */
     public Integer insertar(Empresa empresa) {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -80,16 +78,13 @@ public class EmpresaDAO {
     
     /**
      * Actualiza una empresa existente
-     * 
-     * @param empresa La empresa a actualizar
-     * @return true si se actualizó correctamente
      */
     public boolean actualizar(Empresa empresa) {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
             
             setEmpresaParameters(stmt, empresa);
-            stmt.setInt(15, empresa.getIdEmpresa());
+            stmt.setInt(9, empresa.getIdEmpresa());
             
             int filasAfectadas = stmt.executeUpdate();
             
@@ -107,8 +102,6 @@ public class EmpresaDAO {
     
     /**
      * Obtiene todas las empresas
-     * 
-     * @return Lista de empresas
      */
     public List<Empresa> obtenerTodas() {
         List<Empresa> empresas = new ArrayList<>();
@@ -132,9 +125,6 @@ public class EmpresaDAO {
     
     /**
      * Obtiene una empresa por su ID
-     * 
-     * @param id El ID de la empresa
-     * @return La empresa encontrada o null
      */
     public Empresa obtenerPorId(Integer id) {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -157,8 +147,6 @@ public class EmpresaDAO {
     
     /**
      * Obtiene la empresa configurada por defecto
-     * 
-     * @return La empresa por defecto o null
      */
     public Empresa obtenerPorDefecto() {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -192,10 +180,7 @@ public class EmpresaDAO {
     }
     
     /**
-     * Elimina una empresa (usar con precaución)
-     * 
-     * @param id El ID de la empresa a eliminar
-     * @return true si se eliminó correctamente
+     * Elimina una empresa
      */
     public boolean eliminar(Integer id) {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -217,6 +202,30 @@ public class EmpresaDAO {
     }
     
     /**
+     * Verifica si existe una empresa con el NIF dado
+     */
+    public boolean existeNif(String nif, Integer excludeId) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_EXISTS_NIF)) {
+            
+            stmt.setString(1, nif);
+            stmt.setObject(2, excludeId);
+            stmt.setObject(3, excludeId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+            
+        } catch (SQLException e) {
+            logger.error("Error al verificar NIF de empresa", e);
+        }
+        
+        return false;
+    }
+    
+    /**
      * Establece los parámetros de un PreparedStatement con los datos de la empresa
      */
     private void setEmpresaParameters(PreparedStatement stmt, Empresa empresa) 
@@ -225,16 +234,10 @@ public class EmpresaDAO {
         stmt.setString(2, empresa.getRazonSocial());
         stmt.setString(3, empresa.getNif());
         stmt.setString(4, empresa.getDireccion());
-        stmt.setString(5, empresa.getCodigoPostal());
-        stmt.setString(6, empresa.getCiudad());
-        stmt.setString(7, empresa.getProvincia());
-        stmt.setString(8, empresa.getPais());
-        stmt.setString(9, empresa.getTelefono());
-        stmt.setString(10, empresa.getEmail());
-        stmt.setString(11, empresa.getWeb());
-        stmt.setBigDecimal(12, empresa.getTipoRetencionIrpf());
-        stmt.setBoolean(13, empresa.getActivo() != null ? empresa.getActivo() : true);
-        stmt.setBoolean(14, empresa.getPorDefecto() != null ? empresa.getPorDefecto() : false);
+        stmt.setString(5, empresa.getTelefono());
+        stmt.setString(6, empresa.getEmail());
+        stmt.setBigDecimal(7, empresa.getTipoRetencionIrpf());
+        stmt.setBoolean(8, empresa.getPorDefecto() != null ? empresa.getPorDefecto() : false);
     }
     
     /**
@@ -248,18 +251,12 @@ public class EmpresaDAO {
         empresa.setRazonSocial(rs.getString("razon_social"));
         empresa.setNif(rs.getString("nif"));
         empresa.setDireccion(rs.getString("direccion"));
-        empresa.setCodigoPostal(rs.getString("codigo_postal"));
-        empresa.setCiudad(rs.getString("ciudad"));
-        empresa.setProvincia(rs.getString("provincia"));
-        empresa.setPais(rs.getString("pais"));
         empresa.setTelefono(rs.getString("telefono"));
         empresa.setEmail(rs.getString("email"));
-        empresa.setWeb(rs.getString("web"));
         
         BigDecimal retencion = rs.getBigDecimal("tipo_retencion_irpf");
         empresa.setTipoRetencionIrpf(retencion != null ? retencion : new BigDecimal("15.00"));
         
-        empresa.setActivo(rs.getBoolean("activo"));
         empresa.setPorDefecto(rs.getBoolean("por_defecto"));
         
         return empresa;

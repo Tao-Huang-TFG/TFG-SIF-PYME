@@ -19,20 +19,19 @@ public class FacturaDAO {
     private static final Logger logger = LoggerFactory.getLogger(FacturaDAO.class);
     private final LineaFacturaDAO lineaFacturaDAO;
     
+    // Consultas SQL actualizadas según el nuevo esquema
     private static final String SQL_INSERT = 
-        "INSERT INTO Factura (id_empresa, id_cliente, numero_factura, serie, " +
-        "fecha_emision, metodo_pago, subtotal, total_iva, total_retencion, " +
-        "total, observaciones, estado) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO Factura (id_factura, id_empresa, id_cliente, fecha_emision, " +
+        "metodo_pago, subtotal, total_iva, total_retencion, total) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     private static final String SQL_UPDATE = 
-        "UPDATE Factura SET id_empresa = ?, id_cliente = ?, numero_factura = ?, " +
-        "serie = ?, fecha_emision = ?, metodo_pago = ?, subtotal = ?, " +
-        "total_iva = ?, total_retencion = ?, total = ?, observaciones = ?, " +
-        "estado = ? WHERE id_factura = ?";
+        "UPDATE Factura SET id_empresa = ?, id_cliente = ?, fecha_emision = ?, " +
+        "metodo_pago = ?, subtotal = ?, total_iva = ?, total_retencion = ?, " +
+        "total = ? WHERE id_factura = ?";
     
     private static final String SQL_SELECT_ALL = 
-        "SELECT * FROM Factura ORDER BY fecha_emision DESC, numero_factura DESC";
+        "SELECT * FROM Factura ORDER BY fecha_emision DESC";
     
     private static final String SQL_SELECT_BY_ID = 
         "SELECT * FROM Factura WHERE id_factura = ?";
@@ -42,23 +41,29 @@ public class FacturaDAO {
     
     private static final String SQL_SEARCH = 
         "SELECT * FROM Factura WHERE " +
-        "LOWER(numero_factura) LIKE LOWER(?) OR " +
-        "LOWER(serie) LIKE LOWER(?) OR " +
-        "LOWER(estado) LIKE LOWER(?) " +
+        "LOWER(id_factura) LIKE LOWER(?) OR " +
+        "id_cliente IN (SELECT id_cliente FROM Cliente WHERE LOWER(nombre_fiscal) LIKE LOWER(?)) " +
         "ORDER BY fecha_emision DESC";
     
     private static final String SQL_COUNT = 
         "SELECT COUNT(*) FROM Factura";
     
-    private static final String SQL_NEXT_NUMBER = 
-        "SELECT COALESCE(MAX(CAST(numero_factura AS INT)), 0) + 1 " +
-        "FROM Factura WHERE id_empresa = ? AND serie = ? " +
-        "AND numero_factura ~ '^[0-9]+$'";
+    private static final String SQL_NEXT_ID = 
+        "SELECT COALESCE(MAX(CAST(SUBSTRING(id_factura, 4) AS INT)), 0) + 1 " +
+        "FROM Factura WHERE id_factura LIKE 'FAC%' AND SUBSTRING(id_factura, 4) ~ '^[0-9]+$'";
     
-    private static final String SQL_EXISTS_NUMBER = 
+    private static final String SQL_EXISTS_ID = 
         "SELECT COUNT(*) FROM Factura " +
-        "WHERE id_empresa = ? AND serie = ? AND numero_factura = ? " +
-        "AND (? IS NULL OR id_factura != ?)";
+        "WHERE id_factura = ? AND (? IS NULL OR id_factura != ?)";
+    
+    private static final String SQL_SELECT_BY_CLIENTE = 
+        "SELECT * FROM Factura WHERE id_cliente = ? ORDER BY fecha_emision DESC";
+    
+    private static final String SQL_SELECT_BY_EMPRESA = 
+        "SELECT * FROM Factura WHERE id_empresa = ? ORDER BY fecha_emision DESC";
+    
+    private static final String SQL_SELECT_BY_FECHA_RANGO = 
+        "SELECT * FROM Factura WHERE fecha_emision BETWEEN ? AND ? ORDER BY fecha_emision DESC";
     
     public FacturaDAO() {
         this.lineaFacturaDAO = new LineaFacturaDAO();
@@ -67,33 +72,30 @@ public class FacturaDAO {
     /**
      * Inserta una nueva factura con sus líneas en una transacción
      */
-    public Integer insertar(Factura factura) {
+    public boolean insertar(Factura factura) {
         Connection conn = null;
         try {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
             
             // Insertar factura
-            Integer idFactura = insertarFactura(conn, factura);
-            
-            if (idFactura != null) {
-                factura.setIdFactura(idFactura);
+            if (insertarFactura(conn, factura)) {
                 
                 // Insertar líneas
                 if (factura.getLineas() != null && !factura.getLineas().isEmpty()) {
                     for (LineaFactura linea : factura.getLineas()) {
-                        linea.setIdFactura(idFactura);
+                        linea.setIdFactura(factura.getIdFactura());
                         lineaFacturaDAO.insertar(conn, linea);
                     }
                 }
                 
                 conn.commit();
-                logger.info("Factura insertada con ID: {}", idFactura);
-                return idFactura;
+                logger.info("Factura insertada: {}", factura.getIdFactura());
+                return true;
             }
             
             conn.rollback();
-            return null;
+            return false;
             
         } catch (SQLException e) {
             logger.error("Error al insertar factura", e);
@@ -104,7 +106,7 @@ public class FacturaDAO {
                     logger.error("Error al hacer rollback", ex);
                 }
             }
-            return null;
+            return false;
         } finally {
             if (conn != null) {
                 try {
@@ -120,23 +122,14 @@ public class FacturaDAO {
     /**
      * Inserta solo la factura (sin líneas) en una conexión existente
      */
-    private Integer insertarFactura(Connection conn, Factura factura) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT, 
-                Statement.RETURN_GENERATED_KEYS)) {
+    private boolean insertarFactura(Connection conn, Factura factura) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT)) {
             
             setFacturaParameters(stmt, factura);
             
             int filasAfectadas = stmt.executeUpdate();
-            
-            if (filasAfectadas > 0) {
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        return rs.getInt(1);
-                    }
-                }
-            }
+            return filasAfectadas > 0;
         }
-        return null;
     }
     
     /**
@@ -151,7 +144,7 @@ public class FacturaDAO {
             // Actualizar factura
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
                 setFacturaParameters(stmt, factura);
-                stmt.setInt(13, factura.getIdFactura());
+                stmt.setString(9, factura.getIdFactura());
                 stmt.executeUpdate();
             }
             
@@ -202,7 +195,9 @@ public class FacturaDAO {
              ResultSet rs = stmt.executeQuery(SQL_SELECT_ALL)) {
             
             while (rs.next()) {
-                facturas.add(mapResultSetToFactura(rs));
+                Factura factura = mapResultSetToFactura(rs);
+                cargarLineasFactura(factura);
+                facturas.add(factura);
             }
             
             logger.info("Se obtuvieron {} facturas", facturas.size());
@@ -217,20 +212,16 @@ public class FacturaDAO {
     /**
      * Obtiene una factura por su ID, incluyendo sus líneas
      */
-    public Factura obtenerPorId(Integer id) {
+    public Factura obtenerPorId(String id) {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BY_ID)) {
             
-            stmt.setInt(1, id);
+            stmt.setString(1, id);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     Factura factura = mapResultSetToFactura(rs);
-                    
-                    // Cargar líneas
-                    List<LineaFactura> lineas = lineaFacturaDAO.obtenerPorFactura(id);
-                    factura.setLineas(lineas);
-                    
+                    cargarLineasFactura(factura);
                     return factura;
                 }
             }
@@ -254,11 +245,12 @@ public class FacturaDAO {
             String terminoBusqueda = "%" + termino + "%";
             stmt.setString(1, terminoBusqueda);
             stmt.setString(2, terminoBusqueda);
-            stmt.setString(3, terminoBusqueda);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    facturas.add(mapResultSetToFactura(rs));
+                    Factura factura = mapResultSetToFactura(rs);
+                    cargarLineasFactura(factura);
+                    facturas.add(factura);
                 }
             }
             
@@ -272,13 +264,92 @@ public class FacturaDAO {
     }
     
     /**
+     * Obtiene facturas por cliente
+     */
+    public List<Factura> obtenerPorCliente(Integer idCliente) {
+        List<Factura> facturas = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BY_CLIENTE)) {
+            
+            stmt.setInt(1, idCliente);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Factura factura = mapResultSetToFactura(rs);
+                    cargarLineasFactura(factura);
+                    facturas.add(factura);
+                }
+            }
+            
+        } catch (SQLException e) {
+            logger.error("Error al obtener facturas por cliente", e);
+        }
+        
+        return facturas;
+    }
+    
+    /**
+     * Obtiene facturas por empresa
+     */
+    public List<Factura> obtenerPorEmpresa(Integer idEmpresa) {
+        List<Factura> facturas = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BY_EMPRESA)) {
+            
+            stmt.setInt(1, idEmpresa);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Factura factura = mapResultSetToFactura(rs);
+                    cargarLineasFactura(factura);
+                    facturas.add(factura);
+                }
+            }
+            
+        } catch (SQLException e) {
+            logger.error("Error al obtener facturas por empresa", e);
+        }
+        
+        return facturas;
+    }
+    
+    /**
+     * Obtiene facturas por rango de fechas
+     */
+    public List<Factura> obtenerPorRangoFechas(LocalDate desde, LocalDate hasta) {
+        List<Factura> facturas = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BY_FECHA_RANGO)) {
+            
+            stmt.setDate(1, Date.valueOf(desde));
+            stmt.setDate(2, Date.valueOf(hasta));
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Factura factura = mapResultSetToFactura(rs);
+                    cargarLineasFactura(factura);
+                    facturas.add(factura);
+                }
+            }
+            
+        } catch (SQLException e) {
+            logger.error("Error al obtener facturas por rango de fechas", e);
+        }
+        
+        return facturas;
+    }
+    
+    /**
      * Elimina una factura y sus líneas (por CASCADE)
      */
-    public boolean eliminar(Integer id) {
+    public boolean eliminar(String id) {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL_DELETE)) {
             
-            stmt.setInt(1, id);
+            stmt.setString(1, id);
             int filasAfectadas = stmt.executeUpdate();
             
             if (filasAfectadas > 0) {
@@ -313,44 +384,37 @@ public class FacturaDAO {
     }
     
     /**
-     * Obtiene el siguiente número de factura para una empresa y serie
+     * Genera el siguiente ID de factura
      */
-    public String obtenerSiguienteNumero(Integer idEmpresa, String serie) {
+    public String generarSiguienteId() {
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SQL_NEXT_NUMBER)) {
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(SQL_NEXT_ID)) {
             
-            stmt.setInt(1, idEmpresa);
-            stmt.setString(2, serie);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    int siguiente = rs.getInt(1);
-                    return String.format("%06d", siguiente);
-                }
+            if (rs.next()) {
+                int siguiente = rs.getInt(1);
+                return String.format("FAC%06d", siguiente);
             }
             
         } catch (SQLException e) {
-            logger.error("Error al obtener siguiente número", e);
+            logger.error("Error al generar siguiente ID de factura", e);
         }
         
-        return "000001";
+        return "FAC000001";
     }
     
     /**
-     * Verifica si existe una factura con el número dado
+     * Verifica si existe una factura con el ID dado
      */
-    public boolean existeNumero(Integer idEmpresa, String serie, 
-                               String numero, Integer excludeId) {
-        String sql = SQL_EXISTS_NUMBER;
+    public boolean existeId(String id, String excludeId) {
+        String sql = SQL_EXISTS_ID;
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setInt(1, idEmpresa);
-            stmt.setString(2, serie);
-            stmt.setString(3, numero);
-            stmt.setObject(4, excludeId);
-            stmt.setObject(5, excludeId);
+            stmt.setString(1, id);
+            stmt.setObject(2, excludeId);
+            stmt.setObject(3, excludeId);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -359,10 +423,20 @@ public class FacturaDAO {
             }
             
         } catch (SQLException e) {
-            logger.error("Error al verificar número duplicado", e);
+            logger.error("Error al verificar ID duplicado", e);
         }
         
         return false;
+    }
+    
+    /**
+     * Carga las líneas de una factura
+     */
+    private void cargarLineasFactura(Factura factura) {
+        if (factura != null && factura.getIdFactura() != null) {
+            List<LineaFactura> lineas = lineaFacturaDAO.obtenerPorFactura(factura.getIdFactura());
+            factura.setLineas(lineas);
+        }
     }
     
     /**
@@ -370,18 +444,15 @@ public class FacturaDAO {
      */
     private void setFacturaParameters(PreparedStatement stmt, Factura factura) 
             throws SQLException {
-        stmt.setInt(1, factura.getIdEmpresa());
-        stmt.setInt(2, factura.getIdCliente());
-        stmt.setString(3, factura.getNumeroFactura());
-        stmt.setString(4, factura.getSerie());
-        stmt.setDate(5, Date.valueOf(factura.getFechaEmision()));
-        stmt.setString(6, factura.getMetodoPago());
-        stmt.setBigDecimal(7, factura.getSubtotal());
-        stmt.setBigDecimal(8, factura.getTotalIva());
-        stmt.setBigDecimal(9, factura.getTotalRetencion());
-        stmt.setBigDecimal(10, factura.getTotal());
-        stmt.setString(11, factura.getObservaciones());
-        stmt.setString(12, factura.getEstado());
+        stmt.setString(1, factura.getIdFactura());
+        stmt.setInt(2, factura.getIdEmpresa());
+        stmt.setInt(3, factura.getIdCliente());
+        stmt.setDate(4, Date.valueOf(factura.getFechaEmision()));
+        stmt.setString(5, factura.getMetodoPago());
+        stmt.setBigDecimal(6, factura.getSubtotal());
+        stmt.setBigDecimal(7, factura.getTotalIva());
+        stmt.setBigDecimal(8, factura.getTotalRetencion());
+        stmt.setBigDecimal(9, factura.getTotal());
     }
     
     /**
@@ -390,11 +461,9 @@ public class FacturaDAO {
     private Factura mapResultSetToFactura(ResultSet rs) throws SQLException {
         Factura factura = new Factura();
         
-        factura.setIdFactura(rs.getInt("id_factura"));
+        factura.setIdFactura(rs.getString("id_factura"));
         factura.setIdEmpresa(rs.getInt("id_empresa"));
         factura.setIdCliente(rs.getInt("id_cliente"));
-        factura.setNumeroFactura(rs.getString("numero_factura"));
-        factura.setSerie(rs.getString("serie"));
         
         Date fecha = rs.getDate("fecha_emision");
         factura.setFechaEmision(fecha != null ? fecha.toLocalDate() : LocalDate.now());
@@ -404,13 +473,6 @@ public class FacturaDAO {
         factura.setTotalIva(rs.getBigDecimal("total_iva"));
         factura.setTotalRetencion(rs.getBigDecimal("total_retencion"));
         factura.setTotal(rs.getBigDecimal("total"));
-        factura.setObservaciones(rs.getString("observaciones"));
-        factura.setEstado(rs.getString("estado"));
-        
-        Timestamp fechaCreacion = rs.getTimestamp("fecha_creacion");
-        if (fechaCreacion != null) {
-            factura.setFechaCreacion(fechaCreacion.toLocalDateTime());
-        }
         
         return factura;
     }

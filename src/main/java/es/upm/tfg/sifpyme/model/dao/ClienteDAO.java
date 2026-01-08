@@ -16,7 +16,7 @@ public class ClienteDAO {
     
     private static final Logger logger = LoggerFactory.getLogger(ClienteDAO.class);
     
-    // Consultas SQL
+    // Las consultas SQL ya están correctas para el nuevo esquema
     private static final String SQL_INSERT = 
         "INSERT INTO Cliente (nombre_fiscal, nif, direccion, telefono, email) " +
         "VALUES (?, ?, ?, ?, ?)";
