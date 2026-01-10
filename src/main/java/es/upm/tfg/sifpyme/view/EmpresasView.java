@@ -49,7 +49,7 @@ public class EmpresasView extends BaseListView<Empresa> {
     @Override
     protected String[] getNombresColumnas() {
         return new String[] {
-                "ID", "Nombre Comercial", "Razón Social", "NIF",
+                "ID", "Razón Social", "NIF",
                 "Dirección", "Teléfono", "Email", "Por Defecto"
         };
     }
@@ -77,13 +77,12 @@ public class EmpresasView extends BaseListView<Empresa> {
     @Override
     protected void configurarAnchoColumnas() {
         tabla.getColumnModel().getColumn(0).setPreferredWidth(50);
-        tabla.getColumnModel().getColumn(1).setPreferredWidth(200);
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(200);
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(250); // Dirección
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(120); // Teléfono
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(200); // Email
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(100); // Por Defecto
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(300); // Razón Social (más ancha)
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(250); // Dirección
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(120); // Teléfono
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(200); // Email
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(100); // Por Defecto
     }
 
     @Override
@@ -99,7 +98,6 @@ public class EmpresasView extends BaseListView<Empresa> {
         for (Empresa empresa : empresas) {
             Object[] fila = {
                     empresa.getIdEmpresa(),
-                    empresa.getNombreComercial(),
                     empresa.getRazonSocial(),
                     empresa.getNif(),
                     empresa.getDireccion() != null ? empresa.getDireccion() : "",

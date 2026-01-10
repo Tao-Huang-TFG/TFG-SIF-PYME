@@ -17,19 +17,19 @@ public class EmpresaDAO {
     
     private static final Logger logger = LoggerFactory.getLogger(EmpresaDAO.class);
     
-    // Consultas SQL actualizadas según el nuevo esquema
+    // Consultas SQL actualizadas (sin nombre_comercial)
     private static final String SQL_INSERT = 
-        "INSERT INTO Empresa (nombre_comercial, razon_social, nif, direccion, " +
+        "INSERT INTO Empresa (razon_social, nif, direccion, " +
         "telefono, email, tipo_retencion_irpf, por_defecto) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        "VALUES (?, ?, ?, ?, ?, ?, ?)";
     
     private static final String SQL_UPDATE = 
-        "UPDATE Empresa SET nombre_comercial = ?, razon_social = ?, nif = ?, " +
+        "UPDATE Empresa SET razon_social = ?, nif = ?, " +
         "direccion = ?, telefono = ?, email = ?, tipo_retencion_irpf = ?, " +
         "por_defecto = ? WHERE id_empresa = ?";
     
     private static final String SQL_SELECT_ALL = 
-        "SELECT * FROM Empresa ORDER BY nombre_comercial";
+        "SELECT * FROM Empresa ORDER BY razon_social";
     
     private static final String SQL_SELECT_BY_ID = 
         "SELECT * FROM Empresa WHERE id_empresa = ?";
@@ -230,14 +230,13 @@ public class EmpresaDAO {
      */
     private void setEmpresaParameters(PreparedStatement stmt, Empresa empresa) 
             throws SQLException {
-        stmt.setString(1, empresa.getNombreComercial());
-        stmt.setString(2, empresa.getRazonSocial());
-        stmt.setString(3, empresa.getNif());
-        stmt.setString(4, empresa.getDireccion());
-        stmt.setString(5, empresa.getTelefono());
-        stmt.setString(6, empresa.getEmail());
-        stmt.setBigDecimal(7, empresa.getTipoRetencionIrpf());
-        stmt.setBoolean(8, empresa.getPorDefecto() != null ? empresa.getPorDefecto() : false);
+        stmt.setString(1, empresa.getRazonSocial());
+        stmt.setString(2, empresa.getNif());
+        stmt.setString(3, empresa.getDireccion());
+        stmt.setString(4, empresa.getTelefono());
+        stmt.setString(5, empresa.getEmail());
+        stmt.setBigDecimal(6, empresa.getTipoRetencionIrpf());
+        stmt.setBoolean(7, empresa.getPorDefecto() != null ? empresa.getPorDefecto() : false);
     }
     
     /**
@@ -247,7 +246,6 @@ public class EmpresaDAO {
         Empresa empresa = new Empresa();
         
         empresa.setIdEmpresa(rs.getInt("id_empresa"));
-        empresa.setNombreComercial(rs.getString("nombre_comercial"));
         empresa.setRazonSocial(rs.getString("razon_social"));
         empresa.setNif(rs.getString("nif"));
         empresa.setDireccion(rs.getString("direccion"));

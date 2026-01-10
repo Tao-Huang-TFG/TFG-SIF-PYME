@@ -112,7 +112,7 @@ public class FacturasView extends BaseListView<Factura> {
                 factura.getCliente().getNombreFiscal() : "";
             
             String nombreEmpresa = factura.getEmpresa() != null ? 
-                factura.getEmpresa().getNombreComercial() : "";
+                factura.getEmpresa().getRazonSocial() : "";
 
             Object[] fila = {
                 factura.getIdFactura(),  // CAMBIADO: ID completo

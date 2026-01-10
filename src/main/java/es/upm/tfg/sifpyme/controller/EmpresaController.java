@@ -27,7 +27,7 @@ public class EmpresaController {
      */
     public boolean guardarEmpresa(Empresa empresa) {
         try {
-            logger.info("Guardando empresa: {}", empresa.getNombreComercial());
+            logger.info("Guardando empresa: {}", empresa.getRazonSocial());
             
             // Validaciones adicionales del controlador
             if (!validarEmpresa(empresa)) {
@@ -144,11 +144,6 @@ public class EmpresaController {
     private boolean validarEmpresa(Empresa empresa) {
         if (empresa == null) {
             logger.warn("Empresa es null");
-            return false;
-        }
-        
-        if (empresa.getNombreComercial() == null || empresa.getNombreComercial().trim().isEmpty()) {
-            logger.warn("Nombre comercial vacío");
             return false;
         }
         

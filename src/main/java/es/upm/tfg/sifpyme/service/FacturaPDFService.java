@@ -9,6 +9,7 @@ import es.upm.tfg.sifpyme.model.entity.LineaFactura;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -82,6 +83,7 @@ public class FacturaPDFService {
         }
 
         Document document = new Document(PageSize.A4, 40, 40, 50, 50);
+        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
         
         document.open();
         
@@ -108,7 +110,7 @@ public class FacturaPDFService {
         PdfPCell cellEmpresa = new PdfPCell();
         cellEmpresa.setBorder(Rectangle.NO_BORDER);
         
-        Paragraph nombreEmpresa = new Paragraph(factura.getEmpresa().getNombreComercial(), fuenteTitulo);
+        Paragraph nombreEmpresa = new Paragraph(factura.getEmpresa().getRazonSocial(), fuenteTitulo);
         nombreEmpresa.setSpacingAfter(5);
         cellEmpresa.addElement(nombreEmpresa);
         

@@ -18,7 +18,6 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
     private final EmpresaController controller;
 
     // Campos específicos de empresa (solo los que existen en el modelo)
-    private JTextField txtNombreComercial;
     private JTextField txtRazonSocial;
     private JTextField txtNif;
     private JTextField txtDireccion;
@@ -66,7 +65,6 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
     @Override
     protected void inicializarCamposEspecificos() {
         // Solo inicializar campos que existen en el modelo Empresa
-        txtNombreComercial = UIHelper.crearCampoTexto(30);
         txtRazonSocial = UIHelper.crearCampoTexto(30);
         txtNif = UIHelper.crearCampoTexto(15);
         txtDireccion = UIHelper.crearCampoTexto(40);
@@ -96,19 +94,13 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
         // Panel de datos básicos
         JPanel datosBasicos = UIHelper.crearSeccionPanel("Datos Básicos", COLOR_PRIMARIO);
-        addFormField(datosBasicos, "Nombre Comercial:", txtNombreComercial, true, 0);
         addFormField(datosBasicos, "Razón Social:", txtRazonSocial, true, 1);
         addFormField(datosBasicos, "NIF:", txtNif, true, 2);
+        addFormField(datosBasicos, "Dirección:", txtDireccion, true, 0);
         panel.add(datosBasicos, gbc);
 
-        // Panel de dirección (solo dirección, sin ciudad/provincia/código postal)
-        gbc.gridy = 1;
-        JPanel direccionPanel = UIHelper.crearSeccionPanel("Dirección", COLOR_PRIMARIO);
-        addFormField(direccionPanel, "Dirección:", txtDireccion, true, 0);
-        panel.add(direccionPanel, gbc);
-
         // Panel de contacto (sin sitio web)
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         JPanel contactoPanel = UIHelper.crearSeccionPanel("Contacto y Datos Fiscales", COLOR_PRIMARIO);
         addFormField(contactoPanel, "Teléfono:", txtTelefono, false, 0);
         addFormField(contactoPanel, "Email:", txtEmail, false, 1);
@@ -117,7 +109,7 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
         // Checkbox de empresa por defecto
         GridBagConstraints gbcCheck = new GridBagConstraints();
         gbcCheck.gridx = 0;
-        gbcCheck.gridy = 3;
+        gbcCheck.gridy = 2;
         gbcCheck.gridwidth = 2;
         gbcCheck.anchor = GridBagConstraints.WEST;
         gbcCheck.insets = new Insets(15, 0, 0, 0);
@@ -136,7 +128,6 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
     @Override
     protected void cargarDatosEntidad() {
         if (entidadEditar != null) {
-            txtNombreComercial.setText(entidadEditar.getNombreComercial());
             txtRazonSocial.setText(entidadEditar.getRazonSocial());
             txtNif.setText(entidadEditar.getNif());
             
@@ -161,9 +152,6 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
     protected boolean validarCampos() {
         StringBuilder errores = new StringBuilder();
 
-        if (txtNombreComercial.getText().trim().isEmpty()) {
-            errores.append("• Nombre Comercial es obligatorio\n");
-        }
         if (txtRazonSocial.getText().trim().isEmpty()) {
             errores.append("• Razón Social es obligatoria\n");
         }
@@ -206,8 +194,7 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
             if (modoEdicion && entidadEditar != null) {
                 empresa.setIdEmpresa(entidadEditar.getIdEmpresa());
             }
-
-            empresa.setNombreComercial(txtNombreComercial.getText().trim());
+            
             empresa.setRazonSocial(txtRazonSocial.getText().trim());
             empresa.setNif(txtNif.getText().trim().toUpperCase());
             empresa.setDireccion(txtDireccion.getText().trim());

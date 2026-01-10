@@ -9,7 +9,6 @@ import java.util.Objects;
 public class Empresa {
 
     private Integer idEmpresa;
-    private String nombreComercial;
     private String razonSocial;
     private String nif;
     private String direccion;
@@ -23,9 +22,8 @@ public class Empresa {
         this.porDefecto = false;
     }
 
-    public Empresa(String nombreComercial, String razonSocial, String nif, String direccion) {
+    public Empresa(String razonSocial, String nif, String direccion) {
         this();
-        this.nombreComercial = nombreComercial;
         this.razonSocial = razonSocial;
         this.nif = nif;
         this.direccion = direccion;
@@ -38,14 +36,6 @@ public class Empresa {
 
     public void setIdEmpresa(Integer idEmpresa) {
         this.idEmpresa = idEmpresa;
-    }
-
-    public String getNombreComercial() {
-        return nombreComercial;
-    }
-
-    public void setNombreComercial(String nombreComercial) {
-        this.nombreComercial = nombreComercial;
     }
 
     public String getRazonSocial() {
@@ -120,6 +110,6 @@ public class Empresa {
 
     @Override
     public String toString() {
-        return nombreComercial + " (" + nif + ")";
+        return razonSocial + " (" + nif + ")";
     }
 }
