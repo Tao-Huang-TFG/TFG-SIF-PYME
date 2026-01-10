@@ -2,7 +2,6 @@ package es.upm.tfg.sifpyme.view;
 
 import es.upm.tfg.sifpyme.controller.ProductoController;
 import es.upm.tfg.sifpyme.model.entity.Producto;
-import es.upm.tfg.sifpyme.model.entity.TipoIva;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -11,12 +10,11 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 
 /**
  * Formulario para registro/edición de producto
- * REFACTORIZADO: Ahora usa UIHelper y UITheme
- * Con cálculo automático de Precio <-> PrecioBase según el IVA seleccionado
+ * CORREGIDO: Simplificado - eliminada referencia a TipoIva
+ * El producto ahora tiene tipo_iva como BigDecimal directamente
  */
 public class ProductoFormView extends BaseFormView<Producto> {
 
@@ -25,10 +23,9 @@ public class ProductoFormView extends BaseFormView<Producto> {
     // Campos específicos de producto
     private JTextField txtCodigo;
     private JTextField txtNombre;
-    private JTextArea txtDescripcion;
     private JTextField txtPrecio;
     private JTextField txtPrecioBase;
-    private JComboBox<TipoIva> cmbTipoIva;
+    private JTextField txtTipoIva;  // CAMBIADO: De JComboBox a JTextField
     private JTextField txtTipoRetencion;
 
     // Flags para evitar bucles infinitos en el cálculo
@@ -42,12 +39,10 @@ public class ProductoFormView extends BaseFormView<Producto> {
     public ProductoFormView(CardLayout cardLayout, JPanel cardPanel, Producto productoEditar) {
         super(cardLayout, cardPanel, productoEditar);
         this.controller = new ProductoController();
-        cargarTiposIva();
     }
 
     @Override
     protected void configurarColores() {
-        // Usar el color definido en UITheme para productos
         COLOR_PRIMARIO = UITheme.COLOR_PRODUCTOS;
     }
 
@@ -63,7 +58,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     @Override
     protected String getIconoFormulario() {
-        // Usar el icono centralizado de UITheme
         return UITheme.ICONO_PRODUCTOS;
     }
 
@@ -74,37 +68,25 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     @Override
     protected void inicializarCamposEspecificos() {
-        // Usar UIHelper para crear campos consistentes
         txtCodigo = UIHelper.crearCampoTexto(20);
         txtNombre = UIHelper.crearCampoTexto(30);
-
-        txtDescripcion = UIHelper.crearAreaTexto(3, 30);
-
         txtPrecio = UIHelper.crearCampoTexto(15);
         txtPrecioBase = UIHelper.crearCampoTexto(15);
+        
+        // CAMBIADO: txtTipoIva ahora es JTextField en vez de JComboBox
+        txtTipoIva = UIHelper.crearCampoTexto(10);
+        txtTipoIva.setText("21.00");
+        txtTipoIva.setPreferredSize(new Dimension(100, 35));
+        
         txtTipoRetencion = UIHelper.crearCampoTexto(10);
         txtTipoRetencion.setText("0.00");
-
-        // ComboBox de tipos de IVA usando UIHelper
-        cmbTipoIva = UIHelper.crearComboBox();
 
         // Configurar listeners para cálculo automático
         configurarCalculoAutomatico();
     }
 
-    private void cargarTiposIva() {
-        List<TipoIva> tipos = controller.obtenerTiposIva();
-        for (TipoIva tipo : tipos) {
-            cmbTipoIva.addItem(tipo);
-        }
-        if (!tipos.isEmpty()) {
-            cmbTipoIva.setSelectedIndex(0);
-        }
-    }
-
     /**
      * Configura los listeners para el cálculo automático bidireccional
-     * Precio (con IVA) <-> PrecioBase (sin IVA)
      */
     private void configurarCalculoAutomatico() {
         // Listener para Precio (con IVA) -> calcula PrecioBase
@@ -144,16 +126,30 @@ public class ProductoFormView extends BaseFormView<Producto> {
         });
 
         // Listener para cambio de IVA -> recalcula según el campo que esté lleno
-        cmbTipoIva.addActionListener(e -> recalcularSegunCampoActivo());
+        txtTipoIva.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                recalcularSegunCampoActivo();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                recalcularSegunCampoActivo();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                recalcularSegunCampoActivo();
+            }
+        });
     }
 
     /**
      * Calcula el PrecioBase a partir del Precio (con IVA)
-     * Fórmula: PrecioBase = Precio / (1 + IVA/100)
      */
     private void calcularPrecioBase() {
         if (calculandoPrecioBase)
-            return; // Evitar bucle infinito
+            return;
 
         String precioStr = txtPrecio.getText().trim();
         if (precioStr.isEmpty()) {
@@ -164,11 +160,10 @@ public class ProductoFormView extends BaseFormView<Producto> {
             calculandoPrecio = true;
 
             BigDecimal precio = new BigDecimal(precioStr);
-            TipoIva tipoIva = (TipoIva) cmbTipoIva.getSelectedItem();
-
-            if (tipoIva != null && precio.compareTo(BigDecimal.ZERO) > 0) {
-                // Fórmula: PrecioBase = Precio / (1 + IVA/100)
-                BigDecimal porcentajeIva = tipoIva.getPorcentaje();
+            String ivaStr = txtTipoIva.getText().trim();
+            
+            if (!ivaStr.isEmpty() && precio.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal porcentajeIva = new BigDecimal(ivaStr);
                 BigDecimal divisor = BigDecimal.ONE
                         .add(porcentajeIva.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP));
                 BigDecimal precioBase = precio.divide(divisor, 2, RoundingMode.HALF_UP);
@@ -185,11 +180,10 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     /**
      * Calcula el Precio a partir del PrecioBase (sin IVA)
-     * Fórmula: Precio = PrecioBase * (1 + IVA/100)
      */
     private void calcularPrecio() {
         if (calculandoPrecio)
-            return; // Evitar bucle infinito
+            return;
 
         String precioBaseStr = txtPrecioBase.getText().trim();
         if (precioBaseStr.isEmpty()) {
@@ -200,11 +194,10 @@ public class ProductoFormView extends BaseFormView<Producto> {
             calculandoPrecioBase = true;
 
             BigDecimal precioBase = new BigDecimal(precioBaseStr);
-            TipoIva tipoIva = (TipoIva) cmbTipoIva.getSelectedItem();
+            String ivaStr = txtTipoIva.getText().trim();
 
-            if (tipoIva != null && precioBase.compareTo(BigDecimal.ZERO) > 0) {
-                // Fórmula: Precio = PrecioBase * (1 + IVA/100)
-                BigDecimal porcentajeIva = tipoIva.getPorcentaje();
+            if (!ivaStr.isEmpty() && precioBase.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal porcentajeIva = new BigDecimal(ivaStr);
                 BigDecimal multiplicador = BigDecimal.ONE
                         .add(porcentajeIva.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP));
                 BigDecimal precio = precioBase.multiply(multiplicador).setScale(2, RoundingMode.HALF_UP);
@@ -220,15 +213,12 @@ public class ProductoFormView extends BaseFormView<Producto> {
     }
 
     /**
-     * Recalcula el precio cuando cambia el IVA, basándose en el último campo
-     * editado
+     * Recalcula el precio cuando cambia el IVA
      */
     private void recalcularSegunCampoActivo() {
         String precioStr = txtPrecio.getText().trim();
         String precioBaseStr = txtPrecioBase.getText().trim();
 
-        // Priorizar PrecioBase si ambos están llenos (es más común trabajar con precios
-        // sin IVA)
         if (!precioBaseStr.isEmpty()) {
             calcularPrecio();
         } else if (!precioStr.isEmpty()) {
@@ -250,11 +240,10 @@ public class ProductoFormView extends BaseFormView<Producto> {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 15, 0);
 
-        // Panel de datos básicos usando UIHelper
+        // Panel de datos básicos
         JPanel datosPanel = UIHelper.crearSeccionPanel("Información del Producto", COLOR_PRIMARIO);
         addFormField(datosPanel, "Código:", txtCodigo, true, 0);
         addFormField(datosPanel, "Nombre:", txtNombre, true, 1);
-        addFormFieldTextArea(datosPanel, "Descripción:", txtDescripcion, false, 2);
         panel.add(datosPanel, gbc);
 
         // Panel de precios CON INDICACIONES
@@ -264,11 +253,11 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
         addFormField(preciosPanel, "Precio (con IVA):", txtPrecio, false, 1);
         addFormField(preciosPanel, "Precio Base (sin IVA):", txtPrecioBase, false, 2);
-        addFormFieldCombo(preciosPanel, "Tipo de IVA:", cmbTipoIva, true, 3);
+        addFormField(preciosPanel, "Tipo de IVA (%):", txtTipoIva, true, 3);
         addFormField(preciosPanel, "% Retención:", txtTipoRetencion, false, 4);
         panel.add(preciosPanel, gbc);
 
-        // Nota informativa adicional
+        // Nota informativa
         JLabel lblNota = new JLabel(
                 "<html><i>* El sistema calculará automáticamente el precio con/sin IVA según el que introduzcas</i></html>");
         lblNota.setFont(UITheme.FUENTE_SUBTITULO);
@@ -285,10 +274,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
         return panel;
     }
 
-    /**
-     * Crea un panel de sección con título y texto de ayuda
-     * REFACTORIZADO: Usa UITheme para colores y fuentes
-     */
     private JPanel crearSeccionPanelConAyuda(String titulo, String textoAyuda) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
@@ -308,7 +293,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
         lblTitulo.setForeground(COLOR_PRIMARIO);
         panel.add(lblTitulo, gbc);
 
-        // Texto de ayuda usando fuentes de UITheme
         gbc.gridy = 1;
         gbc.insets = new Insets(0, 0, 15, 0);
         JLabel lblAyuda = new JLabel("<html>" + textoAyuda + "</html>");
@@ -327,10 +311,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
             }
             txtNombre.setText(entidadEditar.getNombre());
 
-            if (entidadEditar.getDescripcion() != null) {
-                txtDescripcion.setText(entidadEditar.getDescripcion());
-            }
-
             // Cargar precios (desactivar listeners temporalmente)
             calculandoPrecio = true;
             calculandoPrecioBase = true;
@@ -345,19 +325,13 @@ public class ProductoFormView extends BaseFormView<Producto> {
             calculandoPrecio = false;
             calculandoPrecioBase = false;
 
-            if (entidadEditar.getTipoRetencion() != null) {
-                txtTipoRetencion.setText(entidadEditar.getTipoRetencion().toString());
+            // CAMBIADO: Cargar tipo IVA directamente
+            if (entidadEditar.getTipoIva() != null) {
+                txtTipoIva.setText(entidadEditar.getTipoIva().toString());
             }
 
-            // Seleccionar el tipo de IVA correspondiente
-            if (entidadEditar.getIdTipoIva() != null) {
-                for (int i = 0; i < cmbTipoIva.getItemCount(); i++) {
-                    TipoIva tipo = cmbTipoIva.getItemAt(i);
-                    if (tipo.getIdTipoIva().equals(entidadEditar.getIdTipoIva())) {
-                        cmbTipoIva.setSelectedIndex(i);
-                        break;
-                    }
-                }
+            if (entidadEditar.getTipoRetencion() != null) {
+                txtTipoRetencion.setText(entidadEditar.getTipoRetencion().toString());
             }
         }
     }
@@ -404,6 +378,22 @@ public class ProductoFormView extends BaseFormView<Producto> {
             errores.append("• Formato de precio base inválido\n");
         }
 
+        // Validar IVA
+        String iva = txtTipoIva.getText().trim();
+        if (iva.isEmpty()) {
+            errores.append("• Tipo de IVA es obligatorio\n");
+        } else {
+            try {
+                BigDecimal ivaVal = new BigDecimal(iva);
+                if (ivaVal.compareTo(BigDecimal.ZERO) < 0 || ivaVal.compareTo(new BigDecimal("100")) > 0) {
+                    errores.append("• El tipo de IVA debe estar entre 0 y 100\n");
+                }
+            } catch (NumberFormatException e) {
+                errores.append("• Formato de IVA inválido\n");
+            }
+        }
+
+        // Validar retención
         String retencion = txtTipoRetencion.getText().trim();
         if (!retencion.isEmpty()) {
             try {
@@ -414,10 +404,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
             } catch (NumberFormatException e) {
                 errores.append("• Formato de retención inválido\n");
             }
-        }
-
-        if (cmbTipoIva.getSelectedItem() == null) {
-            errores.append("• Debe seleccionar un tipo de IVA\n");
         }
 
         if (errores.length() > 0) {
@@ -441,9 +427,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
         producto.setNombre(txtNombre.getText().trim());
 
-        String descripcion = txtDescripcion.getText().trim();
-        producto.setDescripcion(descripcion.isEmpty() ? null : descripcion);
-
         // Precios
         String precio = txtPrecio.getText().trim();
         producto.setPrecio(precio.isEmpty() ? null : new BigDecimal(precio));
@@ -451,11 +434,9 @@ public class ProductoFormView extends BaseFormView<Producto> {
         String precioBase = txtPrecioBase.getText().trim();
         producto.setPrecioBase(precioBase.isEmpty() ? null : new BigDecimal(precioBase));
 
-        // Tipo IVA
-        TipoIva tipoIvaSeleccionado = (TipoIva) cmbTipoIva.getSelectedItem();
-        if (tipoIvaSeleccionado != null) {
-            producto.setIdTipoIva(tipoIvaSeleccionado.getIdTipoIva());
-        }
+        // CAMBIADO: Tipo IVA como BigDecimal directamente
+        String iva = txtTipoIva.getText().trim();
+        producto.setTipoIva(iva.isEmpty() ? new BigDecimal("21.00") : new BigDecimal(iva));
 
         // Retención
         String retencion = txtTipoRetencion.getText().trim();
@@ -464,7 +445,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
         boolean success = modoEdicion ? controller.actualizarProducto(producto) : controller.guardarProducto(producto);
 
         if (!success) {
-            // Verificar si es por código duplicado
             if (producto.getCodigo() != null &&
                     controller.obtenerProductoPorCodigo(producto.getCodigo()) != null) {
                 JOptionPane.showMessageDialog(

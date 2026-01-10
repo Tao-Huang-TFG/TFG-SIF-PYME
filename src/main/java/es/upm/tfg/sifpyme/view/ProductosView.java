@@ -2,7 +2,6 @@ package es.upm.tfg.sifpyme.view;
 
 import es.upm.tfg.sifpyme.controller.ProductoController;
 import es.upm.tfg.sifpyme.model.entity.Producto;
-import es.upm.tfg.sifpyme.model.entity.TipoIva;
 
 import javax.swing.*;
 import java.math.BigDecimal;
@@ -10,7 +9,7 @@ import java.util.List;
 
 /**
  * Vista de lista de productos
- * REFACTORIZADO: Ahora usa UIHelper y UITheme
+ * CORREGIDO: Eliminada referencia a TipoIva - ahora usa tipo_iva directo
  */
 public class ProductosView extends BaseListView<Producto> {
 
@@ -50,7 +49,7 @@ public class ProductosView extends BaseListView<Producto> {
     @Override
     protected String[] getNombresColumnas() {
         return new String[]{ 
-            "ID", "Código", "Nombre", "Descripción", 
+            "ID", "Código", "Nombre", 
             "Precio", "Precio Base", "IVA %", "Retención %" 
         };
     }
@@ -77,19 +76,17 @@ public class ProductosView extends BaseListView<Producto> {
 
     @Override
     protected void configurarAnchoColumnas() {
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(50);
-        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(200);
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(250);
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(80);
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);  // Código
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(300);  // Nombre
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(100);  // Precio
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(100);  // Precio Base
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(80);   // IVA %
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(100);  // Retención %
     }
 
     @Override
     protected void cargarDatos() {
-        // Verificar que el controller no sea null
         if (controller == null) {
             controller = new ProductoController();
         }
@@ -99,20 +96,16 @@ public class ProductosView extends BaseListView<Producto> {
         List<Producto> productos = controller.obtenerTodosLosProductos();
 
         for (Producto producto : productos) {
-            // Obtener el porcentaje de IVA
+            // CAMBIADO: Obtener IVA directamente del producto (ya no hay TipoIva)
             String ivaStr = "";
-            if (producto.getIdTipoIva() != null) {
-                TipoIva tipoIva = controller.obtenerTipoIvaPorId(producto.getIdTipoIva());
-                if (tipoIva != null) {
-                    ivaStr = tipoIva.getPorcentaje() + "%";
-                }
+            if (producto.getTipoIva() != null) {
+                ivaStr = producto.getTipoIva() + "%";
             }
 
             Object[] fila = {
                 producto.getIdProducto(),
                 producto.getCodigo() != null ? producto.getCodigo() : "",
                 producto.getNombre(),
-                producto.getDescripcion() != null ? truncarTexto(producto.getDescripcion(), 50) : "",
                 formatearPrecio(producto.getPrecio()),
                 formatearPrecio(producto.getPrecioBase()),
                 ivaStr,
@@ -143,15 +136,7 @@ public class ProductosView extends BaseListView<Producto> {
         return controller.eliminarProducto(id);
     }
 
-    // Métodos auxiliares específicos de Productos
-    private String truncarTexto(String texto, int maxLength) {
-        if (texto == null) return "";
-        if (texto.length() <= maxLength) {
-            return texto;
-        }
-        return texto.substring(0, maxLength) + "...";
-    }
-
+    // Métodos auxiliares
     private String formatearPrecio(BigDecimal valor) {
         if (valor == null) {
             return "";
