@@ -79,51 +79,50 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
     }
 
     @Override
-    protected JPanel crearPanelCampos() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(UITheme.COLOR_FONDO);
-        panel.setBorder(new EmptyBorder(25, 30, 25, 30));
+protected JPanel crearPanelCampos() {
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBackground(UITheme.COLOR_FONDO);
+    panel.setBorder(new EmptyBorder(25, 30, 25, 30));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 0, 15, 0);
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.gridwidth = 2;
+    gbc.weightx = 1.0;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.insets = new Insets(0, 0, 15, 0);
 
-        // Panel de datos básicos
-        JPanel datosBasicos = UIHelper.crearSeccionPanel("Datos Básicos", COLOR_PRIMARIO);
-        addFormField(datosBasicos, "Razón Social:", txtRazonSocial, true, 1);
-        addFormField(datosBasicos, "NIF:", txtNif, true, 2);
-        addFormField(datosBasicos, "Dirección:", txtDireccion, true, 0);
-        panel.add(datosBasicos, gbc);
+    // Panel de datos básicos
+    JPanel datosBasicos = UIHelper.crearSeccionPanel("Datos Básicos", COLOR_PRIMARIO);
+    addFormField(datosBasicos, "Razón Social:", txtRazonSocial, true, 1);
+    addFormField(datosBasicos, "NIF:", txtNif, true, 2);
+    addFormField(datosBasicos, "Dirección:", txtDireccion, true, 0);
+    panel.add(datosBasicos, gbc);
 
-        // Panel de contacto (sin sitio web)
-        gbc.gridy = 1;
-        JPanel contactoPanel = UIHelper.crearSeccionPanel("Contacto y Datos Fiscales", COLOR_PRIMARIO);
-        addFormField(contactoPanel, "Teléfono:", txtTelefono, false, 0);
-        addFormField(contactoPanel, "Email:", txtEmail, false, 1);
-        addFormField(contactoPanel, "% Retención IRPF:", txtTipoRetencionIrpf, false, 2);
-        
-        // Checkbox de empresa por defecto
-        GridBagConstraints gbcCheck = new GridBagConstraints();
-        gbcCheck.gridx = 0;
-        gbcCheck.gridy = 2;
-        gbcCheck.gridwidth = 2;
-        gbcCheck.anchor = GridBagConstraints.WEST;
-        gbcCheck.insets = new Insets(15, 0, 0, 0);
-        contactoPanel.add(chkPorDefecto, gbcCheck);
-        
-        panel.add(contactoPanel, gbc);
+    // Panel de contacto
+    gbc.gridy = 1;
+    gbc.insets = new Insets(0, 0, 15, 0);
+    JPanel contactoPanel = UIHelper.crearSeccionPanel("Contacto y Datos Fiscales", COLOR_PRIMARIO);
+    addFormField(contactoPanel, "Teléfono:", txtTelefono, false, 0);
+    addFormField(contactoPanel, "Email:", txtEmail, false, 1);
+    addFormField(contactoPanel, "% Retención IRPF:", txtTipoRetencionIrpf, false, 2);
+    panel.add(contactoPanel, gbc);
 
-        // Espacio flexible
-        gbc.gridy = 3;
-        gbc.weighty = 1.0;
-        panel.add(Box.createGlue(), gbc);
+    // Panel para el checkbox (fila separada)
+    gbc.gridy = 2;
+    gbc.insets = new Insets(0, 0, 15, 0);
+    JPanel panelCheckbox = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    panelCheckbox.setOpaque(false);
+    panelCheckbox.add(chkPorDefecto);
+    panel.add(panelCheckbox, gbc);
 
-        return panel;
-    }
+    // Espacio flexible
+    gbc.gridy = 3;
+    gbc.weighty = 1.0;
+    panel.add(Box.createGlue(), gbc);
+
+    return panel;
+}
 
     @Override
     protected void cargarDatosEntidad() {

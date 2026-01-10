@@ -8,7 +8,6 @@
 -- ======================
 CREATE TABLE IF NOT EXISTS Empresa (
   id_empresa INT PRIMARY KEY AUTO_INCREMENT,
-  nombre_comercial VARCHAR(200) NOT NULL,
   razon_social VARCHAR(200) NOT NULL,
   nif VARCHAR(20) NOT NULL UNIQUE,
   direccion VARCHAR(255) NOT NULL,
