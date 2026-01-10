@@ -76,15 +76,16 @@ public class FacturaPDFService {
      * Genera un PDF de factura y lo guarda en el directorio especificado
      */
     public String generarPDF(Factura factura, String rutaDestino) throws DocumentException, IOException {
-        // Crear directorio si no existe
-        Path directorio = Paths.get(rutaDestino).getParent();
-        if (directorio != null && !Files.exists(directorio)) {
-            Files.createDirectories(directorio);
-        }
+    // Crear directorio si no existe
+    Path directorio = Paths.get(rutaDestino).getParent();
+    if (directorio != null && !Files.exists(directorio)) {
+        Files.createDirectories(directorio);
+    }
 
-        Document document = new Document(PageSize.A4, 40, 40, 50, 50);
-        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
-        
+    Document document = new Document(PageSize.A4, 40, 40, 50, 50);
+    
+    try (FileOutputStream fos = new FileOutputStream(rutaDestino)) {
+        PdfWriter.getInstance(document, fos);
         document.open();
         
         // Agregar contenido
@@ -100,6 +101,7 @@ public class FacturaPDFService {
         logger.info("PDF generado exitosamente en: {}", rutaDestino);
         return rutaDestino;
     }
+}
 
     private void agregarEncabezado(Document document, Factura factura) throws DocumentException {
         PdfPTable table = new PdfPTable(2);
