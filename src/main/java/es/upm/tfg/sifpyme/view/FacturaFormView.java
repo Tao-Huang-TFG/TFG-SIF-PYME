@@ -15,8 +15,10 @@ import java.util.List;
 
 /**
  * Formulario para crear/editar facturas
- * REFACTORIZADO: Ahora usa UIHelper y UITheme
- * Incluye tabla de líneas interactiva
+ * REFACTORIZADO: 
+ * - Ahora usa id_factura personalizado (escrito por el usuario)
+ * - Eliminados campos obsoletos (serie, numero)
+ * - Usa UIHelper y UITheme
  */
 public class FacturaFormView extends BaseFormView<Factura> {
 
@@ -26,11 +28,9 @@ public class FacturaFormView extends BaseFormView<Factura> {
     // Campos de encabezado
     private JComboBox<Empresa> cmbEmpresa;
     private JComboBox<Cliente> cmbCliente;
-    private JTextField txtSerie;
-    private JTextField txtNumero;
+    private JTextField txtIdFactura;  // CAMBIADO: ID personalizado
     private JTextField txtFecha;
     private JComboBox<String> cmbMetodoPago;
-    private JTextArea txtObservaciones;
     
     // Tabla de líneas
     private JTable tablaLineas;
@@ -54,19 +54,15 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     public FacturaFormView(CardLayout cardLayout, JPanel cardPanel, Factura facturaEditar) {
         super(cardLayout, cardPanel, facturaEditar);
-        
-        
         cargarCombos();
         
         if (!modoEdicion) {
-            // Configurar valores por defecto para nueva factura
             establecerValoresPorDefecto();
         }
     }
 
     @Override
     protected void configurarColores() {
-        // Usar el color definido en UITheme para facturas
         COLOR_PRIMARIO = UITheme.COLOR_FACTURAS;
     }
 
@@ -84,7 +80,6 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     @Override
     protected String getIconoFormulario() {
-        // Usar el icono centralizado de UITheme
         return UITheme.ICONO_FACTURAS;
     }
 
@@ -95,14 +90,17 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     @Override
     protected void inicializarCamposEspecificos() {
-        //Inicializar el controller PRIMERO
         this.controller = new FacturaController();
+        this.lineasFactura = new ArrayList<>();
 
-        // Encabezado usando UIHelper
+        // Encabezado
         cmbEmpresa = UIHelper.crearComboBox();
         cmbCliente = UIHelper.crearComboBox();
-        txtSerie = UIHelper.crearCampoTexto(10);
-        txtNumero = UIHelper.crearCampoTexto(15);
+        
+        // CAMBIADO: Campo para ID personalizado
+        txtIdFactura = UIHelper.crearCampoTexto(20);
+        txtIdFactura.setToolTipText("Ejemplo: FAC-2025-001, FACT001, 2025/001");
+        
         txtFecha = UIHelper.crearCampoTexto(15);
         txtFecha.setText(LocalDate.now().format(DATE_FORMATTER));
         
@@ -113,11 +111,9 @@ public class FacturaFormView extends BaseFormView<Factura> {
         cmbMetodoPago.addItem("PayPal");
         cmbMetodoPago.addItem("Bizum");
         
-        txtObservaciones = UIHelper.crearAreaTexto(3, 30);
-        
         // Tabla de líneas
         String[] columnasLineas = {
-            "Nº", "Producto", "Cantidad", "Precio", "Descuento %", 
+            "Nº", "Cantidad", "Precio", "Descuento %", 
             "Subtotal", "IVA %", "Imp. IVA", "Retención %", "Imp. Ret.", "Total"
         };
         modeloLineas = new DefaultTableModel(columnasLineas, 0) {
@@ -131,11 +127,10 @@ public class FacturaFormView extends BaseFormView<Factura> {
         tablaLineas.setFont(UITheme.FUENTE_TABLA);
         tablaLineas.setRowHeight(35);
         tablaLineas.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tablaLineas.setForeground(Color.DARK_GRAY);
         
         configurarAnchoColumnasLineas();
         
-        // Botones de líneas usando UIHelper
+        // Botones de líneas
         btnAgregarLinea = UIHelper.crearBoton("Agregar Línea", UITheme.COLOR_EXITO, UITheme.ICONO_AGREGAR);
         btnAgregarLinea.addActionListener(e -> agregarLinea());
         
@@ -151,16 +146,11 @@ public class FacturaFormView extends BaseFormView<Factura> {
         lblTotalRetencion = new JLabel("0,00 €");
         lblTotal = new JLabel("0,00 €");
         
-        // Usar fuentes de UITheme
         lblSubtotal.setFont(UITheme.FUENTE_ETIQUETA);
         lblTotalIva.setFont(UITheme.FUENTE_ETIQUETA);
         lblTotalRetencion.setFont(UITheme.FUENTE_ETIQUETA);
         lblTotal.setFont(UITheme.FUENTE_TITULO_SECUNDARIO);
         lblTotal.setForeground(COLOR_PRIMARIO);
-        
-        // Listener para cambio de empresa -> actualizar número
-        cmbEmpresa.addActionListener(e -> actualizarNumeroFactura());
-        txtSerie.addActionListener(e -> actualizarNumeroFactura());
     }
 
     @Override
@@ -177,16 +167,13 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 15, 0);
 
-        // Panel de encabezado usando UIHelper
         panel.add(crearPanelEncabezado(), gbc);
 
-        // Panel de líneas
         gbc.gridy = 1;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         panel.add(crearPanelLineas(), gbc);
 
-        // Panel de totales
         gbc.gridy = 2;
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -198,43 +185,36 @@ public class FacturaFormView extends BaseFormView<Factura> {
     private JPanel crearPanelEncabezado() {
         JPanel panel = UIHelper.crearSeccionPanel("Datos de la Factura", COLOR_PRIMARIO);
         
-        addFormFieldCombo(panel, "Empresa:", cmbEmpresa, true, 0);
-        addFormFieldCombo(panel, "Cliente:", cmbCliente, true, 1);
+        // Panel de ayuda para el ID
+        GridBagConstraints gbcAyuda = new GridBagConstraints();
+        gbcAyuda.gridx = 0;
+        gbcAyuda.gridy = 0;
+        gbcAyuda.gridwidth = 2;
+        gbcAyuda.fill = GridBagConstraints.HORIZONTAL;
+        gbcAyuda.insets = new Insets(0, 0, 15, 0);
         
-        // Fila de serie y número
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(8, 0, 8, 15);
+        JPanel ayudaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        ayudaPanel.setBackground(new Color(230, 240, 255));
+        ayudaPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(UITheme.COLOR_INFO, 1),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
         
-        JLabel lblSerie = new JLabel("Serie: *");
-        lblSerie.setFont(UITheme.FUENTE_ETIQUETA);
-        lblSerie.setForeground(UITheme.COLOR_PELIGRO);
-        panel.add(lblSerie, gbc);
+        JLabel lblAyuda = new JLabel(
+            "<html><b>💡 ID de Factura:</b> Introduce un identificador único (ej: FAC-2025-001, FACT001, 2025/001)</html>"
+        );
+        lblAyuda.setFont(UITheme.FUENTE_SUBTITULO);
+        lblAyuda.setForeground(UITheme.COLOR_INFO.darker());
+        ayudaPanel.add(lblAyuda);
         
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.weightx = 0;
-        panel.add(txtSerie, gbc);
+        panel.add(ayudaPanel, gbcAyuda);
         
-        // Número al lado
-        gbc.gridx = 1;
-        gbc.insets = new Insets(8, 150, 8, 0);
-        JLabel lblNumero = new JLabel("Número: *");
-        lblNumero.setFont(UITheme.FUENTE_ETIQUETA);
-        lblNumero.setForeground(UITheme.COLOR_PELIGRO);
-        panel.add(lblNumero, gbc);
-        
-        gbc.gridx = 1;
-        gbc.insets = new Insets(8, 250, 8, 0);
-        panel.add(txtNumero, gbc);
-        
-        // Fecha y método de pago
-        gbc.insets = new Insets(8, 0, 8, 15);
-        addFormField(panel, "Fecha:", txtFecha, true, 3);
-        addFormFieldCombo(panel, "Método de Pago:", cmbMetodoPago, true, 4);
-        addFormFieldTextArea(panel, "Observaciones:", txtObservaciones, false, 5);
+        // Campos del formulario
+        addFormFieldCombo(panel, "Empresa:", cmbEmpresa, true, 1);
+        addFormFieldCombo(panel, "Cliente:", cmbCliente, true, 2);
+        addFormField(panel, "ID Factura:", txtIdFactura, true, 3);
+        addFormField(panel, "Fecha:", txtFecha, true, 4);
+        addFormFieldCombo(panel, "Método de Pago:", cmbMetodoPago, true, 5);
         
         return panel;
     }
@@ -247,19 +227,16 @@ public class FacturaFormView extends BaseFormView<Factura> {
             BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
         
-        // Título usando fuentes de UITheme
         JLabel lblTitulo = new JLabel("Líneas de Factura");
         lblTitulo.setFont(UITheme.FUENTE_SUBTITULO_NEGRITA);
         lblTitulo.setForeground(COLOR_PRIMARIO);
         panel.add(lblTitulo, BorderLayout.NORTH);
         
-        // Tabla con scroll
         JScrollPane scrollPane = new JScrollPane(tablaLineas);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1));
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Botones
         JPanel botonesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         botonesPanel.setBackground(Color.WHITE);
         botonesPanel.add(btnAgregarLinea);
@@ -318,8 +295,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 0, 10, 0);
-        JSeparator separator = new JSeparator();
-        panel.add(separator, gbc);
+        panel.add(new JSeparator(), gbc);
         
         // TOTAL
         gbc.gridx = 0;
@@ -340,19 +316,17 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     private void configurarAnchoColumnasLineas() {
         tablaLineas.getColumnModel().getColumn(0).setPreferredWidth(40);   // Nº
-        tablaLineas.getColumnModel().getColumn(1).setPreferredWidth(200);  // Producto
-        tablaLineas.getColumnModel().getColumn(2).setPreferredWidth(80);   // Cantidad
-        tablaLineas.getColumnModel().getColumn(3).setPreferredWidth(80);   // Precio
-        tablaLineas.getColumnModel().getColumn(4).setPreferredWidth(80);   // Descuento
-        tablaLineas.getColumnModel().getColumn(5).setPreferredWidth(90);   // Subtotal
-        tablaLineas.getColumnModel().getColumn(6).setPreferredWidth(70);   // IVA %
-        tablaLineas.getColumnModel().getColumn(7).setPreferredWidth(80);   // Imp. IVA
-        tablaLineas.getColumnModel().getColumn(8).setPreferredWidth(80);   // Ret %
-        tablaLineas.getColumnModel().getColumn(9).setPreferredWidth(80);   // Imp. Ret
-        tablaLineas.getColumnModel().getColumn(10).setPreferredWidth(90);  // Total
+        tablaLineas.getColumnModel().getColumn(1).setPreferredWidth(80);   // Cantidad
+        tablaLineas.getColumnModel().getColumn(2).setPreferredWidth(80);   // Precio
+        tablaLineas.getColumnModel().getColumn(3).setPreferredWidth(80);   // Descuento
+        tablaLineas.getColumnModel().getColumn(4).setPreferredWidth(90);   // Subtotal
+        tablaLineas.getColumnModel().getColumn(5).setPreferredWidth(70);   // IVA %
+        tablaLineas.getColumnModel().getColumn(6).setPreferredWidth(80);   // Imp. IVA
+        tablaLineas.getColumnModel().getColumn(7).setPreferredWidth(80);   // Ret %
+        tablaLineas.getColumnModel().getColumn(8).setPreferredWidth(80);   // Imp. Ret
+        tablaLineas.getColumnModel().getColumn(9).setPreferredWidth(90);   // Total
     }
 
-    // Métodos auxiliares
     private void cargarCombos() {
         // Cargar empresas
         List<Empresa> empresas = controller.obtenerEmpresas();
@@ -377,21 +351,10 @@ public class FacturaFormView extends BaseFormView<Factura> {
     }
 
     private void establecerValoresPorDefecto() {
-        txtSerie.setText("A");
-        actualizarNumeroFactura();
-    }
-
-    private void actualizarNumeroFactura() {
-        if (!modoEdicion && cmbEmpresa.getSelectedItem() != null) {
-            Empresa empresa = (Empresa) cmbEmpresa.getSelectedItem();
-            String serie = txtSerie.getText().trim();
-            
-            if (!serie.isEmpty()) {
-                String siguiente = controller.obtenerSiguienteNumero(
-                    empresa.getIdEmpresa(), serie);
-                txtNumero.setText(siguiente);
-            }
-        }
+        // Sugerir formato de ID basado en fecha actual
+        String sugerencia = "FAC-" + LocalDate.now().getYear() + "-001";
+        txtIdFactura.setText(sugerencia);
+        txtIdFactura.selectAll(); // Seleccionar para facilitar sobrescritura
     }
 
     @Override
@@ -413,14 +376,11 @@ public class FacturaFormView extends BaseFormView<Factura> {
                 }
             }
             
-            txtSerie.setText(entidadEditar.getSerie());
-            txtNumero.setText(entidadEditar.getNumeroFactura());
+            txtIdFactura.setText(entidadEditar.getIdFactura());
+            txtIdFactura.setEnabled(false); // No permitir cambiar ID en edición
+            
             txtFecha.setText(entidadEditar.getFechaEmision().format(DATE_FORMATTER));
             cmbMetodoPago.setSelectedItem(entidadEditar.getMetodoPago());
-            
-            if (entidadEditar.getObservaciones() != null) {
-                txtObservaciones.setText(entidadEditar.getObservaciones());
-            }
             
             // Cargar líneas
             if (entidadEditar.getLineas() != null) {
@@ -443,19 +403,20 @@ public class FacturaFormView extends BaseFormView<Factura> {
             errores.append("• Debe seleccionar un cliente\n");
         }
         
-        if (txtSerie.getText().trim().isEmpty()) {
-            errores.append("• Serie es obligatoria\n");
-        }
-        
-        if (txtNumero.getText().trim().isEmpty()) {
-            errores.append("• Número de factura es obligatorio\n");
+        String idFactura = txtIdFactura.getText().trim();
+        if (idFactura.isEmpty()) {
+            errores.append("• ID de factura es obligatorio\n");
+        } else if (idFactura.length() > 20) {
+            errores.append("• ID de factura no puede exceder 20 caracteres\n");
+        } else if (!modoEdicion && controller.obtenerFacturaPorId(idFactura) != null) {
+            errores.append("• Ya existe una factura con este ID\n");
         }
         
         if (cmbMetodoPago.getSelectedItem() == null) {
             errores.append("• Debe seleccionar un método de pago\n");
         }
         
-        if (lineasFactura.isEmpty()) {
+        if (lineasFactura == null || lineasFactura.isEmpty()) {
             errores.append("• Debe agregar al menos una línea a la factura\n");
         }
 
@@ -472,24 +433,14 @@ public class FacturaFormView extends BaseFormView<Factura> {
         try {
             Factura factura = modoEdicion ? entidadEditar : new Factura();
 
-            if (modoEdicion && entidadEditar != null) {
-                factura.setIdFactura(entidadEditar.getIdFactura());
-            }
-
             Empresa empresa = (Empresa) cmbEmpresa.getSelectedItem();
             Cliente cliente = (Cliente) cmbCliente.getSelectedItem();
 
+            factura.setIdFactura(txtIdFactura.getText().trim());
             factura.setIdEmpresa(empresa.getIdEmpresa());
             factura.setIdCliente(cliente.getIdCliente());
-            factura.setSerie(txtSerie.getText().trim());
-            factura.setNumeroFactura(txtNumero.getText().trim());
             factura.setFechaEmision(LocalDate.parse(txtFecha.getText(), DATE_FORMATTER));
             factura.setMetodoPago((String) cmbMetodoPago.getSelectedItem());
-            
-            String obs = txtObservaciones.getText().trim();
-            factura.setObservaciones(obs.isEmpty() ? null : obs);
-            
-            factura.setEstado("EMITIDA");
             factura.setLineas(lineasFactura);
 
             boolean success = modoEdicion ? 
@@ -521,8 +472,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         
         if (dialog.isConfirmado()) {
             LineaFactura nuevaLinea = dialog.getLinea();
-            if(lineasFactura == null)
-            {
+            if (lineasFactura == null) {
                 lineasFactura = new ArrayList<>();
             }
             nuevaLinea.setNumeroLinea(lineasFactura.size() + 1);
@@ -599,12 +549,8 @@ public class FacturaFormView extends BaseFormView<Factura> {
         modeloLineas.setRowCount(0);
         
         for (LineaFactura linea : lineasFactura) {
-            Producto producto = controller.obtenerProductoPorId(linea.getIdProducto());
-            String nombreProducto = producto != null ? producto.getNombre() : "N/A";
-            
             Object[] fila = {
                 linea.getNumeroLinea(),
-                nombreProducto,
                 formatearNumero(linea.getCantidad()),
                 formatearMoneda(linea.getPrecioUnitario()),
                 formatearNumero(linea.getDescuento()) + "%",

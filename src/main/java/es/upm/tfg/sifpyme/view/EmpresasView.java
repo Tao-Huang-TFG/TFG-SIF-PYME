@@ -30,7 +30,7 @@ public class EmpresasView extends BaseListView<Empresa> {
     protected String getTituloVentana() {
         return "Gestión de Empresas - SifPyme";
     }
-    
+
     @Override
     protected String getTituloHeader() {
         return "Gestión de Empresas";
@@ -48,9 +48,9 @@ public class EmpresasView extends BaseListView<Empresa> {
 
     @Override
     protected String[] getNombresColumnas() {
-        return new String[]{ 
-            "ID", "Nombre Comercial", "Razón Social", "NIF", 
-            "Ciudad", "Provincia", "Email", "Por Defecto" 
+        return new String[] {
+                "ID", "Nombre Comercial", "Razón Social", "NIF",
+                "Dirección", "Teléfono", "Email", "Por Defecto"
         };
     }
 
@@ -80,10 +80,10 @@ public class EmpresasView extends BaseListView<Empresa> {
         tabla.getColumnModel().getColumn(1).setPreferredWidth(200);
         tabla.getColumnModel().getColumn(2).setPreferredWidth(200);
         tabla.getColumnModel().getColumn(3).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(150);
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(150);
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(200);
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(250); // Dirección
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(120); // Teléfono
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(200); // Email
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(100); // Por Defecto
     }
 
     @Override
@@ -91,19 +91,21 @@ public class EmpresasView extends BaseListView<Empresa> {
         if (controller == null) {
             controller = new EmpresaController();
         }
-        
+
         modeloTabla.setRowCount(0);
 
         List<Empresa> empresas = controller.obtenerTodasLasEmpresas();
 
         for (Empresa empresa : empresas) {
             Object[] fila = {
-                empresa.getIdEmpresa(),
-                empresa.getNombreComercial(),
-                empresa.getRazonSocial(),
-                empresa.getNif(),
-                empresa.getEmail() != null ? empresa.getEmail() : "",
-                empresa.getPorDefecto() != null && empresa.getPorDefecto()
+                    empresa.getIdEmpresa(),
+                    empresa.getNombreComercial(),
+                    empresa.getRazonSocial(),
+                    empresa.getNif(),
+                    empresa.getDireccion() != null ? empresa.getDireccion() : "",
+                    empresa.getTelefono() != null ? empresa.getTelefono() : "",
+                    empresa.getEmail() != null ? empresa.getEmail() : "",
+                    empresa.getPorDefecto() != null && empresa.getPorDefecto()
             };
             modeloTabla.addRow(fila);
         }
@@ -134,10 +136,9 @@ public class EmpresasView extends BaseListView<Empresa> {
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
         // Botón para establecer empresa por defecto - REFACTORIZADO
         JButton btnEstablecerDefecto = UIHelper.crearBoton(
-            "Establecer Defecto", 
-            new Color(241, 196, 15), 
-            UITheme.ICONO_ESTABLECER
-        );
+                "Establecer Defecto",
+                new Color(241, 196, 15),
+                UITheme.ICONO_ESTABLECER);
         btnEstablecerDefecto.addActionListener(e -> establecerEmpresaPorDefecto());
         buttonsPanel.add(btnEstablecerDefecto);
     }
@@ -147,10 +148,10 @@ public class EmpresasView extends BaseListView<Empresa> {
 
         if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(
-                this,
-                "Por favor, selecciona una empresa de la lista.",
-                "Selección Requerida",
-                JOptionPane.WARNING_MESSAGE);
+                    this,
+                    "Por favor, selecciona una empresa de la lista.",
+                    "Selección Requerida",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -159,11 +160,11 @@ public class EmpresasView extends BaseListView<Empresa> {
         String nombreEmpresa = (String) modeloTabla.getValueAt(filaModelo, 1);
 
         int confirmacion = JOptionPane.showConfirmDialog(
-            this,
-            "¿Establecer '" + nombreEmpresa + "' como empresa por defecto?",
-            "Confirmar",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE);
+                this,
+                "¿Establecer '" + nombreEmpresa + "' como empresa por defecto?",
+                "Confirmar",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
 
         if (confirmacion == JOptionPane.YES_OPTION) {
             Empresa empresa = controller.obtenerEmpresaPorId(idEmpresa);
@@ -173,17 +174,17 @@ public class EmpresasView extends BaseListView<Empresa> {
 
                 if (actualizado) {
                     JOptionPane.showMessageDialog(
-                        this,
-                        "Empresa establecida como predeterminada.",
-                        "Éxito",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            this,
+                            "Empresa establecida como predeterminada.",
+                            "Éxito",
+                            JOptionPane.INFORMATION_MESSAGE);
                     cargarDatos();
                 } else {
                     JOptionPane.showMessageDialog(
-                        this,
-                        "Error al establecer empresa por defecto.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            this,
+                            "Error al establecer empresa por defecto.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -195,10 +196,10 @@ public class EmpresasView extends BaseListView<Empresa> {
 
         if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(
-                this,
-                "Por favor, selecciona una empresa de la lista.",
-                "Selección Requerida",
-                JOptionPane.WARNING_MESSAGE);
+                    this,
+                    "Por favor, selecciona una empresa de la lista.",
+                    "Selección Requerida",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -207,10 +208,10 @@ public class EmpresasView extends BaseListView<Empresa> {
 
         if (esPorDefecto) {
             JOptionPane.showMessageDialog(
-                this,
-                "No puedes eliminar la empresa por defecto.\nPrimero establece otra como predeterminada.",
-                "Operación no permitida",
-                JOptionPane.WARNING_MESSAGE);
+                    this,
+                    "No puedes eliminar la empresa por defecto.\nPrimero establece otra como predeterminada.",
+                    "Operación no permitida",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 

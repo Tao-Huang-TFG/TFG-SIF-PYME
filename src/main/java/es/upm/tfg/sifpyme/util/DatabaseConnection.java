@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
@@ -52,15 +51,11 @@ public class DatabaseConnection {
 
                 dataSource = new HikariDataSource(config);
 
-                // Verificar si se deben ejecutar los scripts
-                if (shouldRunInitialScripts()) {
-                    initializeDatabase(props);
-                } else {
-                    logger.info("Datos iniciales detectados: se omite la ejecucion de scripts.");
-                }
+                // SOLO ejecutar script de creación de tablas (V1__create_tables.sql)
+                executeCreateTablesScript(props);
 
                 initialized = true;
-                logger.info("Base de datos inicializada correctamente");
+                logger.info("Base de datos inicializada correctamente (solo tablas creadas)");
 
             } catch (Exception e) {
                 logger.error("Error al inicializar la base de datos", e);
@@ -80,66 +75,19 @@ public class DatabaseConnection {
     }
 
     /**
-     * Determina si deben ejecutarse los scripts iniciales (solo si la tabla está vacía)
+     * Ejecuta solo el script de creación de tablas
      */
-    private static boolean shouldRunInitialScripts() {
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            // Comprobamos si existen registros en la tabla Tipo_IVA
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'TIPO_IVA'");
-            if (rs.next() && rs.getInt(1) == 0) {
-                logger.info("Tabla Tipo_IVA no existe. Se ejecutaran scripts iniciales.");
-                return true;
-            }
-
-            rs = stmt.executeQuery("SELECT COUNT(*) FROM Tipo_IVA");
-            if (rs.next()) {
-                int count = rs.getInt(1);
-                rs.close();
-                if (count == 0) {
-                    logger.info("Tabla Tipo_IVA vacia. Se ejecutarán scripts iniciales.");
-                    return true;
-                } else {
-                    logger.info("La tabla Tipo_IVA ya contiene datos ({} registros).", count);
-                    return false;
-                }
-            }
-
-        } catch (Exception e) {
-            logger.warn("Error comprobando la existencia de datos iniciales. Se ejecutaran scripts por precaución.", e);
-            return true;
-        }
-        return true;
-    }
-
-    /**
-     * Ejecuta los scripts de inicialización
-     */
-    private static void initializeDatabase(Properties props) {
-        String scriptsProperty = props.getProperty("db.init.scripts");
-        if (scriptsProperty != null && !scriptsProperty.isEmpty()) {
-            String[] scripts = scriptsProperty.split(",");
-
-            for (String script : scripts) {
-                script = script.trim();
-                executeScript(script);
-            }
-        }
-    }
-
-    /**
-     * Ejecuta un script SQL completo
-     */
-    private static void executeScript(String scriptPath) {
+    private static void executeCreateTablesScript(Properties props) {
+        String createTablesScript = "database/V1__create_tables.sql";
+        
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();
              InputStream is = DatabaseConnection.class.getClassLoader()
-                     .getResourceAsStream(scriptPath);
+                     .getResourceAsStream(createTablesScript);
              BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 
             if (is == null) {
-                logger.warn("No se encontro el script: {}", scriptPath);
+                logger.warn("No se encontró el script de creación de tablas: {}", createTablesScript);
                 return;
             }
 
@@ -161,9 +109,11 @@ public class DatabaseConnection {
                     if (!sql.isEmpty()) {
                         try {
                             stmt.execute(sql);
+                            logger.debug("Ejecutado: {}", sql.substring(0, Math.min(80, sql.length())) + "...");
                         } catch (SQLException e) {
-                            if (!e.getMessage().contains("already exists")) {
-                                logger.warn("Error ejecutando sentencia SQL: {}...",
+                            // Ignorar errores de "already exists" para tablas
+                            if (!e.getMessage().toLowerCase().contains("already exists")) {
+                                logger.warn("Error ejecutando creación de tabla: {}", 
                                         sql.substring(0, Math.min(50, sql.length())), e);
                             }
                         }
@@ -172,10 +122,10 @@ public class DatabaseConnection {
                 }
             }
 
-            logger.info("Script ejecutado: {}", scriptPath);
+            logger.info("Script de creación de tablas ejecutado: {}", createTablesScript);
 
         } catch (Exception e) {
-            logger.error("Error al ejecutar script: {}", scriptPath, e);
+            logger.error("Error al ejecutar script de creación de tablas: {}", createTablesScript, e);
         }
     }
 
@@ -188,7 +138,7 @@ public class DatabaseConnection {
                 .getResourceAsStream("application.properties")) {
 
             if (is == null) {
-                throw new IOException("No se encontro application.properties");
+                throw new IOException("No se encontró application.properties");
             }
 
             props.load(is);

@@ -10,6 +10,7 @@ import java.util.List;
 
 /**
  * Controlador para gestionar las operaciones relacionadas con Factura
+ * REFACTORIZADO: Eliminados métodos obsoletos (generarSiguienteId, obtenerSiguienteNumero)
  */
 public class FacturaController {
     
@@ -33,13 +34,6 @@ public class FacturaController {
      */
     public boolean guardarFactura(Factura factura) {
         try {
-            // Generar ID automático si no viene proporcionado
-            if (factura.getIdFactura() == null || factura.getIdFactura().trim().isEmpty()) {
-                String nuevoId = facturaDAO.generarSiguienteId();
-                factura.setIdFactura(nuevoId);
-                logger.info("Generando nuevo ID de factura: {}", nuevoId);
-            }
-            
             logger.info("Guardando factura: {}", factura.getIdFactura());
             
             if (!validarFactura(factura)) {
@@ -256,18 +250,6 @@ public class FacturaController {
     }
     
     /**
-     * Genera un nuevo ID de factura
-     */
-    public String generarNuevoIdFactura() {
-        try {
-            return facturaDAO.generarSiguienteId();
-        } catch (Exception e) {
-            logger.error("Error al generar nuevo ID de factura", e);
-            return "FAC000001";
-        }
-    }
-    
-    /**
      * Obtiene todas las empresas disponibles
      */
     public List<Empresa> obtenerEmpresas() {
@@ -370,9 +352,6 @@ public class FacturaController {
                 factura.setCliente(cliente);
             }
             
-            // NOTA: Las líneas ya no tienen referencia a productos individuales
-            // en el nuevo esquema simplificado
-            // Las líneas contienen directamente los datos de IVA y retención
         } catch (Exception e) {
             logger.error("Error al cargar datos relacionados de factura", e);
         }
@@ -389,6 +368,11 @@ public class FacturaController {
         
         if (factura.getIdFactura() == null || factura.getIdFactura().trim().isEmpty()) {
             logger.warn("ID de factura vacío");
+            return false;
+        }
+        
+        if (factura.getIdFactura().length() > 20) {
+            logger.warn("ID de factura excede 20 caracteres");
             return false;
         }
         
@@ -415,15 +399,15 @@ public class FacturaController {
         // Validar cada línea
         for (LineaFactura linea : factura.getLineas()) {
             if (linea.getCantidad() == null || linea.getCantidad().signum() <= 0) {
-                logger.warn("Cantidad inválida");
+                logger.warn("Cantidad inválida en línea");
                 return false;
             }
             if (linea.getPrecioUnitario() == null || linea.getPrecioUnitario().signum() < 0) {
-                logger.warn("Precio unitario inválido");
+                logger.warn("Precio unitario inválido en línea");
                 return false;
             }
             if (linea.getPorcentajeIva() == null || linea.getPorcentajeIva().signum() < 0) {
-                logger.warn("Porcentaje de IVA inválido");
+                logger.warn("Porcentaje de IVA inválido en línea");
                 return false;
             }
         }

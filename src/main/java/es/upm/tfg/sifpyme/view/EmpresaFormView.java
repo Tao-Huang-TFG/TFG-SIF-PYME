@@ -11,22 +11,19 @@ import java.math.BigDecimal;
 /**
  * Formulario para registro/edición de empresa
  * REFACTORIZADO: Ahora usa UIHelper y UITheme
+ * CORREGIDO: Eliminados campos inexistentes (ciudad, provincia, código postal, web)
  */
 public class EmpresaFormView extends BaseFormView<Empresa> {
 
     private final EmpresaController controller;
 
-    // Campos específicos de empresa
+    // Campos específicos de empresa (solo los que existen en el modelo)
     private JTextField txtNombreComercial;
     private JTextField txtRazonSocial;
     private JTextField txtNif;
     private JTextField txtDireccion;
-    private JTextField txtCodigoPostal;
-    private JTextField txtCiudad;
-    private JTextField txtProvincia;
     private JTextField txtTelefono;
     private JTextField txtEmail;
-    private JTextField txtWeb;
     private JTextField txtTipoRetencionIrpf;
     private JCheckBox chkPorDefecto;
 
@@ -41,7 +38,6 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
     @Override
     protected void configurarColores() {
-        // Usar el color definido en UITheme para empresas
         COLOR_PRIMARIO = UITheme.COLOR_EMPRESAS;
     }
 
@@ -59,7 +55,6 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
     @Override
     protected String getIconoFormulario() {
-        // Usar el icono centralizado de UITheme
         return UITheme.ICONO_EMPRESAS;
     }
 
@@ -70,21 +65,16 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
     @Override
     protected void inicializarCamposEspecificos() {
-        // Usar UIHelper para crear campos consistentes
+        // Solo inicializar campos que existen en el modelo Empresa
         txtNombreComercial = UIHelper.crearCampoTexto(30);
         txtRazonSocial = UIHelper.crearCampoTexto(30);
         txtNif = UIHelper.crearCampoTexto(15);
         txtDireccion = UIHelper.crearCampoTexto(40);
-        txtCodigoPostal = UIHelper.crearCampoTexto(10);
-        txtCiudad = UIHelper.crearCampoTexto(30);
-        txtProvincia = UIHelper.crearCampoTexto(30);
         txtTelefono = UIHelper.crearCampoTexto(15);
         txtEmail = UIHelper.crearCampoTexto(30);
-        txtWeb = UIHelper.crearCampoTexto(30);
         txtTipoRetencionIrpf = UIHelper.crearCampoTexto(10);
         txtTipoRetencionIrpf.setText("15.00");
 
-        // Usar UITheme para fuentes
         chkPorDefecto = new JCheckBox("Establecer como empresa por defecto");
         chkPorDefecto.setFont(UITheme.FUENTE_CAMPO);
         chkPorDefecto.setBackground(Color.WHITE);
@@ -104,34 +94,30 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 15, 0);
 
-        // Panel de datos básicos usando UIHelper
+        // Panel de datos básicos
         JPanel datosBasicos = UIHelper.crearSeccionPanel("Datos Básicos", COLOR_PRIMARIO);
         addFormField(datosBasicos, "Nombre Comercial:", txtNombreComercial, true, 0);
         addFormField(datosBasicos, "Razón Social:", txtRazonSocial, true, 1);
         addFormField(datosBasicos, "NIF:", txtNif, true, 2);
         panel.add(datosBasicos, gbc);
 
-        // Panel de dirección
+        // Panel de dirección (solo dirección, sin ciudad/provincia/código postal)
         gbc.gridy = 1;
         JPanel direccionPanel = UIHelper.crearSeccionPanel("Dirección", COLOR_PRIMARIO);
         addFormField(direccionPanel, "Dirección:", txtDireccion, true, 0);
-        addFormField(direccionPanel, "Código Postal:", txtCodigoPostal, true, 1);
-        addFormField(direccionPanel, "Ciudad:", txtCiudad, true, 2);
-        addFormField(direccionPanel, "Provincia:", txtProvincia, true, 3);
         panel.add(direccionPanel, gbc);
 
-        // Panel de contacto
+        // Panel de contacto (sin sitio web)
         gbc.gridy = 2;
         JPanel contactoPanel = UIHelper.crearSeccionPanel("Contacto y Datos Fiscales", COLOR_PRIMARIO);
         addFormField(contactoPanel, "Teléfono:", txtTelefono, false, 0);
         addFormField(contactoPanel, "Email:", txtEmail, false, 1);
-        addFormField(contactoPanel, "Sitio Web:", txtWeb, false, 2);
-        addFormField(contactoPanel, "% Retención IRPF:", txtTipoRetencionIrpf, false, 3);
+        addFormField(contactoPanel, "% Retención IRPF:", txtTipoRetencionIrpf, false, 2);
         
-        // Añadir checkbox
+        // Checkbox de empresa por defecto
         GridBagConstraints gbcCheck = new GridBagConstraints();
         gbcCheck.gridx = 0;
-        gbcCheck.gridy = 5;
+        gbcCheck.gridy = 3;
         gbcCheck.gridwidth = 2;
         gbcCheck.anchor = GridBagConstraints.WEST;
         gbcCheck.insets = new Insets(15, 0, 0, 0);
@@ -153,8 +139,10 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
             txtNombreComercial.setText(entidadEditar.getNombreComercial());
             txtRazonSocial.setText(entidadEditar.getRazonSocial());
             txtNif.setText(entidadEditar.getNif());
-            txtDireccion.setText(entidadEditar.getDireccion());
-
+            
+            if (entidadEditar.getDireccion() != null) {
+                txtDireccion.setText(entidadEditar.getDireccion());
+            }
             if (entidadEditar.getTelefono() != null) {
                 txtTelefono.setText(entidadEditar.getTelefono());
             }
@@ -185,20 +173,21 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
         if (txtDireccion.getText().trim().isEmpty()) {
             errores.append("• Dirección es obligatoria\n");
         }
-        if (txtCodigoPostal.getText().trim().isEmpty()) {
-            errores.append("• Código Postal es obligatorio\n");
-        }
-        if (txtCiudad.getText().trim().isEmpty()) {
-            errores.append("• Ciudad es obligatoria\n");
-        }
-        if (txtProvincia.getText().trim().isEmpty()) {
-            errores.append("• Provincia es obligatoria\n");
-        }
 
         // Validar email si se proporciona
         String email = txtEmail.getText().trim();
         if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             errores.append("• El formato del email no es válido\n");
+        }
+
+        // Validar porcentaje de retención
+        try {
+            BigDecimal retencion = new BigDecimal(txtTipoRetencionIrpf.getText().trim());
+            if (retencion.compareTo(BigDecimal.ZERO) < 0 || retencion.compareTo(new BigDecimal("100")) > 0) {
+                errores.append("• El porcentaje de retención debe estar entre 0 y 100\n");
+            }
+        } catch (NumberFormatException e) {
+            errores.append("• Porcentaje de retención inválido\n");
         }
 
         if (errores.length() > 0) {

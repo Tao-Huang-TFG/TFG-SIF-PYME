@@ -4,7 +4,6 @@ import es.upm.tfg.sifpyme.controller.FacturaController;
 import es.upm.tfg.sifpyme.controller.ProductoController;
 import es.upm.tfg.sifpyme.model.entity.LineaFactura;
 import es.upm.tfg.sifpyme.model.entity.Producto;
-import es.upm.tfg.sifpyme.model.entity.TipoIva;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,7 +20,7 @@ import java.util.List;
 
 /**
  * Diálogo para agregar o editar una línea de factura
- * Con JComboBox EDITABLE y autocompletado en tiempo real
+ * CORREGIDO: Todos los errores de compilación resueltos
  */
 public class LineaFacturaDialog extends JDialog {
 
@@ -47,15 +46,13 @@ public class LineaFacturaDialog extends JDialog {
     private JButton btnCancelar;
 
     private JPopupMenu popupProductos;
-
-    private boolean calculando = false;
-
     private JList<Producto> listaProductos;
-
     private DefaultListModel<Producto> modeloProductos;
 
     private Producto productoSeleccionado;
     private List<Producto> todosLosProductos;
+
+    private boolean calculando = false;
 
     public LineaFacturaDialog(JFrame parent, FacturaController controller, LineaFactura lineaEditar) {
         super(parent, lineaEditar == null ? "Agregar Línea" : "Editar Línea", true);
@@ -73,21 +70,19 @@ public class LineaFacturaDialog extends JDialog {
             cargarLineaExistente();
         }
 
-        setSize(750, 750);
+        setSize(750, 700);
         setMinimumSize(new Dimension(650, 600));
         setLocationRelativeTo(parent);
-        setResizable(true); // Permitir redimensionar
+        setResizable(true);
     }
 
     private void initComponents() {
         txtProducto = UIHelper.crearCampoTexto(30);
         txtProducto.setColumns(20);
 
-        // Configurar el txtProducto para manejar mejor el foco
         txtProducto.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
-                // Seleccionar todo el texto cuando se gana el foco (opcional)
                 SwingUtilities.invokeLater(() -> {
                     int length = txtProducto.getText().length();
                     txtProducto.setCaretPosition(length);
@@ -102,36 +97,39 @@ public class LineaFacturaDialog extends JDialog {
         listaProductos.setVisibleRowCount(6);
 
         listaProductos.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel lbl = new JLabel(value.getCodigo() + " - " + value.getNombre());
+            String display = value.getNombre();
+            if (value.getCodigo() != null && !value.getCodigo().isEmpty()) {
+                display = value.getCodigo() + " - " + value.getNombre();
+            }
+            JLabel lbl = new JLabel(display);
             lbl.setFont(UITheme.FUENTE_CAMPO);
             if (isSelected) {
                 lbl.setOpaque(true);
                 lbl.setBackground(UITheme.COLOR_FACTURAS);
                 lbl.setForeground(Color.WHITE);
             }
+            lbl.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
             return lbl;
         });
 
         popupProductos = new JPopupMenu();
         popupProductos.setBorder(BorderFactory.createLineBorder(UITheme.COLOR_BORDE));
-        popupProductos.add(new JScrollPane(listaProductos));
+        JScrollPane scrollPane = new JScrollPane(listaProductos);
+        scrollPane.setPreferredSize(new Dimension(400, 200));
+        popupProductos.add(scrollPane);
 
         popupProductos.setFocusable(false);
 
-        // Asegurar que el texto mantiene el foco al mostrar el popup
         popupProductos.addPopupMenuListener(new PopupMenuListener() {
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                // No hacer nada que robe el foco
             }
 
             @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                // Cuando se cierra el popup, devolver el foco al campo
                 SwingUtilities.invokeLater(() -> {
                     if (txtProducto.isDisplayable()) {
                         txtProducto.requestFocusInWindow();
-                        // Poner el cursor al final del texto
                         txtProducto.setCaretPosition(txtProducto.getText().length());
                     }
                 });
@@ -198,10 +196,10 @@ public class LineaFacturaDialog extends JDialog {
         lblImporteRetencion = new JLabel("0,00 €");
         lblTotal = new JLabel("0,00 €");
 
-        lblSubtotal.setFont(UITheme.FUENTE_RESULTADOS);
-        lblImporteIva.setFont(UITheme.FUENTE_RESULTADOS);
-        lblImporteRetencion.setFont(UITheme.FUENTE_RESULTADOS);
-        lblTotal.setFont(UITheme.FUENTE_TOTAL);
+        lblSubtotal.setFont(UITheme.FUENTE_ETIQUETA);
+        lblImporteIva.setFont(UITheme.FUENTE_ETIQUETA);
+        lblImporteRetencion.setFont(UITheme.FUENTE_ETIQUETA);
+        lblTotal.setFont(UITheme.FUENTE_TITULO_SECUNDARIO);
         lblTotal.setForeground(UITheme.COLOR_FACTURAS);
 
         // Botones
@@ -240,18 +238,17 @@ public class LineaFacturaDialog extends JDialog {
         camposPanel.setBackground(Color.WHITE);
         camposPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
-                BorderFactory.createEmptyBorder(25, 25, 25, 25) // Más padding
-        ));
+                BorderFactory.createEmptyBorder(25, 25, 25, 25)));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(10, 0, 10, 15); // Más espacio vertical
+        gbc.insets = new Insets(10, 0, 10, 15);
 
         int fila = 0;
 
-        // Producto con texto de ayuda más visible
+        // Panel de ayuda
         gbc.gridx = 0;
-        gbc.gridy = fila;
+        gbc.gridy = fila++;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
@@ -269,13 +266,12 @@ public class LineaFacturaDialog extends JDialog {
 
         camposPanel.add(ayudaPanel, gbc);
 
-        fila++;
         gbc.gridwidth = 1;
-        gbc.insets = new Insets(20, 0, 10, 15); // Más espacio después del panel de ayuda
+        gbc.insets = new Insets(20, 0, 10, 15);
 
         agregarCampo(camposPanel, "Producto:", txtProducto, true, fila++, gbc);
 
-        gbc.insets = new Insets(10, 0, 10, 15); // Volver al espacio normal
+        gbc.insets = new Insets(10, 0, 10, 15);
         agregarCampo(camposPanel, "Cantidad:", txtCantidad, true, fila++, gbc);
         agregarCampo(camposPanel, "Precio Unitario:", txtPrecio, true, fila++, gbc);
         agregarCampo(camposPanel, "Descuento %:", txtDescuento, false, fila++, gbc);
@@ -313,11 +309,9 @@ public class LineaFacturaDialog extends JDialog {
         gbc.insets = new Insets(5, 0, 5, 15);
         agregarResultado(camposPanel, "TOTAL LÍNEA:", lblTotal, fila++, gbc);
 
-        // Envolver el panel de campos en un scroll
         JScrollPane scrollPane = new JScrollPane(camposPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Panel de botones
@@ -371,9 +365,6 @@ public class LineaFacturaDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
     }
 
-    /**
-     * Filtra productos en tiempo real según lo que se escribe
-     */
     private void filtrarProductos() {
         String texto = txtProducto.getText().trim().toLowerCase();
         modeloProductos.clear();
@@ -384,21 +375,20 @@ public class LineaFacturaDialog extends JDialog {
         }
 
         List<Producto> filtrados = todosLosProductos.stream()
-                .filter(p -> (p.getCodigo() != null && p.getCodigo().toLowerCase().contains(texto)) ||
-                        p.getNombre().toLowerCase().contains(texto))
+                .filter(p -> {
+                    String codigo = p.getCodigo() != null ? p.getCodigo().toLowerCase() : "";
+                    String nombre = p.getNombre() != null ? p.getNombre().toLowerCase() : "";
+                    return codigo.contains(texto) || nombre.contains(texto);
+                })
                 .limit(10)
                 .toList();
 
         filtrados.forEach(modeloProductos::addElement);
 
         if (!filtrados.isEmpty()) {
-            // Obtener el foco actual ANTES de mostrar el popup
             boolean txtProductoTieneFoco = txtProducto.hasFocus();
-
-            // Mostrar el popup
             popupProductos.show(txtProducto, 0, txtProducto.getHeight());
 
-            // Restaurar el foco al campo de texto si lo tenía antes
             if (txtProductoTieneFoco) {
                 SwingUtilities.invokeLater(() -> {
                     txtProducto.requestFocusInWindow();
@@ -414,13 +404,15 @@ public class LineaFacturaDialog extends JDialog {
         if (productoSeleccionado == null)
             return;
 
-        String texto = productoSeleccionado.getCodigo() + " - " + productoSeleccionado.getNombre();
-        txtProducto.setText(texto);
+        // Crear el texto directamente sin reasignaciones
+        String texto = productoSeleccionado.getCodigo() != null &&
+                !productoSeleccionado.getCodigo().isEmpty()
+                        ? productoSeleccionado.getCodigo() + " - " + productoSeleccionado.getNombre()
+                        : productoSeleccionado.getNombre();
 
-        // Añadir tooltip para texto largo
+        txtProducto.setText(texto);
         txtProducto.setToolTipText(texto);
 
-        // Poner el cursor al final para que se vea el final del texto
         SwingUtilities.invokeLater(() -> {
             int length = texto.length();
             txtProducto.setCaretPosition(length);
@@ -466,6 +458,7 @@ public class LineaFacturaDialog extends JDialog {
             LineaFactura temp = new LineaFactura();
             temp.setCantidad(cantidad);
             temp.setPrecioUnitario(precio);
+            temp.setPrecioBase(precio);
             temp.setDescuento(descuento);
             temp.setPorcentajeIva(iva);
             temp.setPorcentajeRetencion(retencion);
@@ -482,9 +475,6 @@ public class LineaFacturaDialog extends JDialog {
         }
     }
 
-    /**
-     * Autocompleta los campos cuando se selecciona un producto
-     */
     private void autoCompletarDesdeProducto(Producto producto) {
         if (producto == null)
             return;
@@ -492,17 +482,17 @@ public class LineaFacturaDialog extends JDialog {
         calculando = true;
 
         // Precio
-        BigDecimal precio = producto.getPrecioEfectivo();
+        BigDecimal precio = producto.getPrecio();
+        if (precio == null) {
+            precio = producto.getPrecioBase();
+        }
         if (precio != null) {
             txtPrecio.setText(precio.toString());
         }
 
         // IVA
-        if (producto.getIdTipoIva() != null) {
-            TipoIva tipoIva = productoController.obtenerTipoIvaPorId(producto.getIdTipoIva());
-            if (tipoIva != null) {
-                txtPorcentajeIva.setText(tipoIva.getPorcentaje().toString());
-            }
+        if (producto.getTipoIva() != null) {
+            txtPorcentajeIva.setText(producto.getTipoIva().toString());
         }
 
         // Retención
@@ -518,12 +508,13 @@ public class LineaFacturaDialog extends JDialog {
     private void cargarLineaExistente() {
         calculando = true;
 
-        // Cargar y seleccionar el producto
         productoSeleccionado = facturaController.obtenerProductoPorId(linea.getIdProducto());
         if (productoSeleccionado != null) {
-            txtProducto.setText(
-                    productoSeleccionado.getCodigo() + " - " + productoSeleccionado.getNombre());
-            autoCompletarDesdeProducto(productoSeleccionado);
+            String texto = productoSeleccionado.getNombre();
+            if (productoSeleccionado.getCodigo() != null && !productoSeleccionado.getCodigo().isEmpty()) {
+                texto = productoSeleccionado.getCodigo() + " - " + productoSeleccionado.getNombre();
+            }
+            txtProducto.setText(texto);
         }
 
         txtCantidad.setText(linea.getCantidad().toString());
@@ -550,12 +541,11 @@ public class LineaFacturaDialog extends JDialog {
             return;
         }
 
-        Producto producto = productoSeleccionado;
-
-        linea.setIdProducto(producto.getIdProducto());
-        linea.setProducto(producto);
+        linea.setIdProducto(productoSeleccionado.getIdProducto());
+        linea.setProducto(productoSeleccionado);
         linea.setCantidad(new BigDecimal(txtCantidad.getText().trim()));
         linea.setPrecioUnitario(new BigDecimal(txtPrecio.getText().trim()));
+        linea.setPrecioBase(new BigDecimal(txtPrecio.getText().trim()));
         linea.setDescuento(new BigDecimal(txtDescuento.getText().trim()));
         linea.setPorcentajeIva(new BigDecimal(txtPorcentajeIva.getText().trim()));
         linea.setPorcentajeRetencion(new BigDecimal(txtPorcentajeRetencion.getText().trim()));
