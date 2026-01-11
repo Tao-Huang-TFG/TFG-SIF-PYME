@@ -23,6 +23,7 @@ public class LineaFactura {
     private BigDecimal importeRetencion;
     private BigDecimal totalLinea;
     private Integer numeroLinea;
+    private transient int tempIndiceEditar = -1;
     
     // Relación con Producto 
     private Producto producto;
@@ -196,5 +197,13 @@ public class LineaFactura {
     @Override
     public String toString() {
         return "Línea " + numeroLinea + ": " + nombreProducto + " - " + cantidad + " x " + precioUnitario;
+    }
+
+     public int getTempIndiceEditar() {
+        return tempIndiceEditar;
+    }
+    
+    public void setTempIndiceEditar(int tempIndiceEditar) {
+        this.tempIndiceEditar = tempIndiceEditar;
     }
 }

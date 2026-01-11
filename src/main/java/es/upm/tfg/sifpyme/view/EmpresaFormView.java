@@ -28,11 +28,13 @@ public class EmpresaFormView extends BaseFormView<Empresa> {
 
     public EmpresaFormView(CardLayout cardLayout, JPanel cardPanel) {
         this(cardLayout, cardPanel, null);
+        afterConstruction();
     }
 
     public EmpresaFormView(CardLayout cardLayout, JPanel cardPanel, Empresa empresaEditar) {
         super(cardLayout, cardPanel, empresaEditar);
         this.controller = new EmpresaController();
+        afterConstruction();
     }
 
     @Override

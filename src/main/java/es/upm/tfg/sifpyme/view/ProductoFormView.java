@@ -34,11 +34,13 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
     public ProductoFormView(CardLayout cardLayout, JPanel cardPanel) {
         this(cardLayout, cardPanel, null);
+        afterConstruction();
     }
 
     public ProductoFormView(CardLayout cardLayout, JPanel cardPanel, Producto productoEditar) {
         super(cardLayout, cardPanel, productoEditar);
         this.controller = new ProductoController();
+        afterConstruction();
     }
 
     @Override
@@ -264,11 +266,11 @@ public class ProductoFormView extends BaseFormView<Producto> {
         gbcPrecios.fill = GridBagConstraints.HORIZONTAL;
         gbcPrecios.insets = new Insets(0, 0, 10, 0);
 
-        addFormField(camposPrecios, "Precio (con IVA):", txtPrecio, true, 0);
+        addFormField(camposPrecios, "Precio (con IVA):", txtPrecio, true, 2);
         gbcPrecios.gridy = 1;
         addFormField(camposPrecios, "Precio Base (sin IVA):", txtPrecioBase, true, 1);
         gbcPrecios.gridy = 2;
-        addFormField(camposPrecios, "Tipo de IVA (%):", txtTipoIva, true, 2);
+        addFormField(camposPrecios, "Tipo de IVA (%):", txtTipoIva, true, 0);
         gbcPrecios.gridy = 3;
         addFormField(camposPrecios, "% Retención:", txtTipoRetencion, false, 3);
 

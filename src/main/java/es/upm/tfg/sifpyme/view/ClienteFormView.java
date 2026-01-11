@@ -24,6 +24,7 @@ public class ClienteFormView extends BaseFormView<Cliente> {
 
     public ClienteFormView(CardLayout cardLayout, JPanel cardPanel) {
         this(cardLayout, cardPanel, null);
+        afterConstruction();
     }
 
     public ClienteFormView(CardLayout cardLayout, JPanel cardPanel, Cliente clienteEditar) {

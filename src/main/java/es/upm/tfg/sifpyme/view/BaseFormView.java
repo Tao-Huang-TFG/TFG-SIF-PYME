@@ -32,11 +32,14 @@ public abstract class BaseFormView<T> extends JPanel {
 
         initComponents();
         setupLayout();
+    }
 
+    protected void afterConstruction() {
         if (modoEdicion) {
             cargarDatosEntidad();
         }
     }
+
 
     // ==================== MÉTODOS ABSTRACTOS (deben implementarse) ====================
 

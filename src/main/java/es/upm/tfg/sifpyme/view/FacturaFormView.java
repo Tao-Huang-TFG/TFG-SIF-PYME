@@ -59,6 +59,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         if (!modoEdicion) {
             establecerValoresPorDefecto();
         }
+        afterConstruction();
     }
 
     @Override
@@ -350,7 +351,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
     private void establecerValoresPorDefecto() {
         // Sugerir formato de ID basado en fecha actual
-        String sugerencia = "FAC-" + LocalDate.now().getYear() + "-001";
+        String sugerencia = "FAC-" + LocalDate.now().getYear() + "-";
         txtIdFactura.setText(sugerencia);
         txtIdFactura.selectAll(); // Seleccionar para facilitar sobrescritura
     }
@@ -459,56 +460,67 @@ public class FacturaFormView extends BaseFormView<Factura> {
     }
 
     // Métodos para gestionar líneas
-    private void agregarLinea() {
-        LineaFacturaDialog dialog = new LineaFacturaDialog(
-            (JFrame) SwingUtilities.getWindowAncestor(this),
-            controller,
-            null
-        );
-        
-        dialog.setVisible(true);
-        
-        if (dialog.isConfirmado()) {
-            LineaFactura nuevaLinea = dialog.getLinea();
-            if (lineasFactura == null) {
-                lineasFactura = new ArrayList<>();
+   private void agregarLinea() {
+    LineaFacturaFormView lineaPanel = new LineaFacturaFormView(
+        cardLayout,
+        cardPanel,
+        "formularioFactura", // nombre del card anterior
+        controller,
+        null, // nueva línea
+        new LineaFacturaFormView.LineaCallback() {
+            @Override
+            public void onLineaConfirmada(LineaFactura nuevaLinea, boolean esEdicion, int indiceEditar) {
+                if (lineasFactura == null) {
+                    lineasFactura = new ArrayList<>();
+                }
+                nuevaLinea.setNumeroLinea(lineasFactura.size() + 1);
+                lineasFactura.add(nuevaLinea);
+                actualizarTablaLineas();
+                actualizarTotales();
             }
-            nuevaLinea.setNumeroLinea(lineasFactura.size() + 1);
-            lineasFactura.add(nuevaLinea);
-            actualizarTablaLineas();
-            actualizarTotales();
-        }
-    }
-
+        },
+        -1 // no es edición
+    );
+    
+    // Agregar al CardLayout
+    cardPanel.add(lineaPanel, "lineaFacturaNueva");
+    cardLayout.show(cardPanel, "lineaFacturaNueva");
+}
     private void editarLinea() {
-        int filaSeleccionada = tablaLineas.getSelectedRow();
-        
-        if (filaSeleccionada == -1) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Selecciona una línea para editar",
-                "Selección requerida",
-                JOptionPane.WARNING_MESSAGE
-            );
-            return;
-        }
-        
-        LineaFactura lineaEditar = lineasFactura.get(filaSeleccionada);
-        
-        LineaFacturaDialog dialog = new LineaFacturaDialog(
-            (JFrame) SwingUtilities.getWindowAncestor(this),
-            controller,
-            lineaEditar
+    int filaSeleccionada = tablaLineas.getSelectedRow();
+    
+    if (filaSeleccionada == -1) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Selecciona una línea para editar",
+            "Selección requerida",
+            JOptionPane.WARNING_MESSAGE
         );
-        
-        dialog.setVisible(true);
-        
-        if (dialog.isConfirmado()) {
-            lineasFactura.set(filaSeleccionada, dialog.getLinea());
-            actualizarTablaLineas();
-            actualizarTotales();
-        }
+        return;
     }
+    
+    LineaFactura lineaEditar = lineasFactura.get(filaSeleccionada);
+    
+    LineaFacturaFormView lineaPanel = new LineaFacturaFormView(
+        cardLayout,
+        cardPanel,
+        "formularioFactura",
+        controller,
+        lineaEditar,
+        new LineaFacturaFormView.LineaCallback() {
+            @Override
+            public void onLineaConfirmada(LineaFactura lineaEditada, boolean esEdicion, int indiceEditar) {
+                lineasFactura.set(indiceEditar, lineaEditada);
+                actualizarTablaLineas();
+                actualizarTotales();
+            }
+        },
+        filaSeleccionada
+    );
+    
+    cardPanel.add(lineaPanel, "lineaFacturaEditar");
+    cardLayout.show(cardPanel, "lineaFacturaEditar");
+}
 
     private void eliminarLinea() {
         int filaSeleccionada = tablaLineas.getSelectedRow();
