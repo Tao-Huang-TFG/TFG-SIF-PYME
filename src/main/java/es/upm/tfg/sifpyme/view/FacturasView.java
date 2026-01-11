@@ -3,6 +3,7 @@ package es.upm.tfg.sifpyme.view;
 import es.upm.tfg.sifpyme.controller.FacturaController;
 import es.upm.tfg.sifpyme.model.entity.Factura;
 import es.upm.tfg.sifpyme.service.FacturaPDFService;
+import es.upm.tfg.sifpyme.service.FacturaExcelService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,19 +14,19 @@ import java.util.List;
 
 /**
  * Vista de lista de facturas
- * REFACTORIZADO:
- * - Columnas actualizadas: ahora muestra "ID Factura" en vez de Serie/Número
- * - Usa UIHelper y UITheme
+ * ACTUALIZADO: Ahora permite generar PDF o Excel mediante un diálogo
  */
 public class FacturasView extends BaseListView<Factura> {
 
     private FacturaController controller;
     private FacturaPDFService pdfService;
+    private FacturaExcelService excelService;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public FacturasView() {
         this.controller = new FacturaController();
         this.pdfService = new FacturaPDFService();
+        this.excelService = new FacturaExcelService();
         cargarDatos();
     }
 
@@ -57,7 +58,6 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected String[] getNombresColumnas() {
-        // CAMBIADO: ID Factura en vez de Serie + Número
         return new String[]{ 
             "ID Factura", "Fecha", "Cliente", "Empresa",
             "Subtotal", "IVA", "Total", "Método Pago"
@@ -86,15 +86,14 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void configurarAnchoColumnas() {
-        // CAMBIADO: Ajustado para nueva estructura de columnas
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(150);  // ID Factura
-        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);  // Fecha
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(200);  // Cliente
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(200);  // Empresa
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(100);  // Subtotal
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);  // IVA
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(100);  // Total
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(120);  // Método Pago
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(150);
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(200);
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(200);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(120);
     }
 
     @Override
@@ -115,7 +114,7 @@ public class FacturasView extends BaseListView<Factura> {
                 factura.getEmpresa().getRazonSocial() : "";
 
             Object[] fila = {
-                factura.getIdFactura(),  // CAMBIADO: ID completo
+                factura.getIdFactura(),
                 factura.getFechaEmision().format(DATE_FORMATTER),
                 nombreCliente,
                 nombreEmpresa,
@@ -137,14 +136,9 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected JPanel crearFormularioEdicion(Integer id) {
-        // NOTA: Ya no usamos Integer ID, ahora es String
-        // Este método no se usa, pero lo mantenemos por la interfaz
         return null;
     }
     
-    /**
-     * NUEVO: Método sobrecargado para usar String ID
-     */
     protected JPanel crearFormularioEdicion(String idFactura) {
         Factura factura = controller.obtenerFacturaPorId(idFactura);
         
@@ -184,9 +178,9 @@ public class FacturasView extends BaseListView<Factura> {
         }
 
         int filaModelo = tabla.convertRowIndexToModel(filaSeleccionada);
-        String idFactura = (String) modeloTabla.getValueAt(filaModelo, 0); // CAMBIADO: String en vez de Integer
+        String idFactura = (String) modeloTabla.getValueAt(filaModelo, 0);
 
-        JPanel formulario = crearFormularioEdicion(idFactura); // CAMBIADO: Usar el método sobrecargado
+        JPanel formulario = crearFormularioEdicion(idFactura);
         if (formulario != null) {
             Component[] components = cardPanel.getComponents();
             for (Component comp : components) {
@@ -210,13 +204,9 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected boolean eliminarRegistro(Integer id) {
-        // Este método no se usa porque ahora usamos String
         return false;
     }
     
-    /**
-     * NUEVO: Método sobrecargado para eliminar con String ID
-     */
     protected boolean eliminarRegistro(String idFactura) {
         return controller.eliminarFactura(idFactura);
     }
@@ -235,7 +225,7 @@ public class FacturasView extends BaseListView<Factura> {
         }
 
         int filaModelo = tabla.convertRowIndexToModel(filaSeleccionada);
-        String idFactura = (String) modeloTabla.getValueAt(filaModelo, 0); // CAMBIADO: String
+        String idFactura = (String) modeloTabla.getValueAt(filaModelo, 0);
 
         int confirmacion = JOptionPane.showConfirmDialog(
             this,
@@ -246,7 +236,7 @@ public class FacturasView extends BaseListView<Factura> {
             JOptionPane.WARNING_MESSAGE);
 
         if (confirmacion == JOptionPane.YES_OPTION) {
-            boolean eliminado = eliminarRegistro(idFactura); // CAMBIADO: Usar String
+            boolean eliminado = eliminarRegistro(idFactura);
 
             if (eliminado) {
                 JOptionPane.showMessageDialog(
@@ -267,16 +257,19 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected void agregarBotonesAdicionales(JPanel buttonsPanel) {
-        JButton btnGenerarPDF = UIHelper.crearBoton(
-            "Generar PDF", 
-            new Color(231, 76, 60),
-            UITheme.ICONO_PDF
+        JButton btnGenerarArchivo = UIHelper.crearBoton(
+            "Generar Archivo", 
+            new Color(52, 152, 219),
+            "📁"
         );
-        btnGenerarPDF.addActionListener(e -> generarPDF());
-        buttonsPanel.add(btnGenerarPDF, 0);
+        btnGenerarArchivo.addActionListener(e -> mostrarDialogoGenerarArchivo());
+        buttonsPanel.add(btnGenerarArchivo, 0);
     }
 
-    private void generarPDF() {
+    /**
+     * Muestra el diálogo para seleccionar el formato (PDF o Excel)
+     */
+    private void mostrarDialogoGenerarArchivo() {
         int filaSeleccionada = tabla.getSelectedRow();
 
         if (filaSeleccionada == -1) {
@@ -288,8 +281,16 @@ public class FacturasView extends BaseListView<Factura> {
             return;
         }
 
+        // Mostrar diálogo de selección
+        FormatoExportacionDialog.FormatoSeleccionado formato = 
+            FormatoExportacionDialog.mostrarDialogo(this);
+
+        if (formato == FormatoExportacionDialog.FormatoSeleccionado.CANCELAR) {
+            return;
+        }
+
         int filaModelo = tabla.convertRowIndexToModel(filaSeleccionada);
-        String idFactura = (String) modeloTabla.getValueAt(filaModelo, 0); // CAMBIADO: String
+        String idFactura = (String) modeloTabla.getValueAt(filaModelo, 0);
 
         Factura factura = controller.obtenerFacturaPorId(idFactura);
         if (factura == null) {
@@ -301,11 +302,24 @@ public class FacturasView extends BaseListView<Factura> {
             return; 
         }
 
+        // Generar según el formato seleccionado
+        if (formato == FormatoExportacionDialog.FormatoSeleccionado.PDF) {
+            generarPDF(factura);
+        } else {
+            generarExcel(factura);
+        }
+    }
+
+    /**
+     * Genera un archivo PDF de la factura
+     */
+    private void generarPDF(Factura factura) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Guardar Factura PDF");
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-        String nombreArchivo = String.format("Factura_%s.pdf", idFactura.replace("/", "-"));
+        String nombreArchivo = String.format("Factura_%s.pdf", 
+            factura.getIdFactura().replace("/", "-"));
         fileChooser.setSelectedFile(new File(nombreArchivo));
 
         fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
@@ -342,12 +356,67 @@ public class FacturasView extends BaseListView<Factura> {
                 }
             }
             
-            generarPDFEnSegundoPlano(factura, archivo.getAbsolutePath());
+            generarArchivoEnSegundoPlano(factura, archivo.getAbsolutePath(), true);
         }
     }
 
-    private void generarPDFEnSegundoPlano(Factura factura, String rutaDestino) {
-        JDialog dialogoProgreso = new JDialog(this, "Generando PDF", true);
+    /**
+     * Genera un archivo Excel de la factura
+     */
+    private void generarExcel(Factura factura) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar Factura Excel");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        String nombreArchivo = String.format("Factura_%s.xlsx", 
+            factura.getIdFactura().replace("/", "-"));
+        fileChooser.setSelectedFile(new File(nombreArchivo));
+
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.isDirectory() || f.getName().toLowerCase().endsWith(".xlsx");
+            }
+            
+            @Override
+            public String getDescription() {
+                return "Archivos Excel (*.xlsx)";
+            }
+        });
+
+        int result = fileChooser.showSaveDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File archivo = fileChooser.getSelectedFile();
+            
+            if (!archivo.getName().toLowerCase().endsWith(".xlsx")) {
+                archivo = new File(archivo.getAbsolutePath() + ".xlsx");
+            }
+            
+            if (archivo.exists()) {
+                int confirmacion = JOptionPane.showConfirmDialog(
+                    this,
+                    "El archivo ya existe. ¿Deseas sobrescribirlo?",
+                    "Confirmar Sobrescritura",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                
+                if (confirmacion != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+            
+            generarArchivoEnSegundoPlano(factura, archivo.getAbsolutePath(), false);
+        }
+    }
+
+    /**
+     * Genera el archivo en segundo plano (PDF o Excel)
+     */
+    private void generarArchivoEnSegundoPlano(Factura factura, String rutaDestino, boolean esPDF) {
+        String tipoArchivo = esPDF ? "PDF" : "Excel";
+        
+        JDialog dialogoProgreso = new JDialog(this, "Generando " + tipoArchivo, true);
         dialogoProgreso.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialogoProgreso.setSize(350, 120);
         dialogoProgreso.setLocationRelativeTo(this);
@@ -356,7 +425,7 @@ public class FacturasView extends BaseListView<Factura> {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        JLabel lblMensaje = new JLabel("Generando factura PDF...");
+        JLabel lblMensaje = new JLabel("Generando factura " + tipoArchivo + "...");
         lblMensaje.setFont(UITheme.FUENTE_ETIQUETA);
         lblMensaje.setHorizontalAlignment(SwingConstants.CENTER);
         
@@ -371,7 +440,11 @@ public class FacturasView extends BaseListView<Factura> {
         SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() throws Exception {
-                return pdfService.generarPDF(factura, rutaDestino);
+                if (esPDF) {
+                    return pdfService.generarPDF(factura, rutaDestino);
+                } else {
+                    return excelService.generarExcel(factura, rutaDestino);
+                }
             }
             
             @Override
@@ -383,19 +456,20 @@ public class FacturasView extends BaseListView<Factura> {
                     
                     int respuesta = JOptionPane.showConfirmDialog(
                         FacturasView.this,
-                        "PDF generado exitosamente en:\n" + ruta + "\n\n¿Deseas abrir el archivo?",
-                        "PDF Generado",
+                        tipoArchivo + " generado exitosamente en:\n" + ruta + 
+                        "\n\n¿Deseas abrir el archivo?",
+                        tipoArchivo + " Generado",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.INFORMATION_MESSAGE);
                     
                     if (respuesta == JOptionPane.YES_OPTION) {
-                        abrirPDF(ruta);
+                        abrirArchivo(ruta);
                     }
                     
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(
                         FacturasView.this,
-                        "Error al generar el PDF:\n" + e.getMessage(),
+                        "Error al generar el " + tipoArchivo + ":\n" + e.getMessage(),
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
                 }
@@ -406,7 +480,7 @@ public class FacturasView extends BaseListView<Factura> {
         dialogoProgreso.setVisible(true);
     }
 
-    private void abrirPDF(String ruta) {
+    private void abrirArchivo(String ruta) {
         try {
             File archivo = new File(ruta);
             if (archivo.exists()) {
@@ -424,7 +498,7 @@ public class FacturasView extends BaseListView<Factura> {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(
                 this,
-                "Error al abrir el PDF:\n" + e.getMessage(),
+                "Error al abrir el archivo:\n" + e.getMessage(),
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
