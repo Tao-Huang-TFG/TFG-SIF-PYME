@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Servicio para generar PDFs de facturas con diseño profesional
@@ -279,69 +281,76 @@ public class FacturaPDFService {
     }
 
     private void agregarTotales(Document document, Factura factura) throws DocumentException {
-        // Tabla de resumen
-        PdfPTable table = new PdfPTable(4);
-        table.setWidthPercentage(100);
-        table.setWidths(new float[] { 4, 2, 2, 2 });
-        table.setSpacingBefore(10);
 
-        // Fila de headers
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[] { 2, 2, 1.5f, 2, 2 });
+        table.setSpacingBefore(15);
+
+        // Headers
         table.addCell(crearCeldaTotal("Total Bruto (€)", true));
         table.addCell(crearCeldaTotal("Base Imponible (€)", true));
         table.addCell(crearCeldaTotal("Tipo IVA (%)", true));
+        table.addCell(crearCeldaTotal("Subtotal Neto (€)", true));
         table.addCell(crearCeldaTotal("Total Neto (€)", true));
 
-        // Calcular base imponible (subtotal sin IVA)
-        BigDecimal baseImponible = factura.getSubtotal();
-        BigDecimal totalBruto = factura.getSubtotal().add(factura.getTotalIva());
+        // Agrupar por tipo de IVA
+        Map<BigDecimal, BigDecimal> basePorIva = new HashMap<>();
 
-        // Calcular el porcentaje de IVA promedio (si hay múltiples)
-        BigDecimal porcentajeIva = BigDecimal.ZERO;
-        if (factura.getSubtotal().compareTo(BigDecimal.ZERO) > 0) {
-            porcentajeIva = factura.getTotalIva()
-                    .multiply(new BigDecimal("100"))
-                    .divide(factura.getSubtotal(), 2, RoundingMode.HALF_UP);
+        BigDecimal totalBruto = BigDecimal.ZERO;
+        BigDecimal totalNeto = BigDecimal.ZERO;
+
+        for (LineaFactura linea : factura.getLineas()) {
+
+            BigDecimal precioBrutoLinea = linea.getPrecioBase()
+                    .multiply(linea.getCantidad())
+                    .multiply(
+                            BigDecimal.ONE.subtract(
+                                    linea.getDescuento().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)));
+
+            totalBruto = totalBruto.add(precioBrutoLinea);
+
+            basePorIva.merge(
+                    linea.getPorcentajeIva(),
+                    precioBrutoLinea,
+                    BigDecimal::add);
         }
 
-        // Fila de datos
-        table.addCell(crearCeldaTotal(formatearMoneda(totalBruto), false));
-        table.addCell(crearCeldaTotal(formatearMoneda(baseImponible), false));
-        table.addCell(crearCeldaTotal(formatearNumero(porcentajeIva) + " %", false));
-        table.addCell(crearCeldaTotal(formatearMoneda(factura.getTotal()), false));
+        boolean primeraFila = true;
 
-        // Si hay retención, añadir una fila adicional
-        if (factura.getTotalRetencion().compareTo(BigDecimal.ZERO) > 0) {
-            PdfPCell cellRetencion = new PdfPCell(new Phrase("Total Retención (€)", fuenteNormalBold));
-            cellRetencion.setPadding(8);
-            cellRetencion.setColspan(3);
-            cellRetencion.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            cellRetencion.setBackgroundColor(COLOR_SECUNDARIO);
-            table.addCell(cellRetencion);
+        for (Map.Entry<BigDecimal, BigDecimal> entry : basePorIva.entrySet()) {
 
-            table.addCell(crearCeldaTotal("-" + formatearMoneda(factura.getTotalRetencion()), false));
+            BigDecimal tipoIva = entry.getKey();
+            BigDecimal baseImponible = entry.getValue();
+
+            BigDecimal iva = baseImponible
+                    .multiply(tipoIva)
+                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+
+            BigDecimal subtotalNeto = baseImponible.add(iva);
+            totalNeto = totalNeto.add(subtotalNeto);
+
+            // Total Bruto (solo primera fila)
+            table.addCell(crearCeldaTotal(
+                    primeraFila ? formatearMoneda(totalBruto) : "", false));
+
+            // Base Imponible
+            table.addCell(crearCeldaTotal(formatearMoneda(baseImponible), false));
+
+            // Tipo IVA
+            table.addCell(crearCeldaTotal(formatearNumero(tipoIva) + " %", false));
+
+            // Subtotal Neto
+            table.addCell(crearCeldaTotal(formatearMoneda(subtotalNeto), false));
+
+            // Total Neto (solo primera fila)
+            table.addCell(crearCeldaTotal(
+                    primeraFila ? formatearMoneda(factura.getTotal()) : "", false));
+
+            primeraFila = false;
         }
 
         document.add(table);
-
-        // Total final destacado
-        PdfPTable tableFinal = new PdfPTable(2);
-        tableFinal.setWidthPercentage(100);
-        tableFinal.setWidths(new float[] { 3, 1 });
-        tableFinal.setSpacingBefore(15);
-
-        PdfPCell cellTotalLabel = new PdfPCell(new Phrase("TOTAL FACTURA", fuenteSubtitulo));
-        cellTotalLabel.setPadding(12);
-        cellTotalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        cellTotalLabel.setBackgroundColor(COLOR_PRIMARIO);
-        tableFinal.addCell(cellTotalLabel);
-
-        PdfPCell cellTotalValue = new PdfPCell(new Phrase(formatearMoneda(factura.getTotal()) + " €", fuenteSubtitulo));
-        cellTotalValue.setPadding(12);
-        cellTotalValue.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cellTotalValue.setBackgroundColor(COLOR_SECUNDARIO);
-        tableFinal.addCell(cellTotalValue);
-
-        document.add(tableFinal);
     }
 
     private void agregarPiePagina(Document document) throws DocumentException {
