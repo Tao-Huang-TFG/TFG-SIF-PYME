@@ -183,41 +183,39 @@ public class FacturaFormView extends BaseFormView<Factura> {
     }
 
     private JPanel crearPanelEncabezado() {
-        JPanel panel = UIHelper.crearSeccionPanel("Datos de la Factura", COLOR_PRIMARIO);
-        
-        // Panel de ayuda para el ID
-        GridBagConstraints gbcAyuda = new GridBagConstraints();
-        gbcAyuda.gridx = 0;
-        gbcAyuda.gridy = 0;
-        gbcAyuda.gridwidth = 2;
-        gbcAyuda.fill = GridBagConstraints.HORIZONTAL;
-        gbcAyuda.insets = new Insets(0, 0, 15, 0);
-        
-        JPanel ayudaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        ayudaPanel.setBackground(new Color(230, 240, 255));
-        ayudaPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(UITheme.COLOR_INFO, 1),
-            BorderFactory.createEmptyBorder(10, 15, 10, 15)
-        ));
-        
-        JLabel lblAyuda = new JLabel(
-            "<html><b>💡 ID de Factura:</b> Introduce un identificador único (ej: FAC-2025-001, FACT001, 2025/001)</html>"
-        );
-        lblAyuda.setFont(UITheme.FUENTE_SUBTITULO);
-        lblAyuda.setForeground(UITheme.COLOR_INFO.darker());
-        ayudaPanel.add(lblAyuda);
-        
-        panel.add(ayudaPanel, gbcAyuda);
-        
-        // Campos del formulario
-        addFormFieldCombo(panel, "Empresa:", cmbEmpresa, true, 1);
-        addFormFieldCombo(panel, "Cliente:", cmbCliente, true, 2);
-        addFormField(panel, "ID Factura:", txtIdFactura, true, 3);
-        addFormField(panel, "Fecha:", txtFecha, true, 4);
-        addFormFieldCombo(panel, "Método de Pago:", cmbMetodoPago, true, 5);
-        
-        return panel;
-    }
+    JPanel panel = UIHelper.crearSeccionPanelConAyudaEstilizada(
+        "Datos de la Factura", 
+        "ID de Factura: Introduce un identificador único (ej: FAC-2025-001, FACT001, 2025/001)", 
+        COLOR_PRIMARIO
+    );
+    
+    // Cambiar a GridBagLayout para los campos
+    JPanel camposPanel = new JPanel(new GridBagLayout());
+    camposPanel.setOpaque(false);
+    
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.gridwidth = 2;
+    gbc.weightx = 1.0;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.insets = new Insets(0, 0, 10, 0);
+    
+    addFormFieldCombo(camposPanel, "Empresa:", cmbEmpresa, true, 0);
+    gbc.gridy = 1;
+    addFormFieldCombo(camposPanel, "Cliente:", cmbCliente, true, 1);
+    gbc.gridy = 2;
+    addFormField(camposPanel, "ID Factura:", txtIdFactura, true, 2);
+    gbc.gridy = 3;
+    addFormField(camposPanel, "Fecha:", txtFecha, true, 3);
+    gbc.gridy = 4;
+    addFormFieldCombo(camposPanel, "Método de Pago:", cmbMetodoPago, true, 4);
+    
+    // Añadir los campos al panel principal
+    panel.add(camposPanel, BorderLayout.SOUTH);
+    
+    return panel;
+}
 
     private JPanel crearPanelLineas() {
         JPanel panel = new JPanel(new BorderLayout(0, 10));

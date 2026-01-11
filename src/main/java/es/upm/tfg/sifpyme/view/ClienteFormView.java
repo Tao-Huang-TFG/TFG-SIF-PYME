@@ -81,7 +81,7 @@ public class ClienteFormView extends BaseFormView<Cliente> {
 
         addFormField(datosPanel, "Nombre Fiscal:", txtNombreFiscal, true, 0);
         addFormField(datosPanel, "NIF:", txtNif, true, 1);
-        addFormField(datosPanel, "Dirección:", txtDireccion, false, 2);
+        addFormField(datosPanel, "Dirección:", txtDireccion, true, 2);
         addFormField(datosPanel, "Teléfono:", txtTelefono, false, 3);
         addFormField(datosPanel, "Email:", txtEmail, false, 4);
 

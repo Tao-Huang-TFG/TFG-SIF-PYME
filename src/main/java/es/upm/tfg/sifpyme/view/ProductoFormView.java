@@ -25,7 +25,7 @@ public class ProductoFormView extends BaseFormView<Producto> {
     private JTextField txtNombre;
     private JTextField txtPrecio;
     private JTextField txtPrecioBase;
-    private JTextField txtTipoIva;  // CAMBIADO: De JComboBox a JTextField
+    private JTextField txtTipoIva; // CAMBIADO: De JComboBox a JTextField
     private JTextField txtTipoRetencion;
 
     // Flags para evitar bucles infinitos en el cálculo
@@ -72,12 +72,12 @@ public class ProductoFormView extends BaseFormView<Producto> {
         txtNombre = UIHelper.crearCampoTexto(30);
         txtPrecio = UIHelper.crearCampoTexto(15);
         txtPrecioBase = UIHelper.crearCampoTexto(15);
-        
+
         // CAMBIADO: txtTipoIva ahora es JTextField en vez de JComboBox
         txtTipoIva = UIHelper.crearCampoTexto(10);
         txtTipoIva.setText("21.00");
         txtTipoIva.setPreferredSize(new Dimension(100, 35));
-        
+
         txtTipoRetencion = UIHelper.crearCampoTexto(10);
         txtTipoRetencion.setText("0.00");
 
@@ -161,7 +161,7 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
             BigDecimal precio = new BigDecimal(precioStr);
             String ivaStr = txtTipoIva.getText().trim();
-            
+
             if (!ivaStr.isEmpty() && precio.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal porcentajeIva = new BigDecimal(ivaStr);
                 BigDecimal divisor = BigDecimal.ONE
@@ -248,13 +248,31 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
         // Panel de precios CON INDICACIONES
         gbc.gridy = 1;
-        JPanel preciosPanel = crearSeccionPanelConAyuda("Precios e IVA",
-                "💡 Introduce Precio (con IVA) o Precio Base (sin IVA). El otro se calculará automáticamente.");
+        JPanel preciosPanel = UIHelper.crearSeccionPanelConAyudaEstilizada(
+                "Precios e IVA",
+                "Introduce Precio (con IVA) o Precio Base (sin IVA). El otro se calculará automáticamente.",
+                COLOR_PRIMARIO);
 
-        addFormField(preciosPanel, "Precio (con IVA):", txtPrecio, false, 1);
-        addFormField(preciosPanel, "Precio Base (sin IVA):", txtPrecioBase, false, 2);
-        addFormField(preciosPanel, "Tipo de IVA (%):", txtTipoIva, true, 3);
-        addFormField(preciosPanel, "% Retención:", txtTipoRetencion, false, 4);
+        JPanel camposPrecios = new JPanel(new GridBagLayout());
+        camposPrecios.setOpaque(false);
+
+        GridBagConstraints gbcPrecios = new GridBagConstraints();
+        gbcPrecios.gridx = 0;
+        gbcPrecios.gridy = 0;
+        gbcPrecios.gridwidth = 2;
+        gbcPrecios.weightx = 1.0;
+        gbcPrecios.fill = GridBagConstraints.HORIZONTAL;
+        gbcPrecios.insets = new Insets(0, 0, 10, 0);
+
+        addFormField(camposPrecios, "Precio (con IVA):", txtPrecio, true, 0);
+        gbcPrecios.gridy = 1;
+        addFormField(camposPrecios, "Precio Base (sin IVA):", txtPrecioBase, true, 1);
+        gbcPrecios.gridy = 2;
+        addFormField(camposPrecios, "Tipo de IVA (%):", txtTipoIva, true, 2);
+        gbcPrecios.gridy = 3;
+        addFormField(camposPrecios, "% Retención:", txtTipoRetencion, false, 3);
+
+        preciosPanel.add(camposPrecios, BorderLayout.SOUTH);
         panel.add(preciosPanel, gbc);
 
         // Nota informativa
@@ -270,35 +288,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
         gbc.gridy = 3;
         gbc.weighty = 1.0;
         panel.add(Box.createGlue(), gbc);
-
-        return panel;
-    }
-
-    private JPanel crearSeccionPanelConAyuda(String titulo, String textoAyuda) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(0, 0, 10, 0);
-
-        JLabel lblTitulo = new JLabel(titulo);
-        lblTitulo.setFont(UITheme.FUENTE_SUBTITULO_NEGRITA);
-        lblTitulo.setForeground(COLOR_PRIMARIO);
-        panel.add(lblTitulo, gbc);
-
-        gbc.gridy = 1;
-        gbc.insets = new Insets(0, 0, 15, 0);
-        JLabel lblAyuda = new JLabel("<html>" + textoAyuda + "</html>");
-        lblAyuda.setFont(UITheme.FUENTE_SUBTITULO);
-        lblAyuda.setForeground(new Color(100, 100, 100));
-        panel.add(lblAyuda, gbc);
 
         return panel;
     }

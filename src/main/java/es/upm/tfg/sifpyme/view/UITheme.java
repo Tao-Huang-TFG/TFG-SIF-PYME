@@ -43,6 +43,7 @@ public class UITheme {
     public static final Font FUENTE_ICONO_GRANDE = new Font("Segoe UI Emoji", Font.PLAIN, 36);
     public static final Font FUENTE_ICONO_MEDIANO = new Font("Segoe UI Emoji", Font.PLAIN, 28);
     public static final Font FUENTE_ICONO_PEQUENO = new Font("Segoe UI Symbol", Font.PLAIN, 16);
+    public static final Font FUENTE_ICONO_AYUDA = new Font("Segoe UI Symbol", Font.PLAIN, 13);
 
     // ==================== ICONOS (Unicode) ====================
 

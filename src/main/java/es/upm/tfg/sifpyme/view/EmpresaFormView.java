@@ -94,9 +94,9 @@ protected JPanel crearPanelCampos() {
 
     // Panel de datos básicos
     JPanel datosBasicos = UIHelper.crearSeccionPanel("Datos Básicos", COLOR_PRIMARIO);
-    addFormField(datosBasicos, "Razón Social:", txtRazonSocial, true, 1);
-    addFormField(datosBasicos, "NIF:", txtNif, true, 2);
-    addFormField(datosBasicos, "Dirección:", txtDireccion, true, 0);
+    addFormField(datosBasicos, "Razón Social:", txtRazonSocial, true, 0);
+    addFormField(datosBasicos, "NIF:", txtNif, true, 1);
+    addFormField(datosBasicos, "Dirección:", txtDireccion, true, 2);
     panel.add(datosBasicos, gbc);
 
     // Panel de contacto
