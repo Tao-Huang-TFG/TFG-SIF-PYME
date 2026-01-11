@@ -233,7 +233,7 @@ public class FacturaPDFService {
         table.setSpacingAfter(10);
 
         // Headers con fondo de color
-        String[] headers = { "Descripción", "Cantidad", "Precio (€)", "IVA (%)", "Descuento (%)", "Total (€)" };
+        String[] headers = { "Producto", "Cantidad", "Precio (€)", "IVA (%)", "Descuento (%)", "Total (€)" };
         for (String header : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(header, fuenteTablaHeader));
             cell.setBackgroundColor(COLOR_PRIMARIO);
@@ -245,19 +245,19 @@ public class FacturaPDFService {
         // Líneas de factura
         for (LineaFactura linea : factura.getLineas()) {
             // CAMBIO: Usar nombre_producto si está disponible, o descripción por defecto
-            String descripcion;
+            String nombre_producto;
             if (linea.getNombreProducto() != null && !linea.getNombreProducto().trim().isEmpty()) {
-                descripcion = linea.getNombreProducto();
+                nombre_producto = linea.getNombreProducto();
             } else if (linea.getProducto() != null && linea.getProducto().getNombre() != null) {
-                descripcion = linea.getProducto().getNombre();
+                nombre_producto = linea.getProducto().getNombre();
             } else {
                 // Si no hay nombre, usar "Línea X" como fallback
-                descripcion = "Línea " + linea.getNumeroLinea();
+                nombre_producto = "Línea " + linea.getNumeroLinea();
             }
 
-            PdfPCell cellDescripcion = new PdfPCell(new Phrase(descripcion, fuenteTabla));
-            cellDescripcion.setPadding(8);
-            table.addCell(cellDescripcion);
+            PdfPCell cellProducto = new PdfPCell(new Phrase(nombre_producto, fuenteTabla));
+            cellProducto.setPadding(8);
+            table.addCell(cellProducto);
 
             // Cantidad
             table.addCell(crearCeldaNumero(formatearNumero(linea.getCantidad())));

@@ -277,15 +277,6 @@ public class ProductoFormView extends BaseFormView<Producto> {
         preciosPanel.add(camposPrecios, BorderLayout.SOUTH);
         panel.add(preciosPanel, gbc);
 
-        // Nota informativa
-        JLabel lblNota = new JLabel(
-                "<html><i>* El sistema calculará automáticamente el precio con/sin IVA según el que introduzcas</i></html>");
-        lblNota.setFont(UITheme.FUENTE_SUBTITULO);
-        lblNota.setForeground(COLOR_PRIMARIO);
-        gbc.gridy = 2;
-        gbc.insets = new Insets(5, 0, 0, 0);
-        panel.add(lblNota, gbc);
-
         // Espacio flexible
         gbc.gridy = 3;
         gbc.weighty = 1.0;
