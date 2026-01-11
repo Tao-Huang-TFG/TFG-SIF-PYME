@@ -1,7 +1,6 @@
 package es.upm.tfg.sifpyme.view;
 
 import es.upm.tfg.sifpyme.controller.FacturaController;
-import es.upm.tfg.sifpyme.controller.ProductoController;
 import es.upm.tfg.sifpyme.model.entity.LineaFactura;
 import es.upm.tfg.sifpyme.model.entity.Producto;
 
@@ -29,7 +28,6 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
     }
 
     private final FacturaController facturaController;
-    private final ProductoController productoController;
     private LineaFactura lineaEditar;
     private final LineaCallback callback;
     private final int indiceEditar;
@@ -71,7 +69,6 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         this.callback = callback;
         this.indiceEditar = indiceEditar;
         this.facturaController = controller;
-        this.productoController = new ProductoController();
 
         if (lineaEditar != null) {
             this.lineaEditar = lineaEditar;

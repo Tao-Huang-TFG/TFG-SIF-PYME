@@ -22,7 +22,7 @@ public class CalculadoraFacturaService {
      * @throws IllegalArgumentException si cantidad o precio unitario son nulos
      */
     public void calcularImportesLinea(LineaFactura linea) {
-        if (linea.getCantidad() == null || linea.getPrecioUnitario() == null) {
+        if (linea.getCantidad() == null || linea.getPrecioBase() == null) {
             throw new IllegalArgumentException(
                 "La cantidad y el precio unitario no pueden ser nulos"
             );
@@ -31,7 +31,7 @@ public class CalculadoraFacturaService {
         // Calcular subtotal con descuento aplicado
         BigDecimal subtotal = calcularSubtotalConDescuento(
             linea.getCantidad(),
-            linea.getPrecioUnitario(),
+            linea.getPrecioBase(),
             linea.getDescuento()
         );
         linea.setSubtotalLinea(subtotal);
@@ -63,17 +63,17 @@ public class CalculadoraFacturaService {
      * Calcula el subtotal de una línea aplicando el descuento si existe.
      * 
      * @param cantidad Cantidad de productos/servicios
-     * @param precioUnitario Precio por unidad
+     * @param precioBase PrecioBase por unidad
      * @param descuento Porcentaje de descuento (puede ser null o 0)
      * @return Subtotal con descuento aplicado
      */
     public BigDecimal calcularSubtotalConDescuento(
             BigDecimal cantidad, 
-            BigDecimal precioUnitario,
+            BigDecimal precioBase,
             BigDecimal descuento) {
         
         // Base = cantidad * precio
-        BigDecimal base = cantidad.multiply(precioUnitario);
+        BigDecimal base = cantidad.multiply(precioBase);
         
         // Aplicar descuento si existe y es mayor que 0
         if (descuento != null && descuento.compareTo(BigDecimal.ZERO) > 0) {
