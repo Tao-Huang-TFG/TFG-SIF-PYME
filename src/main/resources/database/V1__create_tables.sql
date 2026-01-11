@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS Factura (
 CREATE TABLE IF NOT EXISTS Linea_factura (
   id_linea INT PRIMARY KEY AUTO_INCREMENT,
   id_factura VARCHAR(20) NOT NULL,
+  nombre_producto VARCHAR(255) NOT NULL,
   cantidad DECIMAL(10,2) NOT NULL CHECK (cantidad > 0),
   precio_base DECIMAL(10,2) NOT NULL CHECK (precio_base >= 0),
   precio_unitario DECIMAL(10,2) NOT NULL CHECK (precio_unitario >= 0),

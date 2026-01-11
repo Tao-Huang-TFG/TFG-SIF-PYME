@@ -5,7 +5,6 @@ import es.upm.tfg.sifpyme.util.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +16,12 @@ public class LineaFacturaDAO {
     
     private static final Logger logger = LoggerFactory.getLogger(LineaFacturaDAO.class);
     
-    // Consultas SQL actualizadas según el nuevo esquema
+    // Consultas SQL actualizadas con el nuevo campo nombre_producto
     private static final String SQL_INSERT = 
-        "INSERT INTO Linea_factura (id_factura, cantidad, precio_base, " +
+        "INSERT INTO Linea_factura (id_factura, nombre_producto, cantidad, precio_base, " +
         "precio_unitario, descuento, subtotal_linea, porcentaje_iva, " +
         "importe_iva, porcentaje_retencion, importe_retencion, total_linea, " +
-        "numero_linea) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "numero_linea) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     private static final String SQL_SELECT_BY_FACTURA = 
         "SELECT * FROM Linea_factura WHERE id_factura = ? ORDER BY numero_linea";
@@ -37,7 +36,7 @@ public class LineaFacturaDAO {
         "UPDATE Linea_factura SET cantidad = ?, precio_base = ?, precio_unitario = ?, " +
         "descuento = ?, subtotal_linea = ?, porcentaje_iva = ?, importe_iva = ?, " +
         "porcentaje_retencion = ?, importe_retencion = ?, total_linea = ?, " +
-        "numero_linea = ? WHERE id_linea = ?";
+        "numero_linea = ?, nombre_producto = ? WHERE id_linea = ?";
     
     private static final String SQL_DELETE = 
         "DELETE FROM Linea_factura WHERE id_linea = ?";
@@ -103,7 +102,8 @@ public class LineaFacturaDAO {
              PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
             
             setLineaParameters(stmt, linea);
-            stmt.setInt(12, linea.getIdLinea());
+            stmt.setString(12, linea.getNombreProducto());  // Añadido nombre_producto
+            stmt.setInt(13, linea.getIdLinea());
             
             int filasAfectadas = stmt.executeUpdate();
             
@@ -196,65 +196,23 @@ public class LineaFacturaDAO {
     }
     
     /**
-     * Calcula los totales de una línea de factura
-     */
-    public void calcularTotales(LineaFactura linea) {
-        if (linea == null) return;
-        
-        BigDecimal cantidad = linea.getCantidad();
-        BigDecimal precioUnitario = linea.getPrecioUnitario();
-        BigDecimal descuento = linea.getDescuento() != null ? linea.getDescuento() : BigDecimal.ZERO;
-        BigDecimal porcentajeIva = linea.getPorcentajeIva() != null ? linea.getPorcentajeIva() : BigDecimal.ZERO;
-        BigDecimal porcentajeRetencion = linea.getPorcentajeRetencion() != null ? linea.getPorcentajeRetencion() : BigDecimal.ZERO;
-        
-        if (cantidad != null && precioUnitario != null) {
-            // Subtotal antes de descuento
-            BigDecimal subtotalSinDescuento = cantidad.multiply(precioUnitario);
-            
-            // Calcular descuento
-            BigDecimal descuentoAplicado = subtotalSinDescuento
-                .multiply(descuento)
-                .divide(new BigDecimal("100"));
-            
-            // Subtotal línea
-            BigDecimal subtotalLinea = subtotalSinDescuento.subtract(descuentoAplicado);
-            linea.setSubtotalLinea(subtotalLinea);
-            
-            // Calcular IVA
-            BigDecimal importeIva = subtotalLinea
-                .multiply(porcentajeIva)
-                .divide(new BigDecimal("100"));
-            linea.setImporteIva(importeIva);
-            
-            // Calcular retención
-            BigDecimal importeRetencion = subtotalLinea
-                .multiply(porcentajeRetencion)
-                .divide(new BigDecimal("100"));
-            linea.setImporteRetencion(importeRetencion);
-            
-            // Calcular total línea
-            BigDecimal totalLinea = subtotalLinea.add(importeIva).subtract(importeRetencion);
-            linea.setTotalLinea(totalLinea);
-        }
-    }
-    
-    /**
      * Establece los parámetros de un PreparedStatement con los datos de la línea
      */
     private void setLineaParameters(PreparedStatement stmt, LineaFactura linea) 
             throws SQLException {
         stmt.setString(1, linea.getIdFactura());
-        stmt.setBigDecimal(2, linea.getCantidad());
-        stmt.setBigDecimal(3, linea.getPrecioBase());
-        stmt.setBigDecimal(4, linea.getPrecioUnitario());
-        stmt.setBigDecimal(5, linea.getDescuento());
-        stmt.setBigDecimal(6, linea.getSubtotalLinea());
-        stmt.setBigDecimal(7, linea.getPorcentajeIva());
-        stmt.setBigDecimal(8, linea.getImporteIva());
-        stmt.setBigDecimal(9, linea.getPorcentajeRetencion());
-        stmt.setBigDecimal(10, linea.getImporteRetencion());
-        stmt.setBigDecimal(11, linea.getTotalLinea());
-        stmt.setInt(12, linea.getNumeroLinea());
+        stmt.setString(2, linea.getNombreProducto());  // NUEVO: nombre_producto
+        stmt.setBigDecimal(3, linea.getCantidad());
+        stmt.setBigDecimal(4, linea.getPrecioBase());
+        stmt.setBigDecimal(5, linea.getPrecioUnitario());
+        stmt.setBigDecimal(6, linea.getDescuento());
+        stmt.setBigDecimal(7, linea.getSubtotalLinea());
+        stmt.setBigDecimal(8, linea.getPorcentajeIva());
+        stmt.setBigDecimal(9, linea.getImporteIva());
+        stmt.setBigDecimal(10, linea.getPorcentajeRetencion());
+        stmt.setBigDecimal(11, linea.getImporteRetencion());
+        stmt.setBigDecimal(12, linea.getTotalLinea());
+        stmt.setInt(13, linea.getNumeroLinea());
     }
     
     /**
@@ -265,6 +223,7 @@ public class LineaFacturaDAO {
         
         linea.setIdLinea(rs.getInt("id_linea"));
         linea.setIdFactura(rs.getString("id_factura"));
+        linea.setNombreProducto(rs.getString("nombre_producto"));  // NUEVO
         linea.setCantidad(rs.getBigDecimal("cantidad"));
         linea.setPrecioBase(rs.getBigDecimal("precio_base"));
         linea.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));

@@ -9,8 +9,9 @@ import java.util.Objects;
 public class LineaFactura {
     
     private Integer idLinea;
-    private String idFactura;  // Ahora es String
+    private String idFactura;
     private Integer idProducto;
+    private String nombreProducto;  // NUEVO CAMPO
     private BigDecimal cantidad;
     private BigDecimal precioBase;
     private BigDecimal precioUnitario;
@@ -33,11 +34,12 @@ public class LineaFactura {
         this.importeRetencion = BigDecimal.ZERO;
     }
     
-    public LineaFactura(String idFactura, Integer idProducto, BigDecimal cantidad,
-                       BigDecimal precioUnitario, BigDecimal porcentajeIva) {
+    public LineaFactura(String idFactura, Integer idProducto, String nombreProducto, // NUEVO PARÁMETRO
+                       BigDecimal cantidad, BigDecimal precioUnitario, BigDecimal porcentajeIva) {
         this();
         this.idFactura = idFactura;
         this.idProducto = idProducto;
+        this.nombreProducto = nombreProducto;  // INICIALIZAR NUEVO CAMPO
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;
         this.porcentajeIva = porcentajeIva;
@@ -66,6 +68,15 @@ public class LineaFactura {
     
     public void setIdProducto(Integer idProducto) {
         this.idProducto = idProducto;
+    }
+    
+    // NUEVO GETTER Y SETTER PARA nombreProducto
+    public String getNombreProducto() {
+        return nombreProducto;
+    }
+    
+    public void setNombreProducto(String nombreProducto) {
+        this.nombreProducto = nombreProducto;
     }
     
     public BigDecimal getCantidad() {
@@ -164,6 +175,7 @@ public class LineaFactura {
         this.producto = producto;
         if (producto != null) {
             this.idProducto = producto.getIdProducto();
+            this.nombreProducto = producto.getNombre();  // ESTABLECER NOMBRE DESDE PRODUCTO
         }
     }
     
@@ -183,6 +195,6 @@ public class LineaFactura {
     
     @Override
     public String toString() {
-        return "Línea " + numeroLinea + ": " + cantidad + " x " + precioUnitario;
+        return "Línea " + numeroLinea + ": " + nombreProducto + " - " + cantidad + " x " + precioUnitario;
     }
 }
