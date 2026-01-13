@@ -561,21 +561,37 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
     }
 
     private void mostrarBuscadorProducto() {
+        // Obtener texto del campo
+        String textoBusqueda = txtNombreProducto.getText().trim().toLowerCase();
+
+        // Limpiar lista actual
         modeloProductos.clear();
-        todosLosProductos.forEach(modeloProductos::addElement);
 
-        if (!todosLosProductos.isEmpty()) {
-            Point location = btnBuscarProducto.getLocationOnScreen();
-            SwingUtilities.convertPointFromScreen(location, btnBuscarProducto);
-
-            popupProductos.show(txtNombreProducto, 0, txtNombreProducto.getHeight());
-        } else {
+        // Filtrar productos según el texto de búsqueda
+        List<Producto> filtrados = filtrarProductos(textoBusqueda);
+        if (filtrados.isEmpty()) {
             JOptionPane.showMessageDialog(
                     this,
-                    "No hay productos registrados en el sistema",
-                    "Sin Productos",
+                    "No se encontraron productos que coincidan con la búsqueda.",
+                    "Sin Resultados",
                     JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
+
+        filtrados.forEach(modeloProductos::addElement);
+
+        // Mostrar popup debajo del campo de texto
+        popupProductos.show(txtNombreProducto, 0, txtNombreProducto.getHeight());
+    }
+
+    private List<Producto> filtrarProductos(String texto) {
+        if (texto.isEmpty()) {
+            return todosLosProductos; // Si no hay texto, mostramos todos
+        }
+
+        return todosLosProductos.stream()
+                .filter(p -> p.toString().toLowerCase().contains(texto))
+                .toList();
     }
 
     private void seleccionarProductoPlantilla() {
@@ -614,11 +630,6 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         calculandoPrecioBase = false;
         calcularTotales();
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Datos cargados desde el producto.\nPuedes modificarlos libremente para esta factura.",
-                "Plantilla Cargada",
-                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void agregarResultado(JPanel panel, String label, JLabel valor,
