@@ -242,6 +242,7 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         gbcCampos.gridwidth = 1;
         gbcCampos.insets = new Insets(5, 0, 5, 15);
 
+        fila++;
         agregarResultado(camposPanel, "Subtotal:", lblSubtotal, fila++, gbcCampos);
         agregarResultado(camposPanel, "Importe IVA:", lblImporteIva, fila++, gbcCampos);
         agregarResultado(camposPanel, "Importe Retención:", lblImporteRetencion, fila++, gbcCampos);
@@ -567,7 +568,7 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             Point location = btnBuscarProducto.getLocationOnScreen();
             SwingUtilities.convertPointFromScreen(location, btnBuscarProducto);
 
-            popupProductos.show(btnBuscarProducto, 0, btnBuscarProducto.getHeight());
+            popupProductos.show(txtNombreProducto, 0, txtNombreProducto.getHeight());
         } else {
             JOptionPane.showMessageDialog(
                     this,
