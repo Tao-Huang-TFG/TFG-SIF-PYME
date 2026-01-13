@@ -52,6 +52,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
     private List<Cliente> todosLosClientes;
     private Cliente clienteSeleccionado;
     private boolean seleccionandoCliente = false;
+    private boolean cargandoDatosCliente = false;
 
     // Lista de líneas en memoria
     private List<LineaFactura> lineasFactura;
@@ -371,6 +372,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
             }
 
             // Cargar cliente para txtCliente
+            cargandoDatosCliente = true;
             for (Cliente cliente : todosLosClientes) {
                 if (cliente.getIdCliente().equals(entidadEditar.getIdCliente())) {
                     clienteSeleccionado = cliente;
@@ -378,6 +380,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
                     break;
                 }
             }
+            cargandoDatosCliente = false;
 
             txtIdFactura.setText(entidadEditar.getIdFactura());
             txtIdFactura.setEnabled(false); // No permitir cambiar ID en edición
@@ -531,7 +534,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
     }
 
     private void buscarClientes() {
-        if(seleccionandoCliente){
+        if(seleccionandoCliente || cargandoDatosCliente){
             return;
         }
         String textoBusqueda = txtCliente.getText().trim().toLowerCase();
