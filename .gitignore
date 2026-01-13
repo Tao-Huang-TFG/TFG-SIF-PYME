@@ -16,3 +16,6 @@ logs/
 #Archivos temporales de Office
 ~$*
 
+#Carpeta de creación de app
+SIFPyme/
+
