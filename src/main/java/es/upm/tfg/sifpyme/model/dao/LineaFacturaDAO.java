@@ -20,8 +20,8 @@ public class LineaFacturaDAO {
     private static final String SQL_INSERT = 
         "INSERT INTO Linea_factura (id_factura, nombre_producto, cantidad, precio_base, " +
         "precio_unitario, descuento, subtotal_linea, porcentaje_iva, " +
-        "importe_iva, porcentaje_retencion, importe_retencion, total_linea, " +
-        "numero_linea) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "importe_iva, porcentaje_retencion, importe_retencion, porcentaje_recargo, " +
+        "importe_recargo, total_linea, numero_linea) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     private static final String SQL_SELECT_BY_FACTURA = 
         "SELECT * FROM Linea_factura WHERE id_factura = ? ORDER BY numero_linea";
@@ -35,8 +35,8 @@ public class LineaFacturaDAO {
     private static final String SQL_UPDATE = 
         "UPDATE Linea_factura SET cantidad = ?, precio_base = ?, precio_unitario = ?, " +
         "descuento = ?, subtotal_linea = ?, porcentaje_iva = ?, importe_iva = ?, " +
-        "porcentaje_retencion = ?, importe_retencion = ?, total_linea = ?, " +
-        "numero_linea = ?, nombre_producto = ? WHERE id_linea = ?";
+        "porcentaje_retencion = ?, importe_retencion = ?, porcentaje_recargo = ?, " +
+        "importe_recargo = ?, total_linea = ?, numero_linea = ?, nombre_producto = ? WHERE id_linea = ?";
     
     private static final String SQL_DELETE = 
         "DELETE FROM Linea_factura WHERE id_linea = ?";
@@ -102,8 +102,8 @@ public class LineaFacturaDAO {
              PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
             
             setLineaParameters(stmt, linea);
-            stmt.setString(12, linea.getNombreProducto());  // Añadido nombre_producto
-            stmt.setInt(13, linea.getIdLinea());
+            stmt.setString(14, linea.getNombreProducto());  // Añadido nombre_producto
+            stmt.setInt(15, linea.getIdLinea());
             
             int filasAfectadas = stmt.executeUpdate();
             
@@ -211,8 +211,10 @@ public class LineaFacturaDAO {
         stmt.setBigDecimal(9, linea.getImporteIva());
         stmt.setBigDecimal(10, linea.getPorcentajeRetencion());
         stmt.setBigDecimal(11, linea.getImporteRetencion());
-        stmt.setBigDecimal(12, linea.getTotalLinea());
-        stmt.setInt(13, linea.getNumeroLinea());
+        stmt.setBigDecimal(12, linea.getPorcentajeRecargo());
+        stmt.setBigDecimal(13, linea.getImporteRecargo());
+        stmt.setBigDecimal(14, linea.getTotalLinea());
+        stmt.setInt(15, linea.getNumeroLinea());
     }
     
     /**
@@ -233,6 +235,8 @@ public class LineaFacturaDAO {
         linea.setImporteIva(rs.getBigDecimal("importe_iva"));
         linea.setPorcentajeRetencion(rs.getBigDecimal("porcentaje_retencion"));
         linea.setImporteRetencion(rs.getBigDecimal("importe_retencion"));
+        linea.setPorcentajeRecargo(rs.getBigDecimal("porcentaje_recargo"));
+        linea.setImporteRecargo(rs.getBigDecimal("importe_recargo"));
         linea.setTotalLinea(rs.getBigDecimal("total_linea"));
         linea.setNumeroLinea(rs.getInt("numero_linea"));
         

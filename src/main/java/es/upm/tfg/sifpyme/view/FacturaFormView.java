@@ -44,6 +44,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
     private JLabel lblSubtotal;
     private JLabel lblTotalIva;
     private JLabel lblTotalRetencion;
+    private JLabel lblTotalRecargo;
     private JLabel lblTotal;
 
     private JPopupMenu popupClientes;
@@ -156,11 +157,13 @@ public class FacturaFormView extends BaseFormView<Factura> {
         lblSubtotal = new JLabel("0,00 €");
         lblTotalIva = new JLabel("0,00 €");
         lblTotalRetencion = new JLabel("0,00 €");
+        lblTotalRecargo = new JLabel("0,00 €");
         lblTotal = new JLabel("0,00 €");
 
         lblSubtotal.setFont(UITheme.FUENTE_ETIQUETA);
         lblTotalIva.setFont(UITheme.FUENTE_ETIQUETA);
         lblTotalRetencion.setFont(UITheme.FUENTE_ETIQUETA);
+        lblTotalRecargo.setFont(UITheme.FUENTE_ETIQUETA);
         lblTotal.setFont(UITheme.FUENTE_TITULO_SECUNDARIO);
         lblTotal.setForeground(COLOR_PRIMARIO);
     }
@@ -296,9 +299,19 @@ public class FacturaFormView extends BaseFormView<Factura> {
         gbc.gridx = 1;
         panel.add(lblTotalRetencion, gbc);
 
-        // Línea separadora
+        // Total Recargo
         gbc.gridx = 0;
         gbc.gridy = 3;
+        JLabel lbl4 = new JLabel("Total Recargo:");
+        lbl4.setFont(UITheme.FUENTE_ETIQUETA);
+        panel.add(lbl4, gbc);
+
+        gbc.gridx = 1;
+        panel.add(lblTotalRecargo, gbc);
+
+        // Línea separadora
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 0, 10, 0);
@@ -306,7 +319,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
         // TOTAL
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
         gbc.insets = new Insets(5, 10, 5, 10);
@@ -716,6 +729,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
         lblSubtotal.setText(formatearMoneda(facturaTemp.getSubtotal()));
         lblTotalIva.setText(formatearMoneda(facturaTemp.getTotalIva()));
         lblTotalRetencion.setText(formatearMoneda(facturaTemp.getTotalRetencion()));
+        lblTotalRecargo.setText(formatearMoneda(facturaTemp.getTotalRecargo()));
         lblTotal.setText(formatearMoneda(facturaTemp.getTotal()));
     }
 

@@ -19,6 +19,7 @@ public class Factura {
     private BigDecimal subtotal;
     private BigDecimal totalIva;
     private BigDecimal totalRetencion;
+    private BigDecimal totalRecargo;
     private BigDecimal total;
     
     // Relaciones
@@ -32,6 +33,7 @@ public class Factura {
         this.subtotal = BigDecimal.ZERO;
         this.totalIva = BigDecimal.ZERO;
         this.totalRetencion = BigDecimal.ZERO;
+        this.totalRecargo = BigDecimal.ZERO;
         this.total = BigDecimal.ZERO;
         this.lineas = new ArrayList<>();
     }
@@ -108,7 +110,15 @@ public class Factura {
     public void setTotalRetencion(BigDecimal totalRetencion) {
         this.totalRetencion = totalRetencion;
     }
-    
+
+    public BigDecimal getTotalRecargo() {
+        return totalRecargo;
+    }
+
+    public void setTotalRecargo(BigDecimal totalRecargo) {
+        this.totalRecargo = totalRecargo;
+    }
+
     public BigDecimal getTotal() {
         return total;
     }

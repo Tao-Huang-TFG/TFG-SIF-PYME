@@ -21,6 +21,8 @@ public class LineaFactura {
     private BigDecimal importeIva;
     private BigDecimal porcentajeRetencion;
     private BigDecimal importeRetencion;
+    private BigDecimal porcentajeRecargo;
+    private BigDecimal importeRecargo;
     private BigDecimal totalLinea;
     private Integer numeroLinea;
     private transient int tempIndiceEditar = -1;
@@ -33,6 +35,8 @@ public class LineaFactura {
         this.descuento = BigDecimal.ZERO;
         this.porcentajeRetencion = BigDecimal.ZERO;
         this.importeRetencion = BigDecimal.ZERO;
+        this.porcentajeRecargo = BigDecimal.ZERO;
+        this.importeRecargo = BigDecimal.ZERO;
     }
     
     public LineaFactura(String idFactura, Integer idProducto, String nombreProducto, // NUEVO PARÁMETRO
@@ -150,6 +154,22 @@ public class LineaFactura {
     
     public void setImporteRetencion(BigDecimal importeRetencion) {
         this.importeRetencion = importeRetencion;
+    }
+    
+    public BigDecimal getPorcentajeRecargo() {
+        return porcentajeRecargo;
+    }
+    
+    public void setPorcentajeRecargo(BigDecimal porcentajeRecargo) {
+        this.porcentajeRecargo = porcentajeRecargo;
+    }
+    
+    public BigDecimal getImporteRecargo() {
+        return importeRecargo;
+    }
+    
+    public void setImporteRecargo(BigDecimal importeRecargo) {
+        this.importeRecargo = importeRecargo;
     }
     
     public BigDecimal getTotalLinea() {

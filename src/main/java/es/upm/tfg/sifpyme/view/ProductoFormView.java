@@ -27,6 +27,7 @@ public class ProductoFormView extends BaseFormView<Producto> {
     private JTextField txtPrecioBase;
     private JTextField txtTipoIva; // CAMBIADO: De JComboBox a JTextField
     private JTextField txtTipoRetencion;
+    private JTextField txtRecargoEquivalencia;
 
     // Flags para evitar bucles infinitos en el cálculo
     private boolean calculandoPrecio = false;
@@ -82,6 +83,9 @@ public class ProductoFormView extends BaseFormView<Producto> {
 
         txtTipoRetencion = UIHelper.crearCampoTexto(10);
         txtTipoRetencion.setText("0.00");
+
+        txtRecargoEquivalencia = UIHelper.crearCampoTexto(10);
+        txtRecargoEquivalencia.setText("0.00");
 
         // Configurar listeners para cálculo automático
         configurarCalculoAutomatico();
@@ -273,6 +277,8 @@ public class ProductoFormView extends BaseFormView<Producto> {
         addFormField(camposPrecios, "Tipo de IVA (%):", txtTipoIva, true, 0);
         gbcPrecios.gridy = 3;
         addFormField(camposPrecios, "% Retención:", txtTipoRetencion, false, 3);
+        gbcPrecios.gridy = 4;
+        addFormField(camposPrecios, "% Recargo equiv.:", txtRecargoEquivalencia, false, 4);
 
         preciosPanel.add(camposPrecios, BorderLayout.SOUTH);
         panel.add(preciosPanel, gbc);
@@ -307,13 +313,16 @@ public class ProductoFormView extends BaseFormView<Producto> {
             calculandoPrecio = false;
             calculandoPrecioBase = false;
 
-            // CAMBIADO: Cargar tipo IVA directamente
             if (entidadEditar.getTipoIva() != null) {
                 txtTipoIva.setText(entidadEditar.getTipoIva().toString());
             }
 
             if (entidadEditar.getTipoRetencion() != null) {
                 txtTipoRetencion.setText(entidadEditar.getTipoRetencion().toString());
+            }
+
+            if (entidadEditar.getRecargoEquivalencia() != null) {
+                txtRecargoEquivalencia.setText(entidadEditar.getRecargoEquivalencia().toString());
             }
         }
     }
@@ -388,6 +397,19 @@ public class ProductoFormView extends BaseFormView<Producto> {
             }
         }
 
+        // Validar recargo equivalencia
+        String recargo = txtRecargoEquivalencia.getText().trim();
+        if (!recargo.isEmpty()) {
+            try {
+                BigDecimal rec = new BigDecimal(recargo);
+                if (rec.compareTo(BigDecimal.ZERO) < 0 || rec.compareTo(new BigDecimal("100")) > 0) {
+                    errores.append("• El recargo de equivalencia debe estar entre 0 y 100\n");
+                }
+            } catch (NumberFormatException e) {
+                errores.append("• Formato de recargo de equivalencia inválido\n");
+            }
+        }
+
         if (errores.length() > 0) {
             mostrarErroresValidacion(errores);
             return false;
@@ -423,6 +445,10 @@ public class ProductoFormView extends BaseFormView<Producto> {
         // Retención
         String retencion = txtTipoRetencion.getText().trim();
         producto.setTipoRetencion(retencion.isEmpty() ? BigDecimal.ZERO : new BigDecimal(retencion));
+
+        // Recargo equivalencia
+        String recargo = txtRecargoEquivalencia.getText().trim();
+        producto.setRecargoEquivalencia(recargo.isEmpty() ? BigDecimal.ZERO : new BigDecimal(recargo));
 
         boolean success = modoEdicion ? controller.actualizarProducto(producto) : controller.guardarProducto(producto);
 

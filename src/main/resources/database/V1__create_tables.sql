@@ -8,12 +8,11 @@
 -- ======================
 CREATE TABLE IF NOT EXISTS Empresa (
   id_empresa INT PRIMARY KEY AUTO_INCREMENT,
-  razon_social VARCHAR(200) NOT NULL,
+  razon_social VARCHAR(255) NOT NULL,
   nif VARCHAR(20) NOT NULL UNIQUE,
   direccion VARCHAR(255) NOT NULL,
   telefono VARCHAR(20),
   email VARCHAR(100),
-  tipo_retencion_irpf DECIMAL(5,2) DEFAULT 15.00,
   por_defecto BOOLEAN DEFAULT FALSE
 );
 
@@ -40,6 +39,7 @@ CREATE TABLE IF NOT EXISTS Producto (
   precio DECIMAL(10,2),
   precio_base DECIMAL(10,2),
   tipo_retencion DECIMAL(5,2) DEFAULT 0,
+  recargo_equivalencia DECIMAL(5,2) DEFAULT 0,
   CONSTRAINT chk_precio_no_nulo CHECK (
     precio IS NOT NULL OR precio_base IS NOT NULL
   ),
@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS Producto (
     AND (precio_base IS NULL OR precio_base >= 0)
     AND tipo_retencion BETWEEN 0 AND 100
     AND tipo_iva BETWEEN 0 AND 100
+    AND recargo_equivalencia BETWEEN 0 AND 100
   )
 );
 
@@ -63,6 +64,7 @@ CREATE TABLE IF NOT EXISTS Factura (
   subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
   total_iva DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (total_iva >= 0),
   total_retencion DECIMAL(10,2) DEFAULT 0 CHECK (total_retencion >= 0),
+  total_recargo DECIMAL(10,2) DEFAULT 0 CHECK (total_recargo >= 0),
   total DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (total >= 0),
   FOREIGN KEY (id_empresa) REFERENCES Empresa(id_empresa)
     ON DELETE RESTRICT
@@ -88,6 +90,8 @@ CREATE TABLE IF NOT EXISTS Linea_factura (
   importe_iva DECIMAL(10,2) NOT NULL CHECK (importe_iva >= 0),
   porcentaje_retencion DECIMAL(5,2) DEFAULT 0 CHECK (porcentaje_retencion >= 0),
   importe_retencion DECIMAL(10,2) DEFAULT 0 CHECK (importe_retencion >= 0),
+  porcentaje_recargo DECIMAL(5,2) DEFAULT 0 CHECK (porcentaje_recargo >= 0),
+  importe_recargo DECIMAL(10,2) DEFAULT 0 CHECK (importe_recargo >= 0),
   total_linea DECIMAL(10,2) NOT NULL CHECK (total_linea >= 0),
   numero_linea INT NOT NULL,
   FOREIGN KEY (id_factura) REFERENCES Factura(id_factura)

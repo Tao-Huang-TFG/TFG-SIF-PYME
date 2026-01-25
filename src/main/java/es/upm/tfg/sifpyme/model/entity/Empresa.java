@@ -1,6 +1,5 @@
 package es.upm.tfg.sifpyme.model.entity;
 
-import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
@@ -14,11 +13,9 @@ public class Empresa {
     private String direccion;
     private String telefono;
     private String email;
-    private BigDecimal tipoRetencionIrpf;
     private Boolean porDefecto;
 
     public Empresa() {
-        this.tipoRetencionIrpf = new BigDecimal("15.00");
         this.porDefecto = false;
     }
 
@@ -76,14 +73,6 @@ public class Empresa {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public BigDecimal getTipoRetencionIrpf() {
-        return tipoRetencionIrpf;
-    }
-
-    public void setTipoRetencionIrpf(BigDecimal tipoRetencionIrpf) {
-        this.tipoRetencionIrpf = tipoRetencionIrpf;
     }
 
     public Boolean getPorDefecto() {

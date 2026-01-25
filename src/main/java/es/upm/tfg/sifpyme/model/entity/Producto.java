@@ -15,16 +15,18 @@ public class Producto {
     private BigDecimal precio;
     private BigDecimal precioBase;
     private BigDecimal tipoRetencion;
+    private BigDecimal recargoEquivalencia;
     
     // Constructores
     public Producto() {
         this.tipoIva = new BigDecimal("21.00");
         this.tipoRetencion = BigDecimal.ZERO;
+        this.recargoEquivalencia = BigDecimal.ZERO;
     }
-    
+
     public Producto(Integer idProducto, BigDecimal tipoIva, String codigo, 
                     String nombre, BigDecimal precio, BigDecimal precioBase, 
-                    BigDecimal tipoRetencion) {
+                    BigDecimal tipoRetencion, BigDecimal recargoEquivalencia) {
         this.idProducto = idProducto;
         this.tipoIva = tipoIva != null ? tipoIva : new BigDecimal("21.00");
         this.codigo = codigo;
@@ -32,6 +34,7 @@ public class Producto {
         this.precio = precio;
         this.precioBase = precioBase;
         this.tipoRetencion = tipoRetencion != null ? tipoRetencion : BigDecimal.ZERO;
+        this.recargoEquivalencia = recargoEquivalencia != null ? recargoEquivalencia : BigDecimal.ZERO;
     }
     
     public Producto(String nombre, BigDecimal precio, BigDecimal tipoIva) {
@@ -98,11 +101,14 @@ public class Producto {
         this.tipoRetencion = tipoRetencion;
     }
     
-    // Método de utilidad para obtener el precio efectivo
-    public BigDecimal getPrecioEfectivo() {
-        return precio != null ? precio : precioBase;
+    public BigDecimal getRecargoEquivalencia() {
+        return recargoEquivalencia;
     }
-    
+
+    public void setRecargoEquivalencia(BigDecimal recargoEquivalencia) {
+        this.recargoEquivalencia = recargoEquivalencia;
+    }
+
     // Métodos de utilidad
     @Override
     public boolean equals(Object o) {

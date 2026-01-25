@@ -58,9 +58,9 @@ public class FacturasView extends BaseListView<Factura> {
 
     @Override
     protected String[] getNombresColumnas() {
-        return new String[]{ 
+        return new String[]{
             "ID Factura", "Fecha", "Cliente", "Empresa",
-            "Subtotal", "IVA", "Total", "Método Pago"
+            "Subtotal", "IVA", "Recargo", "Total", "Método Pago"
         };
     }
 
@@ -90,10 +90,11 @@ public class FacturasView extends BaseListView<Factura> {
         tabla.getColumnModel().getColumn(1).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(2).setPreferredWidth(200);
         tabla.getColumnModel().getColumn(3).setPreferredWidth(200);
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(120);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(90);
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(90);
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(90);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(90);
+        tabla.getColumnModel().getColumn(8).setPreferredWidth(120);
     }
 
     @Override
@@ -120,6 +121,7 @@ public class FacturasView extends BaseListView<Factura> {
                 nombreEmpresa,
                 formatearMoneda(factura.getSubtotal()),
                 formatearMoneda(factura.getTotalIva()),
+                formatearMoneda(factura.getTotalRecargo()),
                 formatearMoneda(factura.getTotal()),
                 factura.getMetodoPago()
             };

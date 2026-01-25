@@ -40,10 +40,12 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
     private JTextField txtDescuento;
     private JTextField txtPorcentajeIva;
     private JTextField txtPorcentajeRetencion;
+    private JTextField txtPorcentajeRecargo;
 
     private JLabel lblSubtotal;
     private JLabel lblImporteIva;
     private JLabel lblImporteRetencion;
+    private JLabel lblImporteRecargo;
     private JLabel lblTotal;
 
     private JButton btnBuscarProducto;
@@ -151,15 +153,20 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         txtPorcentajeRetencion = crearCampoTexto(5);
         txtPorcentajeRetencion.setText("0");
 
+        txtPorcentajeRecargo = crearCampoTexto(5);
+        txtPorcentajeRecargo.setText("0");
+
         // Labels de resultados
         lblSubtotal = new JLabel("0,00 €");
         lblImporteIva = new JLabel("0,00 €");
         lblImporteRetencion = new JLabel("0,00 €");
+        lblImporteRecargo = new JLabel("0,00 €");
         lblTotal = new JLabel("0,00 €");
 
         lblSubtotal.setFont(UITheme.FUENTE_ETIQUETA);
         lblImporteIva.setFont(UITheme.FUENTE_ETIQUETA);
         lblImporteRetencion.setFont(UITheme.FUENTE_ETIQUETA);
+        lblImporteRecargo.setFont(UITheme.FUENTE_ETIQUETA);
         lblTotal.setFont(UITheme.FUENTE_TITULO_SECUNDARIO);
         lblTotal.setForeground(COLOR_PRIMARIO);
 
@@ -237,6 +244,7 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         addFormField(camposPanel, "Precio Unitario (con IVA):", txtPrecioUnitario, true, fila++);
         addFormField(camposPanel, "Descuento %:", txtDescuento, false, fila++);
         addFormField(camposPanel, "Retención %:", txtPorcentajeRetencion, false, fila++);
+        addFormField(camposPanel, "Recargo %:", txtPorcentajeRecargo, false, fila++);
 
         // Totales
         gbcCampos.gridwidth = 1;
@@ -246,6 +254,7 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         agregarResultado(camposPanel, "Subtotal:", lblSubtotal, fila++, gbcCampos);
         agregarResultado(camposPanel, "Importe IVA:", lblImporteIva, fila++, gbcCampos);
         agregarResultado(camposPanel, "Importe Retención:", lblImporteRetencion, fila++, gbcCampos);
+        agregarResultado(camposPanel, "Importe Recargo:", lblImporteRecargo, fila++, gbcCampos);
 
         // Separador final
         gbcCampos.gridx = 0;
@@ -278,6 +287,8 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             txtDescuento.setText(entidadEditar.getDescuento().toString());
             txtPorcentajeIva.setText(entidadEditar.getPorcentajeIva().toString());
             txtPorcentajeRetencion.setText(entidadEditar.getPorcentajeRetencion().toString());
+            txtPorcentajeRecargo.setText(entidadEditar.getPorcentajeRecargo() != null ? 
+                    entidadEditar.getPorcentajeRecargo().toString() : "0");
 
             calcularTotales();
         }
@@ -338,6 +349,15 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             errores.append("• IVA inválido\n");
         }
 
+        try {
+            BigDecimal recargo = new BigDecimal(txtPorcentajeRecargo.getText().trim());
+            if (recargo.compareTo(BigDecimal.ZERO) < 0) {
+                errores.append("• El recargo no puede ser negativo\n");
+            }
+        } catch (NumberFormatException e) {
+            errores.append("• Recargo inválido\n");
+        }
+
         if (errores.length() > 0) {
             mostrarErroresValidacion(errores);
             return false;
@@ -358,6 +378,7 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             linea.setDescuento(new BigDecimal(txtDescuento.getText().trim()));
             linea.setPorcentajeIva(new BigDecimal(txtPorcentajeIva.getText().trim()));
             linea.setPorcentajeRetencion(new BigDecimal(txtPorcentajeRetencion.getText().trim()));
+            linea.setPorcentajeRecargo(new BigDecimal(txtPorcentajeRecargo.getText().trim()));
             linea.setIdProducto(null);
 
             // Calcular importes finales
@@ -425,53 +446,53 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         });
     }
 
-    private void configurarCalculoAutomatico() {
-        DocumentListener calcListener = new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                calcularTotales();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                calcularTotales();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                calcularTotales();
-            }
+    /** DocumentListener que recalcula totales (subtotal, IVA, retención, recargo, total) de inmediato. */
+    private DocumentListener crearListenerTotales() {
+        return new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { recalcularTotalesSensible(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { recalcularTotalesSensible(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { recalcularTotalesSensible(); }
         };
+    }
 
-        txtPrecioUnitario.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                calcularPrecioBase();
-            }
+    /** Listener para precio unitario: recalcula precio base (desde IVA) y luego totales. */
+    private DocumentListener crearListenerPrecioUnitario() {
+        return new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { recalcularDesdePrecioUnitario(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { recalcularDesdePrecioUnitario(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { recalcularDesdePrecioUnitario(); }
+        };
+    }
 
-            public void removeUpdate(DocumentEvent e) {
-                calcularPrecioBase();
-            }
+    /** Listener para precio base: recalcula precio unitario (desde IVA) y luego totales. */
+    private DocumentListener crearListenerPrecioBase() {
+        return new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { recalcularDesdePrecioBase(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { recalcularDesdePrecioBase(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { recalcularDesdePrecioBase(); }
+        };
+    }
 
-            public void changedUpdate(DocumentEvent e) {
-                calcularPrecioBase();
-            }
-        });
+    private void configurarCalculoAutomatico() {
+        DocumentListener totalesListener = crearListenerTotales();
 
-        txtPrecioBase.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                calcularPrecioUnitario();
-            }
+        txtPrecioUnitario.getDocument().addDocumentListener(crearListenerPrecioUnitario());
+        txtPrecioBase.getDocument().addDocumentListener(crearListenerPrecioBase());
 
-            public void removeUpdate(DocumentEvent e) {
-                calcularPrecioUnitario();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                calcularPrecioUnitario();
-            }
-        });
-
-        txtCantidad.getDocument().addDocumentListener(calcListener);
-        txtDescuento.getDocument().addDocumentListener(calcListener);
-        txtPorcentajeIva.getDocument().addDocumentListener(calcListener);
-        txtPorcentajeRetencion.getDocument().addDocumentListener(calcListener);
+        txtCantidad.getDocument().addDocumentListener(totalesListener);
+        txtDescuento.getDocument().addDocumentListener(totalesListener);
+        txtPorcentajeIva.getDocument().addDocumentListener(totalesListener);
+        txtPorcentajeRetencion.getDocument().addDocumentListener(totalesListener);
+        txtPorcentajeRecargo.getDocument().addDocumentListener(totalesListener);
     }
 
     private void calcularPrecioBase() {
@@ -539,6 +560,7 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             BigDecimal descuento = new BigDecimal(txtDescuento.getText().trim());
             BigDecimal iva = new BigDecimal(txtPorcentajeIva.getText().trim());
             BigDecimal retencion = new BigDecimal(txtPorcentajeRetencion.getText().trim());
+            BigDecimal recargo = new BigDecimal(txtPorcentajeRecargo.getText().trim());
 
             LineaFactura temp = new LineaFactura();
             temp.setCantidad(cantidad);
@@ -547,12 +569,14 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             temp.setDescuento(descuento);
             temp.setPorcentajeIva(iva);
             temp.setPorcentajeRetencion(retencion);
+            temp.setPorcentajeRecargo(recargo);
 
             facturaController.calcularLinea(temp);
 
             lblSubtotal.setText(formatearMoneda(temp.getSubtotalLinea()));
             lblImporteIva.setText(formatearMoneda(temp.getImporteIva()));
             lblImporteRetencion.setText(formatearMoneda(temp.getImporteRetencion()));
+            lblImporteRecargo.setText(formatearMoneda(temp.getImporteRecargo()));
             lblTotal.setText(formatearMoneda(temp.getTotalLinea()));
 
         } catch (NumberFormatException e) {

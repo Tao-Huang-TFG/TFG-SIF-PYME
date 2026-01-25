@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Vista de lista de productos
- * CORREGIDO: Eliminada referencia a TipoIva - ahora usa tipo_iva directo
+ * Vista de lista de productos.
+ * Columnas: ID, Código, Nombre, Precio, Precio Base, IVA %, Retención %, Rec. equiv. %
  */
 public class ProductosView extends BaseListView<Producto> {
 
@@ -48,9 +48,9 @@ public class ProductosView extends BaseListView<Producto> {
 
     @Override
     protected String[] getNombresColumnas() {
-        return new String[]{ 
-            "ID", "Código", "Nombre", 
-            "Precio", "Precio Base", "IVA %", "Retención %" 
+        return new String[]{
+            "ID", "Código", "Nombre",
+            "Precio", "Precio Base", "IVA %", "Retención %", "Rec. equiv. %"
         };
     }
 
@@ -78,11 +78,12 @@ public class ProductosView extends BaseListView<Producto> {
     protected void configurarAnchoColumnas() {
         tabla.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
         tabla.getColumnModel().getColumn(1).setPreferredWidth(100);  // Código
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(300);  // Nombre
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(100);  // Precio
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(100);  // Precio Base
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(80);   // IVA %
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(100);  // Retención %
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(280);  // Nombre
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(90);   // Precio
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(90);   // Precio Base
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(70);   // IVA %
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(85);   // Retención %
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(85);   // Rec. equiv. %
     }
 
     @Override
@@ -96,11 +97,7 @@ public class ProductosView extends BaseListView<Producto> {
         List<Producto> productos = controller.obtenerTodosLosProductos();
 
         for (Producto producto : productos) {
-            // CAMBIADO: Obtener IVA directamente del producto (ya no hay TipoIva)
-            String ivaStr = "";
-            if (producto.getTipoIva() != null) {
-                ivaStr = producto.getTipoIva() + "%";
-            }
+            String ivaStr = producto.getTipoIva() != null ? formatearPrecio(producto.getTipoIva()) : "";
 
             Object[] fila = {
                 producto.getIdProducto(),
@@ -109,7 +106,8 @@ public class ProductosView extends BaseListView<Producto> {
                 formatearPrecio(producto.getPrecio()),
                 formatearPrecio(producto.getPrecioBase()),
                 ivaStr,
-                formatearPrecio(producto.getTipoRetencion())
+                formatearPrecio(producto.getTipoRetencion()),
+                formatearPrecio(producto.getRecargoEquivalencia())
             };
             modeloTabla.addRow(fila);
         }

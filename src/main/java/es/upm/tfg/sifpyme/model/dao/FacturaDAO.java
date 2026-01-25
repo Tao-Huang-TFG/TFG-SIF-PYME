@@ -6,6 +6,7 @@ import es.upm.tfg.sifpyme.util.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -19,14 +20,13 @@ public class FacturaDAO {
     private static final Logger logger = LoggerFactory.getLogger(FacturaDAO.class);
     private final LineaFacturaDAO lineaFacturaDAO;
 
-    // Consultas SQL actualizadas según el nuevo esquema
-    private static final String SQL_INSERT = "INSERT INTO Factura (id_factura, id_empresa, id_cliente, fecha_emision, "
-            +
-            "metodo_pago, subtotal, total_iva, total_retencion, total) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // Consultas SQL (incluye total_recargo)
+    private static final String SQL_INSERT = "INSERT INTO Factura (id_factura, id_empresa, id_cliente, fecha_emision, " +
+            "metodo_pago, subtotal, total_iva, total_retencion, total_recargo, total) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String SQL_UPDATE = "UPDATE Factura SET id_empresa = ?, id_cliente = ?, fecha_emision = ?, " +
-            "metodo_pago = ?, subtotal = ?, total_iva = ?, total_retencion = ?, " +
+            "metodo_pago = ?, subtotal = ?, total_iva = ?, total_retencion = ?, total_recargo = ?, " +
             "total = ? WHERE id_factura = ?";
 
     private static final String SQL_SELECT_ALL = "SELECT * FROM Factura ORDER BY fecha_emision DESC";
@@ -133,7 +133,7 @@ public class FacturaDAO {
             // Actualizar factura
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
                 setFacturaParametersUPDATE(stmt, factura);
-                stmt.setString(9, factura.getIdFactura());
+                stmt.setString(10, factura.getIdFactura());
                 stmt.executeUpdate();
             }
 
@@ -441,12 +441,12 @@ public class FacturaDAO {
         stmt.setBigDecimal(6, factura.getSubtotal());
         stmt.setBigDecimal(7, factura.getTotalIva());
         stmt.setBigDecimal(8, factura.getTotalRetencion());
-        stmt.setBigDecimal(9, factura.getTotal());
+        stmt.setBigDecimal(9, factura.getTotalRecargo() != null ? factura.getTotalRecargo() : BigDecimal.ZERO);
+        stmt.setBigDecimal(10, factura.getTotal());
     }
 
     private void setFacturaParametersUPDATE(PreparedStatement stmt, Factura factura)
             throws SQLException {
-
         stmt.setInt(1, factura.getIdEmpresa());
         stmt.setInt(2, factura.getIdCliente());
         stmt.setDate(3, Date.valueOf(factura.getFechaEmision()));
@@ -454,10 +454,9 @@ public class FacturaDAO {
         stmt.setBigDecimal(5, factura.getSubtotal());
         stmt.setBigDecimal(6, factura.getTotalIva());
         stmt.setBigDecimal(7, factura.getTotalRetencion());
-        stmt.setBigDecimal(8, factura.getTotal());
-
-        // WHERE
-        stmt.setString(9, factura.getIdFactura());
+        stmt.setBigDecimal(8, factura.getTotalRecargo() != null ? factura.getTotalRecargo() : BigDecimal.ZERO);
+        stmt.setBigDecimal(9, factura.getTotal());
+        stmt.setString(10, factura.getIdFactura());
     }
 
     /**
@@ -477,6 +476,8 @@ public class FacturaDAO {
         factura.setSubtotal(rs.getBigDecimal("subtotal"));
         factura.setTotalIva(rs.getBigDecimal("total_iva"));
         factura.setTotalRetencion(rs.getBigDecimal("total_retencion"));
+        BigDecimal rec = rs.getBigDecimal("total_recargo");
+        factura.setTotalRecargo(rec != null ? rec : BigDecimal.ZERO);
         factura.setTotal(rs.getBigDecimal("total"));
 
         return factura;

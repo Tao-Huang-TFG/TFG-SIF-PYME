@@ -5,7 +5,6 @@ import es.upm.tfg.sifpyme.util.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,16 +16,14 @@ public class EmpresaDAO {
     
     private static final Logger logger = LoggerFactory.getLogger(EmpresaDAO.class);
     
-    // Consultas SQL actualizadas (sin nombre_comercial)
-    private static final String SQL_INSERT = 
-        "INSERT INTO Empresa (razon_social, nif, direccion, " +
-        "telefono, email, tipo_retencion_irpf, por_defecto) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?)";
-    
-    private static final String SQL_UPDATE = 
-        "UPDATE Empresa SET razon_social = ?, nif = ?, " +
-        "direccion = ?, telefono = ?, email = ?, tipo_retencion_irpf = ?, " +
-        "por_defecto = ? WHERE id_empresa = ?";
+    // Consultas SQL (sin tipo_retencion_irpf)
+    private static final String SQL_INSERT =
+        "INSERT INTO Empresa (razon_social, nif, direccion, telefono, email, por_defecto) " +
+        "VALUES (?, ?, ?, ?, ?, ?)";
+
+    private static final String SQL_UPDATE =
+        "UPDATE Empresa SET razon_social = ?, nif = ?, direccion = ?, " +
+        "telefono = ?, email = ?, por_defecto = ? WHERE id_empresa = ?";
     
     private static final String SQL_SELECT_ALL = 
         "SELECT * FROM Empresa ORDER BY razon_social";
@@ -84,7 +81,7 @@ public class EmpresaDAO {
              PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
             
             setEmpresaParameters(stmt, empresa);
-            stmt.setInt(9, empresa.getIdEmpresa());
+            stmt.setInt(7, empresa.getIdEmpresa());
             
             int filasAfectadas = stmt.executeUpdate();
             
@@ -228,15 +225,14 @@ public class EmpresaDAO {
     /**
      * Establece los parámetros de un PreparedStatement con los datos de la empresa
      */
-    private void setEmpresaParameters(PreparedStatement stmt, Empresa empresa) 
+    private void setEmpresaParameters(PreparedStatement stmt, Empresa empresa)
             throws SQLException {
         stmt.setString(1, empresa.getRazonSocial());
         stmt.setString(2, empresa.getNif());
         stmt.setString(3, empresa.getDireccion());
         stmt.setString(4, empresa.getTelefono());
         stmt.setString(5, empresa.getEmail());
-        stmt.setBigDecimal(6, empresa.getTipoRetencionIrpf());
-        stmt.setBoolean(7, empresa.getPorDefecto() != null ? empresa.getPorDefecto() : false);
+        stmt.setBoolean(6, empresa.getPorDefecto() != null ? empresa.getPorDefecto() : false);
     }
     
     /**
@@ -251,10 +247,6 @@ public class EmpresaDAO {
         empresa.setDireccion(rs.getString("direccion"));
         empresa.setTelefono(rs.getString("telefono"));
         empresa.setEmail(rs.getString("email"));
-        
-        BigDecimal retencion = rs.getBigDecimal("tipo_retencion_irpf");
-        empresa.setTipoRetencionIrpf(retencion != null ? retencion : new BigDecimal("15.00"));
-        
         empresa.setPorDefecto(rs.getBoolean("por_defecto"));
         
         return empresa;
