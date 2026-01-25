@@ -287,8 +287,9 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             txtDescuento.setText(entidadEditar.getDescuento().toString());
             txtPorcentajeIva.setText(entidadEditar.getPorcentajeIva().toString());
             txtPorcentajeRetencion.setText(entidadEditar.getPorcentajeRetencion().toString());
-            txtPorcentajeRecargo.setText(entidadEditar.getPorcentajeRecargo() != null ? 
-                    entidadEditar.getPorcentajeRecargo().toString() : "0");
+            txtPorcentajeRecargo.setText(
+                    entidadEditar.getPorcentajeRecargo() != null ? entidadEditar.getPorcentajeRecargo().toString()
+                            : "0");
 
             calcularTotales();
         }
@@ -446,39 +447,72 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
         });
     }
 
-    /** DocumentListener que recalcula totales (subtotal, IVA, retención, recargo, total) de inmediato. */
+    /**
+     * DocumentListener que recalcula totales (subtotal, IVA, retención, recargo,
+     * total) de inmediato.
+     */
     private DocumentListener crearListenerTotales() {
         return new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) { recalcularTotalesSensible(); }
+            public void insertUpdate(DocumentEvent e) {
+                recalcularTotalesSensible();
+            }
+
             @Override
-            public void removeUpdate(DocumentEvent e) { recalcularTotalesSensible(); }
+            public void removeUpdate(DocumentEvent e) {
+                recalcularTotalesSensible();
+            }
+
             @Override
-            public void changedUpdate(DocumentEvent e) { recalcularTotalesSensible(); }
+            public void changedUpdate(DocumentEvent e) {
+                recalcularTotalesSensible();
+            }
         };
     }
 
-    /** Listener para precio unitario: recalcula precio base (desde IVA) y luego totales. */
+    /**
+     * Listener para precio unitario: recalcula precio base (desde IVA) y luego
+     * totales.
+     */
     private DocumentListener crearListenerPrecioUnitario() {
         return new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) { recalcularDesdePrecioUnitario(); }
+            public void insertUpdate(DocumentEvent e) {
+                recalcularDesdePrecioUnitario();
+            }
+
             @Override
-            public void removeUpdate(DocumentEvent e) { recalcularDesdePrecioUnitario(); }
+            public void removeUpdate(DocumentEvent e) {
+                recalcularDesdePrecioUnitario();
+            }
+
             @Override
-            public void changedUpdate(DocumentEvent e) { recalcularDesdePrecioUnitario(); }
+            public void changedUpdate(DocumentEvent e) {
+                recalcularDesdePrecioUnitario();
+            }
         };
     }
 
-    /** Listener para precio base: recalcula precio unitario (desde IVA) y luego totales. */
+    /**
+     * Listener para precio base: recalcula precio unitario (desde IVA) y luego
+     * totales.
+     */
     private DocumentListener crearListenerPrecioBase() {
         return new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) { recalcularDesdePrecioBase(); }
+            public void insertUpdate(DocumentEvent e) {
+                recalcularDesdePrecioBase();
+            }
+
             @Override
-            public void removeUpdate(DocumentEvent e) { recalcularDesdePrecioBase(); }
+            public void removeUpdate(DocumentEvent e) {
+                recalcularDesdePrecioBase();
+            }
+
             @Override
-            public void changedUpdate(DocumentEvent e) { recalcularDesdePrecioBase(); }
+            public void changedUpdate(DocumentEvent e) {
+                recalcularDesdePrecioBase();
+            }
         };
     }
 
@@ -560,7 +594,8 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             BigDecimal descuento = new BigDecimal(txtDescuento.getText().trim());
             BigDecimal iva = new BigDecimal(txtPorcentajeIva.getText().trim());
             BigDecimal retencion = new BigDecimal(txtPorcentajeRetencion.getText().trim());
-            BigDecimal recargo = new BigDecimal(txtPorcentajeRecargo.getText().trim());
+            BigDecimal recargo = new BigDecimal(txtPorcentajeRecargo.getText().trim()); // Asegúrate de obtener este
+                                                                                        // valor
 
             LineaFactura temp = new LineaFactura();
             temp.setCantidad(cantidad);
@@ -569,18 +604,54 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             temp.setDescuento(descuento);
             temp.setPorcentajeIva(iva);
             temp.setPorcentajeRetencion(retencion);
-            temp.setPorcentajeRecargo(recargo);
+            temp.setPorcentajeRecargo(recargo); // ¡Importante!
 
+            // Calcular la línea usando el controlador
             facturaController.calcularLinea(temp);
 
+            // Actualizar las etiquetas
             lblSubtotal.setText(formatearMoneda(temp.getSubtotalLinea()));
             lblImporteIva.setText(formatearMoneda(temp.getImporteIva()));
             lblImporteRetencion.setText(formatearMoneda(temp.getImporteRetencion()));
-            lblImporteRecargo.setText(formatearMoneda(temp.getImporteRecargo()));
+            lblImporteRecargo.setText(formatearMoneda(temp.getImporteRecargo())); // ¡Este debe mostrarse!
             lblTotal.setText(formatearMoneda(temp.getTotalLinea()));
 
         } catch (NumberFormatException e) {
-            // Formato inválido
+            // Formato inválido - no hacer nada o mostrar mensaje de error
+        }
+    }
+
+    /**
+     * Método puente para actualizar totales cuando cambia cualquier campo
+     * que no sea el precio (cantidad, descuentos, impuestos).
+     */
+    private void recalcularTotalesSensible() {
+        // Si se está calculando un precio base/unitario, evitamos entrar aquí
+        // para no interferir con la lógica bidireccional de precios.
+        if (!calculandoPrecio && !calculandoPrecioBase) {
+            calcularTotales();
+        }
+    }
+
+    /**
+     * Cuando cambia el precio unitario (con IVA), calculamos el base y luego
+     * totales.
+     */
+    private void recalcularDesdePrecioUnitario() {
+        if (!calculandoPrecioBase) {
+            calcularPrecioBase();
+            calcularTotales();
+        }
+    }
+
+    /**
+     * Cuando cambia el precio base (sin IVA), calculamos el unitario y luego
+     * totales.
+     */
+    private void recalcularDesdePrecioBase() {
+        if (!calculandoPrecio) {
+            calcularPrecioUnitario();
+            calcularTotales();
         }
     }
 
