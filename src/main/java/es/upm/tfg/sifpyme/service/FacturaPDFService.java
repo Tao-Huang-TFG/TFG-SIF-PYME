@@ -17,7 +17,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -118,9 +120,6 @@ public class FacturaPDFService {
         Paragraph nombreEmpresa = new Paragraph(factura.getEmpresa().getRazonSocial(), fuenteTitulo);
         nombreEmpresa.setSpacingAfter(5);
         cellEmpresa.addElement(nombreEmpresa);
-
-        Paragraph razonSocial = new Paragraph(factura.getEmpresa().getRazonSocial(), fuenteNormal);
-        cellEmpresa.addElement(razonSocial);
 
         table.addCell(cellEmpresa);
 
@@ -228,18 +227,66 @@ public class FacturaPDFService {
     }
 
     private void agregarTablaLineas(Document document, Factura factura) throws DocumentException {
-        PdfPTable table = new PdfPTable(6);
+        // Determinar si hay recargo o retención en alguna línea
+        boolean hayRecargo = false;
+        boolean hayRetencion = false;
+        for (LineaFactura linea : factura.getLineas()) {
+            if (linea.getImporteRecargo() != null && linea.getImporteRecargo().compareTo(BigDecimal.ZERO) > 0) {
+                hayRecargo = true;
+            }
+            if (linea.getImporteRetencion() != null && linea.getImporteRetencion().compareTo(BigDecimal.ZERO) > 0) {
+                hayRetencion = true;
+            }
+            if (hayRecargo && hayRetencion) {
+                break;
+            }
+        }
+
+        // Número de columnas
+        int numColumnas = 6;
+        if (hayRecargo)
+            numColumnas++;
+        if (hayRetencion)
+            numColumnas++;
+
+        PdfPTable table = new PdfPTable(numColumnas);
         table.setWidthPercentage(100);
-        table.setWidths(new float[] { 4, 1.5f, 1.5f, 1.5f, 1.5f, 2 });
+
+        // Configurar anchos de columnas
+        float[] anchos;
+        if (hayRecargo && hayRetencion) {
+            anchos = new float[] { 3, 1.2f, 1.2f, 0.8f, 1.2f, 1.2f, 1.2f, 1.2f };
+        } else if (hayRecargo) {
+            anchos = new float[] { 3, 1.2f, 1.2f, 0.8f, 1.2f, 1.2f, 1.2f };
+        } else if (hayRetencion) {
+            anchos = new float[] { 3, 1.2f, 1.2f, 0.8f, 1.2f, 1.2f, 1.2f };
+        } else {
+            anchos = new float[] { 3, 1.2f, 1.2f, 0.8f, 1.2f, 1.2f };
+        }
+        table.setWidths(anchos);
+
         table.setSpacingBefore(10);
         table.setSpacingAfter(10);
 
         // Headers con fondo de color
-        String[] headers = { "Producto", "Cantidad", "Precio (€)", "IVA (%)", "Descuento (%)", "Total (€)" };
-        for (String header : headers) {
+        List<String> headersList = new ArrayList<>();
+        headersList.add("Producto");
+        headersList.add("Cantidad");
+        headersList.add("Precio (€)");
+        headersList.add("IVA (%)");
+        headersList.add("Descuento (%)");
+        if (hayRecargo) {
+            headersList.add("Recargo (€)");
+        }
+        if (hayRetencion) {
+            headersList.add("Retención (€)");
+        }
+        headersList.add("Total (€)");
+
+        for (String header : headersList) {
             PdfPCell cell = new PdfPCell(new Phrase(header, fuenteTablaHeader));
             cell.setBackgroundColor(COLOR_PRIMARIO);
-            cell.setPadding(8);
+            cell.setPadding(6);
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             table.addCell(cell);
         }
@@ -258,7 +305,7 @@ public class FacturaPDFService {
             }
 
             PdfPCell cellProducto = new PdfPCell(new Phrase(nombre_producto, fuenteTabla));
-            cellProducto.setPadding(8);
+            cellProducto.setPadding(6);
             table.addCell(cellProducto);
 
             // Cantidad
@@ -273,6 +320,19 @@ public class FacturaPDFService {
             // Descuento
             table.addCell(crearCeldaNumero(formatearNumero(linea.getDescuento())));
 
+            // Recargo
+            if (hayRecargo) {
+                BigDecimal recargo = linea.getImporteRecargo() != null ? linea.getImporteRecargo() : BigDecimal.ZERO;
+                table.addCell(crearCeldaNumero(formatearMoneda(recargo)));
+            }
+
+            // Retención
+            if (hayRetencion) {
+                BigDecimal retencion = linea.getImporteRetencion() != null ? linea.getImporteRetencion()
+                        : BigDecimal.ZERO;
+                table.addCell(crearCeldaNumero(formatearMoneda(retencion)));
+            }
+
             // Total
             table.addCell(crearCeldaNumero(formatearMoneda(linea.getTotalLinea())));
         }
@@ -282,75 +342,125 @@ public class FacturaPDFService {
 
     private void agregarTotales(Document document, Factura factura) throws DocumentException {
 
-        PdfPTable table = new PdfPTable(5);
-        table.setWidthPercentage(100);
-        table.setWidths(new float[] { 2, 2, 1.5f, 2, 2 });
-        table.setSpacingBefore(15);
+        PdfPTable tablaResumen = new PdfPTable(2);
+        tablaResumen.setWidthPercentage(50);
+        tablaResumen.setWidths(new float[] { 3, 2 });
+        tablaResumen.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
-        // Headers
-        table.addCell(crearCeldaTotal("Total Bruto (€)", true));
-        table.addCell(crearCeldaTotal("Base Imponible (€)", true));
-        table.addCell(crearCeldaTotal("Tipo IVA (%)", true));
-        table.addCell(crearCeldaTotal("Subtotal Neto (€)", true));
-        table.addCell(crearCeldaTotal("Total Neto (€)", true));
-
-        // Agrupar por tipo de IVA
-        Map<BigDecimal, BigDecimal> basePorIva = new HashMap<>();
-
+        // Total Bruto
         BigDecimal totalBruto = BigDecimal.ZERO;
-        BigDecimal totalNeto = BigDecimal.ZERO;
-
         for (LineaFactura linea : factura.getLineas()) {
-
             BigDecimal precioBrutoLinea = linea.getPrecioBase()
                     .multiply(linea.getCantidad())
                     .multiply(
                             BigDecimal.ONE.subtract(
                                     linea.getDescuento().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)));
-
             totalBruto = totalBruto.add(precioBrutoLinea);
-
-            basePorIva.merge(
-                    linea.getPorcentajeIva(),
-                    precioBrutoLinea,
-                    BigDecimal::add);
         }
 
-        boolean primeraFila = true;
+        PdfPCell cellTotalBrutoLabel = new PdfPCell(new Phrase("TOTAL BRUTO:", fuenteNormalBold));
+        cellTotalBrutoLabel.setBorder(Rectangle.NO_BORDER);
+        cellTotalBrutoLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tablaResumen.addCell(cellTotalBrutoLabel);
 
-        for (Map.Entry<BigDecimal, BigDecimal> entry : basePorIva.entrySet()) {
+        PdfPCell cellTotalBrutoValor = new PdfPCell(
+                new Phrase(formatearMoneda(totalBruto), fuenteNormal));
+        cellTotalBrutoValor.setBorder(Rectangle.NO_BORDER);
+        cellTotalBrutoValor.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tablaResumen.addCell(cellTotalBrutoValor);
 
-            BigDecimal tipoIva = entry.getKey();
-            BigDecimal baseImponible = entry.getValue();
+        // Agrupar por tipo de IVA para mostrar líneas individuales
+        Map<BigDecimal, BigDecimal> basePorIva = new HashMap<>();
+        Map<BigDecimal, BigDecimal> ivaPorTipo = new HashMap<>();
 
-            BigDecimal iva = baseImponible
-                    .multiply(tipoIva)
+        for (LineaFactura linea : factura.getLineas()) {
+            BigDecimal baseImponibleLinea = linea.getPrecioBase()
+                    .multiply(linea.getCantidad())
+                    .multiply(
+                            BigDecimal.ONE.subtract(
+                                    linea.getDescuento().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)));
+
+            basePorIva.merge(linea.getPorcentajeIva(), baseImponibleLinea, BigDecimal::add);
+
+            BigDecimal ivaLinea = baseImponibleLinea
+                    .multiply(linea.getPorcentajeIva())
                     .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-
-            BigDecimal subtotalNeto = baseImponible.add(iva);
-            totalNeto = totalNeto.add(subtotalNeto);
-
-            // Total Bruto (solo primera fila)
-            table.addCell(crearCeldaTotal(
-                    primeraFila ? formatearMoneda(totalBruto) : "", false));
-
-            // Base Imponible
-            table.addCell(crearCeldaTotal(formatearMoneda(baseImponible), false));
-
-            // Tipo IVA
-            table.addCell(crearCeldaTotal(formatearNumero(tipoIva) + " %", false));
-
-            // Subtotal Neto
-            table.addCell(crearCeldaTotal(formatearMoneda(subtotalNeto), false));
-
-            // Total Neto (solo primera fila)
-            table.addCell(crearCeldaTotal(
-                    primeraFila ? formatearMoneda(factura.getTotal()) : "", false));
-
-            primeraFila = false;
+            ivaPorTipo.merge(linea.getPorcentajeIva(), ivaLinea, BigDecimal::add);
         }
 
-        document.add(table);
+        // Mostrar una línea por cada tipo de IVA
+        for (Map.Entry<BigDecimal, BigDecimal> entry : basePorIva.entrySet()) {
+            BigDecimal tipoIva = entry.getKey();
+            BigDecimal importeIva = ivaPorTipo.get(tipoIva);
+
+            // Etiqueta con el tipo de IVA
+            PdfPCell cellIvaLabel = new PdfPCell(
+                    new Phrase(String.format("IVA %s%%:", formatearNumero(tipoIva)), fuenteNormalBold));
+            cellIvaLabel.setBorder(Rectangle.NO_BORDER);
+            cellIvaLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tablaResumen.addCell(cellIvaLabel);
+
+            // Valor con base imponible y subtotal neto
+            String valor = String.format("+ %s",
+                    formatearMoneda(importeIva));
+
+            PdfPCell cellIvaValor = new PdfPCell(new Phrase(valor, fuenteNormal));
+            cellIvaValor.setBorder(Rectangle.NO_BORDER);
+            cellIvaValor.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tablaResumen.addCell(cellIvaValor);
+        }
+
+        // Recargo (si existe)
+        if (factura.getTotalRecargo() != null && factura.getTotalRecargo().compareTo(BigDecimal.ZERO) > 0) {
+            PdfPCell cellRecargoLabel = new PdfPCell(new Phrase("RECARGO:", fuenteNormalBold));
+            cellRecargoLabel.setBorder(Rectangle.NO_BORDER);
+            cellRecargoLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tablaResumen.addCell(cellRecargoLabel);
+
+            PdfPCell cellRecargoValor = new PdfPCell(
+                    new Phrase("+" + formatearMoneda(factura.getTotalRecargo()), fuenteNormal));
+            cellRecargoValor.setBorder(Rectangle.NO_BORDER);
+            cellRecargoValor.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tablaResumen.addCell(cellRecargoValor);
+        }
+
+        // Retención (si existe)
+        if (factura.getTotalRetencion() != null && factura.getTotalRetencion().compareTo(BigDecimal.ZERO) > 0) {
+            PdfPCell cellRetLabel = new PdfPCell(new Phrase("RETENCIÓN IRPF:", fuenteNormalBold));
+            cellRetLabel.setBorder(Rectangle.NO_BORDER);
+            cellRetLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tablaResumen.addCell(cellRetLabel);
+
+            PdfPCell cellRetValor = new PdfPCell(
+                    new Phrase("-" + formatearMoneda(factura.getTotalRetencion()), fuenteNormal));
+            cellRetValor.setBorder(Rectangle.NO_BORDER);
+            cellRetValor.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tablaResumen.addCell(cellRetValor);
+        }
+
+        // Separador antes del total
+        PdfPCell cellSeparadorLabel = new PdfPCell(new Phrase(" ", fuenteNormal));
+        cellSeparadorLabel.setBorder(Rectangle.TOP);
+        cellSeparadorLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tablaResumen.addCell(cellSeparadorLabel);
+
+        PdfPCell cellSeparadorValor = new PdfPCell(new Phrase(" ", fuenteNormal));
+        cellSeparadorValor.setBorder(Rectangle.TOP);
+        cellSeparadorValor.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tablaResumen.addCell(cellSeparadorValor);
+
+        // Total
+        PdfPCell cellTotalLabel = new PdfPCell(new Phrase("TOTAL FACTURA:", fuenteNormalBold));
+        cellTotalLabel.setBorder(Rectangle.NO_BORDER);
+        cellTotalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tablaResumen.addCell(cellTotalLabel);
+
+        PdfPCell cellTotalValor = new PdfPCell(new Phrase(formatearMoneda(factura.getTotal()), fuenteNormalBold));
+        cellTotalValor.setBorder(Rectangle.NO_BORDER);
+        cellTotalValor.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tablaResumen.addCell(cellTotalValor);
+
+        document.add(tablaResumen);
     }
 
     private void agregarPiePagina(Document document) throws DocumentException {
@@ -381,16 +491,6 @@ public class FacturaPDFService {
         PdfPCell cell = new PdfPCell(new Phrase(texto, fuenteTabla));
         cell.setPadding(8);
         cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        return cell;
-    }
-
-    private PdfPCell crearCeldaTotal(String texto, boolean esHeader) {
-        PdfPCell cell = new PdfPCell(new Phrase(texto, esHeader ? fuenteNormalBold : fuenteNormal));
-        cell.setPadding(8);
-        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        if (esHeader) {
-            cell.setBackgroundColor(COLOR_SECUNDARIO);
-        }
         return cell;
     }
 

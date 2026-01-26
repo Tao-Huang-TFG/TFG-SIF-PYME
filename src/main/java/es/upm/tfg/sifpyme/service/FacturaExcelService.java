@@ -4,6 +4,7 @@ import es.upm.tfg.sifpyme.model.entity.Cliente;
 import es.upm.tfg.sifpyme.model.entity.Empresa;
 import es.upm.tfg.sifpyme.model.entity.Factura;
 import es.upm.tfg.sifpyme.model.entity.LineaFactura;
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -13,10 +14,13 @@ import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -58,7 +62,6 @@ public class FacturaExcelService {
             CellStyle estiloNormal = crearEstiloNormal(workbook);
             CellStyle estiloMoneda = crearEstiloMoneda(workbook);
             CellStyle estiloTotal = crearEstiloTotal(workbook);
-            CellStyle estiloSubtotal = crearEstiloSubtotal(workbook);
 
             int filaActual = 0;
 
@@ -67,8 +70,6 @@ public class FacturaExcelService {
             filaActual = agregarDatosEmisorReceptor(sheet, factura, estiloHeader, estiloNormal, filaActual);
             filaActual = agregarDatosFactura(sheet, factura, estiloHeader, estiloNormal, filaActual);
             filaActual = agregarTablaLineas(sheet, factura, estiloHeader, estiloNormal, estiloMoneda, filaActual);
-            filaActual = agregarTotalesPorIva(sheet, factura, estiloHeader, estiloNormal, estiloMoneda, estiloSubtotal,
-                    filaActual);
             filaActual = agregarResumenFinal(sheet, factura, estiloHeader, estiloMoneda, estiloTotal, filaActual);
             agregarPiePagina(sheet, estiloNormal, filaActual);
 
@@ -249,9 +250,38 @@ public class FacturaExcelService {
 
     private int agregarTablaLineas(Sheet sheet, Factura factura, CellStyle estiloHeader,
             CellStyle estiloNormal, CellStyle estiloMoneda, int filaActual) {
+        // Determinar si hay recargo o retención en alguna línea
+        boolean hayRecargo = false;
+        boolean hayRetencion = false;
+        for (LineaFactura linea : factura.getLineas()) {
+            if (linea.getImporteRecargo() != null && linea.getImporteRecargo().compareTo(BigDecimal.ZERO) > 0) {
+                hayRecargo = true;
+            }
+            if (linea.getImporteRetencion() != null && linea.getImporteRetencion().compareTo(BigDecimal.ZERO) > 0) {
+                hayRetencion = true;
+            }
+            if (hayRecargo && hayRetencion) {
+                break;
+            }
+        }
+
         // Headers de la tabla
         Row rowHeader = sheet.createRow(filaActual++);
-        String[] headers = { "Producto", "Cantidad", "Precio (€)", "IVA (%)", "Descuento (%)", "Total (€)" };
+        List<String> headerList = new ArrayList<>();
+        headerList.add("Producto");
+        headerList.add("Cantidad");
+        headerList.add("Precio (€)");
+        headerList.add("IVA (%)");
+        headerList.add("Descuento (%)");
+        if (hayRecargo) {
+            headerList.add("Recargo (€)");
+        }
+        if (hayRetencion) {
+            headerList.add("Retención (€)");
+        }
+        headerList.add("Total (€)");
+
+        String[] headers = headerList.toArray(new String[0]);
 
         for (int i = 0; i < headers.length; i++) {
             Cell cell = rowHeader.createCell(i);
@@ -262,39 +292,55 @@ public class FacturaExcelService {
         // Líneas de factura
         for (LineaFactura linea : factura.getLineas()) {
             Row row = sheet.createRow(filaActual++);
+            int colIndex = 0;
 
             // Producto
-            Cell cellProducto = row.createCell(0);
+            Cell cellProducto = row.createCell(colIndex++);
             String nombreProducto = linea.getNombreProducto() != null && !linea.getNombreProducto().trim().isEmpty()
                     ? linea.getNombreProducto()
-                    : (linea.getProducto() != null && linea.getProducto().getNombre() != null
-                            ? linea.getProducto().getNombre()
-                            : "Línea " + linea.getNumeroLinea());
+                    : "Línea " + linea.getNumeroLinea();
             cellProducto.setCellValue(nombreProducto);
             cellProducto.setCellStyle(estiloNormal);
 
             // Cantidad
-            Cell cellCantidad = row.createCell(1);
+            Cell cellCantidad = row.createCell(colIndex++);
             cellCantidad.setCellValue(formatearNumero(linea.getCantidad()));
             cellCantidad.setCellStyle(estiloNormal);
 
             // Precio
-            Cell cellPrecio = row.createCell(2);
+            Cell cellPrecio = row.createCell(colIndex++);
             cellPrecio.setCellValue(formatearNumeroDouble(linea.getPrecioUnitario()));
             cellPrecio.setCellStyle(estiloMoneda);
 
             // IVA
-            Cell cellIva = row.createCell(3);
+            Cell cellIva = row.createCell(colIndex++);
             cellIva.setCellValue(formatearNumero(linea.getPorcentajeIva()));
             cellIva.setCellStyle(estiloNormal);
 
             // Descuento
-            Cell cellDescuento = row.createCell(4);
+            Cell cellDescuento = row.createCell(colIndex++);
             cellDescuento.setCellValue(formatearNumero(linea.getDescuento()));
             cellDescuento.setCellStyle(estiloNormal);
 
+            // Recargo (si hay en alguna línea)
+            if (hayRecargo) {
+                Cell cellRecargo = row.createCell(colIndex++);
+                BigDecimal recargo = linea.getImporteRecargo() != null ? linea.getImporteRecargo() : BigDecimal.ZERO;
+                cellRecargo.setCellValue(formatearNumeroDouble(recargo));
+                cellRecargo.setCellStyle(estiloMoneda);
+            }
+
+            // Retención (si hay en alguna línea)
+            if (hayRetencion) {
+                Cell cellRetencion = row.createCell(colIndex++);
+                BigDecimal retencion = linea.getImporteRetencion() != null ? linea.getImporteRetencion()
+                        : BigDecimal.ZERO;
+                cellRetencion.setCellValue(formatearNumeroDouble(retencion));
+                cellRetencion.setCellStyle(estiloMoneda);
+            }
+
             // Total
-            Cell cellTotal = row.createCell(5);
+            Cell cellTotal = row.createCell(colIndex++);
             cellTotal.setCellValue(formatearNumeroDouble(linea.getTotalLinea()));
             cellTotal.setCellStyle(estiloMoneda);
         }
@@ -303,124 +349,104 @@ public class FacturaExcelService {
         return filaActual;
     }
 
-    private int agregarTotalesPorIva(Sheet sheet, Factura factura,
-            CellStyle estiloHeader, CellStyle estiloNormal,
-            CellStyle estiloMoneda, CellStyle estiloSubtotal,
-            int filaActual) {
-
-        // Headers de la tabla de totales por IVA
-        Row rowHeader = sheet.createRow(filaActual++);
-        String[] headers = {
-                "Total Bruto (€)",
-                "Base Imponible (€)",
-                "Tipo IVA (%)",
-                "Subtotal Neto (€)",
-                "Total Neto (€)"
-        };
-
-        for (int i = 0; i < headers.length; i++) {
-            Cell cell = rowHeader.createCell(i);
-            cell.setCellValue(headers[i]);
-            cell.setCellStyle(estiloHeader);
-        }
-
-        // Agrupar importes por tipo de IVA
-        Map<BigDecimal, BigDecimal> basePorIva = new TreeMap<>();
-        Map<BigDecimal, BigDecimal> totalPorIva = new TreeMap<>();
-
-        BigDecimal totalBase = BigDecimal.ZERO;
-        BigDecimal totalBruto = BigDecimal.ZERO;
-
-        for (LineaFactura linea : factura.getLineas()) {
-            BigDecimal tipoIva = linea.getPorcentajeIva();
-
-            basePorIva.putIfAbsent(tipoIva, BigDecimal.ZERO);
-            totalPorIva.putIfAbsent(tipoIva, BigDecimal.ZERO);
-
-            basePorIva.put(
-                    tipoIva,
-                    basePorIva.get(tipoIva).add(linea.getPrecioBase()));
-
-            totalPorIva.put(
-                    tipoIva,
-                    totalPorIva.get(tipoIva).add(linea.getTotalLinea()));
-
-            totalBase = totalBase.add(linea.getPrecioBase());
-            totalBruto = totalBruto.add(linea.getTotalLinea());
-        }
-
-        boolean primeraFila = true;
-
-        for (BigDecimal tipoIva : basePorIva.keySet()) {
-            Row row = sheet.createRow(filaActual++);
-
-            // 0️⃣ Subtotal (solo primera fila)
-            Cell cellSubtotal = row.createCell(0);
-            if (primeraFila) {
-                cellSubtotal.setCellValue(formatearNumeroDouble(totalBase));
-                cellSubtotal.setCellStyle(estiloSubtotal);
-            }
-
-            // 1️⃣ Base Imponible
-            Cell cellBase = row.createCell(1);
-            cellBase.setCellValue(formatearNumeroDouble(basePorIva.get(tipoIva)));
-            cellBase.setCellStyle(estiloMoneda);
-
-            // 2️⃣ Tipo IVA
-            Cell cellTipoIva = row.createCell(2);
-            cellTipoIva.setCellValue(formatearNumero(tipoIva));
-            cellTipoIva.setCellStyle(estiloNormal);
-
-            // 3️⃣ Subtotal Neto
-            Cell cellSubtotalNeto = row.createCell(3);
-            cellSubtotalNeto.setCellValue(formatearNumeroDouble(totalPorIva.get(tipoIva)));
-            cellSubtotalNeto.setCellStyle(estiloMoneda);
-
-            // 4️⃣ Total (solo primera fila)
-            Cell cellTotal = row.createCell(4);
-            if (primeraFila) {
-                cellTotal.setCellValue(formatearNumeroDouble(totalBruto));
-                cellTotal.setCellStyle(estiloSubtotal);
-            }
-
-            primeraFila = false;
-        }
-
-        filaActual++; // Línea en blanco
-        return filaActual;
-    }
+    
 
     private int agregarResumenFinal(Sheet sheet, Factura factura, CellStyle estiloHeader,
             CellStyle estiloMoneda, CellStyle estiloTotal, int filaActual) {
+
+        // Agrupar por tipo de IVA
+        Map<BigDecimal, BigDecimal> basePorIva = new TreeMap<>();
+        Map<BigDecimal, BigDecimal> ivaPorTipo = new TreeMap<>();
+
+        BigDecimal totalBruto = BigDecimal.ZERO;
+
+        for (LineaFactura linea : factura.getLineas()) {
+            BigDecimal baseImponibleLinea = linea.getPrecioBase()
+                    .multiply(linea.getCantidad())
+                    .multiply(
+                            BigDecimal.ONE.subtract(
+                                    linea.getDescuento().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)));
+
+            basePorIva.merge(linea.getPorcentajeIva(), baseImponibleLinea, BigDecimal::add);
+
+            BigDecimal ivaLinea = baseImponibleLinea
+                    .multiply(linea.getPorcentajeIva())
+                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            ivaPorTipo.merge(linea.getPorcentajeIva(), ivaLinea, BigDecimal::add);
+
+            totalBruto = totalBruto.add(baseImponibleLinea);
+        }
+
+        // Fila de total bruto
+        Row rowTotalBruto = sheet.createRow(filaActual++);
+
+        Cell cellTotalBrutoLabel = rowTotalBruto.createCell(0);
+        cellTotalBrutoLabel.setCellValue("TOTAL BRUTO");
+        cellTotalBrutoLabel.setCellStyle(estiloHeader);
+        sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 0, 2));
+
+        Cell cellTotalBrutoValor = rowTotalBruto.createCell(3);
+        cellTotalBrutoValor.setCellValue(formatearNumeroDouble(totalBruto));
+        cellTotalBrutoValor.setCellStyle(estiloMoneda);
+        sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 3, 4));
+
+        // Filas por tipo de IVA
+        for (BigDecimal tipoIva : basePorIva.keySet()) {
+            Row rowIva = sheet.createRow(filaActual++);
+
+            BigDecimal importeIva = ivaPorTipo.get(tipoIva);
+
+            Cell cellIvaLabel = rowIva.createCell(0);
+            cellIvaLabel.setCellValue(String.format("IVA %s%%", formatearNumero(tipoIva)));
+            cellIvaLabel.setCellStyle(estiloHeader);
+            sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 0, 2));
+
+            Cell cellIvaValor = rowIva.createCell(3);
+            String valor = String.format("+%s",
+                    formatearNumeroDouble(importeIva));
+            cellIvaValor.setCellValue(valor);
+            cellIvaValor.setCellStyle(estiloMoneda);
+            sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 3, 4));
+        }
+
+        // Fila de recargo si existe
+        if (factura.getTotalRecargo() != null && factura.getTotalRecargo().compareTo(BigDecimal.ZERO) > 0) {
+            Row rowRecargo = sheet.createRow(filaActual++);
+
+            Cell cellRecargoLabel = rowRecargo.createCell(0);
+            cellRecargoLabel.setCellValue("RECARGO");
+            cellRecargoLabel.setCellStyle(estiloHeader);
+            sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 0, 2));
+
+            Cell cellRecargoValor = rowRecargo.createCell(3);
+            cellRecargoValor.setCellValue("+" + formatearNumeroDouble(factura.getTotalRecargo()));
+            cellRecargoValor.setCellStyle(estiloMoneda);
+            sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 3, 4));
+        }
+
         // Fila de retención si existe
-        if (factura.getTotalRetencion().compareTo(BigDecimal.ZERO) > 0) {
+        if (factura.getTotalRetencion() != null && factura.getTotalRetencion().compareTo(BigDecimal.ZERO) > 0) {
             Row rowRetencion = sheet.createRow(filaActual++);
 
-            // Etiqueta retención
             Cell cellRetLabel = rowRetencion.createCell(0);
             cellRetLabel.setCellValue("RETENCIÓN IRPF");
             cellRetLabel.setCellStyle(estiloHeader);
             sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 0, 2));
 
-            // Valor retención
             Cell cellRetValor = rowRetencion.createCell(3);
             cellRetValor.setCellValue("-" + formatearNumeroDouble(factura.getTotalRetencion()));
             cellRetValor.setCellStyle(estiloMoneda);
             sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 3, 4));
-
-            filaActual++; // Espacio
         }
 
         // Fila de total final
         Row rowTotal = sheet.createRow(filaActual++);
 
-        // Etiqueta TOTAL FACTURA
         Cell cellTotalLabel = rowTotal.createCell(0);
         cellTotalLabel.setCellValue("TOTAL FACTURA");
         cellTotalLabel.setCellStyle(estiloTotal);
         sheet.addMergedRegion(new CellRangeAddress(filaActual - 1, filaActual - 1, 0, 3));
 
-        // Valor total
         Cell cellTotalValor = rowTotal.createCell(4);
         cellTotalValor.setCellValue(formatearNumeroDouble(factura.getTotal()));
         cellTotalValor.setCellStyle(estiloTotal);
@@ -503,29 +529,6 @@ public class FacturaExcelService {
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
         style.setAlignment(HorizontalAlignment.RIGHT);
-        style.setVerticalAlignment(VerticalAlignment.CENTER);
-
-        // Formato de moneda
-        DataFormat format = workbook.createDataFormat();
-        style.setDataFormat(format.getFormat("#,##0.00"));
-
-        return style;
-    }
-
-    private CellStyle crearEstiloSubtotal(Workbook workbook) {
-        CellStyle style = workbook.createCellStyle();
-        Font font = workbook.createFont();
-        font.setBold(true);
-        font.setFontHeightInPoints((short) 11);
-        font.setColor(IndexedColors.DARK_BLUE.getIndex());
-        style.setFont(font);
-        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        style.setBorderBottom(BorderStyle.MEDIUM);
-        style.setBorderTop(BorderStyle.MEDIUM);
-        style.setBorderLeft(BorderStyle.MEDIUM);
-        style.setBorderRight(BorderStyle.MEDIUM);
-        style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
 
         // Formato de moneda

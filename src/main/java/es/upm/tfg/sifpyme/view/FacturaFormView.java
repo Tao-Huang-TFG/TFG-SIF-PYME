@@ -126,8 +126,8 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
         // Tabla de líneas
         String[] columnasLineas = {
-                "Nº", "Cantidad", "Precio", "Descuento %",
-                "Subtotal", "IVA %", "Imp. IVA", "Retención %", "Imp. Ret.", "Total"
+                "Nº", "Cantidad", "Precio Base", 
+                "Subtotal", "Descuento %", "IVA %", "Retención %", "Recargo %", "Total"
         };
         modeloLineas = new DefaultTableModel(columnasLineas, 0) {
             @Override
@@ -337,14 +337,13 @@ public class FacturaFormView extends BaseFormView<Factura> {
     private void configurarAnchoColumnasLineas() {
         tablaLineas.getColumnModel().getColumn(0).setPreferredWidth(40); // Nº
         tablaLineas.getColumnModel().getColumn(1).setPreferredWidth(80); // Cantidad
-        tablaLineas.getColumnModel().getColumn(2).setPreferredWidth(80); // Precio
-        tablaLineas.getColumnModel().getColumn(3).setPreferredWidth(80); // Descuento
-        tablaLineas.getColumnModel().getColumn(4).setPreferredWidth(90); // Subtotal
+        tablaLineas.getColumnModel().getColumn(2).setPreferredWidth(80); // Precio Base
+        tablaLineas.getColumnModel().getColumn(3).setPreferredWidth(90); // Subtotal
+        tablaLineas.getColumnModel().getColumn(4).setPreferredWidth(80); // Descuento
         tablaLineas.getColumnModel().getColumn(5).setPreferredWidth(70); // IVA %
-        tablaLineas.getColumnModel().getColumn(6).setPreferredWidth(80); // Imp. IVA
-        tablaLineas.getColumnModel().getColumn(7).setPreferredWidth(80); // Ret %
-        tablaLineas.getColumnModel().getColumn(8).setPreferredWidth(80); // Imp. Ret
-        tablaLineas.getColumnModel().getColumn(9).setPreferredWidth(90); // Total
+        tablaLineas.getColumnModel().getColumn(6).setPreferredWidth(80); // Ret %
+        tablaLineas.getColumnModel().getColumn(7).setPreferredWidth(80); // Rec %
+        tablaLineas.getColumnModel().getColumn(8).setPreferredWidth(90); // Total
     }
 
     private void cargarCombos() {
@@ -707,13 +706,12 @@ public class FacturaFormView extends BaseFormView<Factura> {
             Object[] fila = {
                     linea.getNumeroLinea(),
                     formatearNumero(linea.getCantidad()),
-                    formatearMoneda(linea.getPrecioUnitario()),
-                    formatearNumero(linea.getDescuento()) + "%",
+                    formatearMoneda(linea.getPrecioBase()),
                     formatearMoneda(linea.getSubtotalLinea()),
+                    formatearNumero(linea.getDescuento()) + "%",
                     formatearNumero(linea.getPorcentajeIva()) + "%",
-                    formatearMoneda(linea.getImporteIva()),
                     formatearNumero(linea.getPorcentajeRetencion()) + "%",
-                    formatearMoneda(linea.getImporteRetencion()),
+                    formatearNumero(linea.getPorcentajeRecargo()) + "%",
                     formatearMoneda(linea.getTotalLinea())
             };
 
