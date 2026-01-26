@@ -274,10 +274,10 @@ public class FacturaExcelService {
         headerList.add("IVA (%)");
         headerList.add("Descuento (%)");
         if (hayRecargo) {
-            headerList.add("Recargo (€)");
+            headerList.add("Recargo (%)");
         }
         if (hayRetencion) {
-            headerList.add("Retención (€)");
+            headerList.add("Retención (%)");
         }
         headerList.add("Total (€)");
 
@@ -309,7 +309,7 @@ public class FacturaExcelService {
 
             // Precio
             Cell cellPrecio = row.createCell(colIndex++);
-            cellPrecio.setCellValue(formatearNumeroDouble(linea.getPrecioUnitario()));
+            cellPrecio.setCellValue(formatearNumeroDouble(linea.getPrecioBase()));
             cellPrecio.setCellStyle(estiloMoneda);
 
             // IVA
@@ -325,7 +325,7 @@ public class FacturaExcelService {
             // Recargo (si hay en alguna línea)
             if (hayRecargo) {
                 Cell cellRecargo = row.createCell(colIndex++);
-                BigDecimal recargo = linea.getImporteRecargo() != null ? linea.getImporteRecargo() : BigDecimal.ZERO;
+                BigDecimal recargo = linea.getPorcentajeRecargo() != null ? linea.getPorcentajeRecargo() : BigDecimal.ZERO;
                 cellRecargo.setCellValue(formatearNumeroDouble(recargo));
                 cellRecargo.setCellStyle(estiloMoneda);
             }
@@ -333,8 +333,7 @@ public class FacturaExcelService {
             // Retención (si hay en alguna línea)
             if (hayRetencion) {
                 Cell cellRetencion = row.createCell(colIndex++);
-                BigDecimal retencion = linea.getImporteRetencion() != null ? linea.getImporteRetencion()
-                        : BigDecimal.ZERO;
+                BigDecimal retencion = linea.getPorcentajeRetencion() != null ? linea.getPorcentajeRetencion() : BigDecimal.ZERO;
                 cellRetencion.setCellValue(formatearNumeroDouble(retencion));
                 cellRetencion.setCellStyle(estiloMoneda);
             }

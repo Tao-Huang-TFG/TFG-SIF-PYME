@@ -272,14 +272,14 @@ public class FacturaPDFService {
         List<String> headersList = new ArrayList<>();
         headersList.add("Producto");
         headersList.add("Cantidad");
-        headersList.add("Precio (€)");
+        headersList.add("Precio Base (€)");
         headersList.add("IVA (%)");
         headersList.add("Descuento (%)");
         if (hayRecargo) {
-            headersList.add("Recargo (€)");
+            headersList.add("Recargo (%)");
         }
         if (hayRetencion) {
-            headersList.add("Retención (€)");
+            headersList.add("Retención (%)");
         }
         headersList.add("Total (€)");
 
@@ -312,7 +312,7 @@ public class FacturaPDFService {
             table.addCell(crearCeldaNumero(formatearNumero(linea.getCantidad())));
 
             // Precio
-            table.addCell(crearCeldaNumero(formatearMoneda(linea.getPrecioUnitario())));
+            table.addCell(crearCeldaNumero(formatearMoneda(linea.getPrecioBase())));
 
             // IVA
             table.addCell(crearCeldaNumero(formatearNumero(linea.getPorcentajeIva())));
@@ -322,15 +322,14 @@ public class FacturaPDFService {
 
             // Recargo
             if (hayRecargo) {
-                BigDecimal recargo = linea.getImporteRecargo() != null ? linea.getImporteRecargo() : BigDecimal.ZERO;
-                table.addCell(crearCeldaNumero(formatearMoneda(recargo)));
+                BigDecimal recargo = linea.getPorcentajeRecargo() != null ? linea.getPorcentajeRecargo() : BigDecimal.ZERO;
+                table.addCell(crearCeldaNumero(formatearNumero(recargo)));
             }
 
             // Retención
             if (hayRetencion) {
-                BigDecimal retencion = linea.getImporteRetencion() != null ? linea.getImporteRetencion()
-                        : BigDecimal.ZERO;
-                table.addCell(crearCeldaNumero(formatearMoneda(retencion)));
+                BigDecimal retencion = linea.getPorcentajeRetencion() != null ? linea.getPorcentajeRetencion() : BigDecimal.ZERO;
+                table.addCell(crearCeldaNumero(formatearNumero(retencion)));
             }
 
             // Total
