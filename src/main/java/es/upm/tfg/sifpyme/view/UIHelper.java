@@ -129,8 +129,19 @@ public class UIHelper {
      */
     public static JTextField crearCampoTexto(int columnas) {
         JTextField campo = new JTextField(columnas);
-        aplicarEstiloCampo(campo);
+        campo.setFont(UITheme.FUENTE_CAMPO);
+        campo.setBorder(crearBordeCampoReducido()); // Usar borde con menos padding
+        campo.setBackground(Color.WHITE);
         return campo;
+    }
+
+    /**
+     * Crea un borde para campos con menos padding vertical
+     */
+    private static Border crearBordeCampoReducido() {
+        return BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UITheme.COLOR_BORDE, 1),
+                BorderFactory.createEmptyBorder(0, 10, 0, 10)); // Reducido de 10,12,10,12 a 6,10,6,10
     }
 
     /**
