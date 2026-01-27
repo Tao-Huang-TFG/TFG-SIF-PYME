@@ -24,12 +24,12 @@ public class ClienteFormView extends BaseFormView<Cliente> {
 
     public ClienteFormView(CardLayout cardLayout, JPanel cardPanel) {
         this(cardLayout, cardPanel, null);
-        afterConstruction();
     }
 
     public ClienteFormView(CardLayout cardLayout, JPanel cardPanel, Cliente clienteEditar) {
         super(cardLayout, cardPanel, clienteEditar);
         this.controller = new ClienteController();
+        afterConstruction(); // MOVER aquí, igual que en EmpresaFormView
     }
 
     @Override
