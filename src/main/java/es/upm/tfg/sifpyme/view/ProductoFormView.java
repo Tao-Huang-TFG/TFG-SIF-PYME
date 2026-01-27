@@ -477,6 +477,7 @@ public class ProductoFormView extends BaseFormView<Producto> {
         gbc.gridy = fila;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
 
         JLabel lbl = new JLabel(label);
         lbl.setFont(UITheme.FUENTE_ETIQUETA);

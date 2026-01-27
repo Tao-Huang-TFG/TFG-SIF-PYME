@@ -47,7 +47,8 @@ public class ProductoDAO {
                 PreparedStatement stmt = conn.prepareStatement(SQL_INSERT,
                         Statement.RETURN_GENERATED_KEYS)) {
 
-            setProductoParameters(stmt, producto);
+            // Para INSERT, no incluir el ID
+            setProductoParameters(stmt, producto, false);
 
             int filasAfectadas = stmt.executeUpdate();
 
@@ -76,8 +77,8 @@ public class ProductoDAO {
         try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
 
-            setProductoParameters(stmt, producto);
-            stmt.setInt(7, producto.getIdProducto());
+            // Para UPDATE, incluir el ID como último parámetro
+            setProductoParameters(stmt, producto, true);
 
             int filasAfectadas = stmt.executeUpdate();
 
@@ -263,15 +264,24 @@ public class ProductoDAO {
 
     /**
      * Establece los parámetros de un PreparedStatement con los datos del producto
+     * Para UPDATE, necesita 8 parámetros (7 datos + 1 ID)
+     * Para INSERT, necesita solo 7 parámetros
      */
-    private void setProductoParameters(PreparedStatement stmt, Producto producto) throws SQLException {
-        stmt.setBigDecimal(1, producto.getTipoIva());
-        stmt.setString(2, producto.getCodigo());
-        stmt.setString(3, producto.getNombre());
-        stmt.setBigDecimal(4, producto.getPrecio());
-        stmt.setBigDecimal(5, producto.getPrecioBase());
-        stmt.setBigDecimal(6, producto.getTipoRetencion());
-        stmt.setBigDecimal(7, producto.getRecargoEquivalencia()); // Nuevo parámetro
+    private void setProductoParameters(PreparedStatement stmt, Producto producto, boolean incluirId)
+            throws SQLException {
+        int index = 1;
+        stmt.setBigDecimal(index++, producto.getTipoIva());
+        stmt.setString(index++, producto.getCodigo());
+        stmt.setString(index++, producto.getNombre());
+        stmt.setBigDecimal(index++, producto.getPrecio());
+        stmt.setBigDecimal(index++, producto.getPrecioBase());
+        stmt.setBigDecimal(index++, producto.getTipoRetencion());
+        stmt.setBigDecimal(index++, producto.getRecargoEquivalencia());
+
+        // Si es para UPDATE, incluir el ID como último parámetro
+        if (incluirId) {
+            stmt.setInt(index, producto.getIdProducto());
+        }
     }
 
     /**

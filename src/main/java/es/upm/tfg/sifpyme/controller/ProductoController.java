@@ -73,11 +73,25 @@ public class ProductoController {
                 return false;
             }
 
-            // Verificar código duplicado (excluyendo el producto actual)
+            // OBTENER EL PRODUCTO ORIGINAL ANTES DE ACTUALIZAR
+            Producto productoOriginal = obtenerProductoPorId(producto.getIdProducto());
+
+            if (productoOriginal == null) {
+                logger.warn("Producto original no encontrado: {}", producto.getIdProducto());
+                return false;
+            }
+
+            // Verificar código duplicado SOLO si el código ha cambiado
             if (producto.getCodigo() != null && !producto.getCodigo().trim().isEmpty()) {
-                if (productoDAO.existeCodigo(producto.getCodigo(), producto.getIdProducto())) {
-                    logger.warn("Ya existe otro producto con el código: {}", producto.getCodigo());
-                    return false;
+                String codigoOriginal = productoOriginal.getCodigo();
+                String codigoNuevo = producto.getCodigo().trim();
+
+                // Solo verificar duplicado si el código ha cambiado
+                if (!codigoOriginal.equals(codigoNuevo)) {
+                    if (productoDAO.existeCodigo(codigoNuevo, producto.getIdProducto())) {
+                        logger.warn("Ya existe otro producto con el código: {}", codigoNuevo);
+                        return false;
+                    }
                 }
             }
 
