@@ -202,7 +202,7 @@ public class EmpresasView extends BaseListView<Empresa> {
         }
 
         int filaModelo = tabla.convertRowIndexToModel(filaSeleccionada);
-        Boolean esPorDefecto = (Boolean) modeloTabla.getValueAt(filaModelo, 7);
+        Boolean esPorDefecto = (Boolean) modeloTabla.getValueAt(filaModelo, 6);
 
         if (esPorDefecto) {
             JOptionPane.showMessageDialog(
