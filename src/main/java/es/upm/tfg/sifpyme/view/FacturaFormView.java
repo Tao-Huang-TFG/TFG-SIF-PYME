@@ -126,7 +126,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
         // Tabla de líneas
         String[] columnasLineas = {
-                "Nº", "Cantidad", "Precio Base", 
+                "Producto", "Cantidad", "Precio Base", 
                 "Subtotal", "Descuento %", "IVA %", "Retención %", "Recargo %", "Total"
         };
         modeloLineas = new DefaultTableModel(columnasLineas, 0) {
@@ -335,14 +335,14 @@ public class FacturaFormView extends BaseFormView<Factura> {
     }
 
     private void configurarAnchoColumnasLineas() {
-        tablaLineas.getColumnModel().getColumn(0).setPreferredWidth(40); // Nº
-        tablaLineas.getColumnModel().getColumn(1).setPreferredWidth(80); // Cantidad
+        tablaLineas.getColumnModel().getColumn(0).setPreferredWidth(245); // Producto
+        tablaLineas.getColumnModel().getColumn(1).setPreferredWidth(40); // Cantidad
         tablaLineas.getColumnModel().getColumn(2).setPreferredWidth(80); // Precio Base
         tablaLineas.getColumnModel().getColumn(3).setPreferredWidth(90); // Subtotal
-        tablaLineas.getColumnModel().getColumn(4).setPreferredWidth(80); // Descuento
-        tablaLineas.getColumnModel().getColumn(5).setPreferredWidth(70); // IVA %
-        tablaLineas.getColumnModel().getColumn(6).setPreferredWidth(80); // Ret %
-        tablaLineas.getColumnModel().getColumn(7).setPreferredWidth(80); // Rec %
+        tablaLineas.getColumnModel().getColumn(4).setPreferredWidth(40); // Descuento
+        tablaLineas.getColumnModel().getColumn(5).setPreferredWidth(35); // IVA %
+        tablaLineas.getColumnModel().getColumn(6).setPreferredWidth(40); // Ret %
+        tablaLineas.getColumnModel().getColumn(7).setPreferredWidth(40); // Rec %
         tablaLineas.getColumnModel().getColumn(8).setPreferredWidth(90); // Total
     }
 
@@ -704,7 +704,7 @@ public class FacturaFormView extends BaseFormView<Factura> {
 
         for (LineaFactura linea : lineasFactura) {
             Object[] fila = {
-                    linea.getNumeroLinea(),
+                    linea.getNombreProducto(),
                     formatearNumero(linea.getCantidad()),
                     formatearMoneda(linea.getPrecioBase()),
                     formatearMoneda(linea.getSubtotalLinea()),
