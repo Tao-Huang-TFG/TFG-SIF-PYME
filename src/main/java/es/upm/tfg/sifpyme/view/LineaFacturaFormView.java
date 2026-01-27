@@ -721,6 +721,11 @@ public class LineaFacturaFormView extends BaseFormView<LineaFactura> {
             txtPorcentajeRetencion.setText(producto.getTipoRetencion().toString());
         }
 
+        if (producto.getRecargoEquivalencia() != null &&
+            producto.getRecargoEquivalencia().compareTo(BigDecimal.ZERO) > 0) {
+        txtPorcentajeRecargo.setText(producto.getRecargoEquivalencia().toString());
+        }
+
         calculandoPrecio = false;
         calculandoPrecioBase = false;
         calcularTotales();
