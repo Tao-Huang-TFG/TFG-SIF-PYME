@@ -9,7 +9,8 @@ import java.util.List;
 
 /**
  * Vista de lista de productos.
- * Columnas: ID, Código, Nombre, Precio, Precio Base, IVA %, Retención %, Rec. equiv. %
+ * Columnas: ID, Código, Nombre, Precio, Precio Base, IVA %, Retención %, Rec.
+ * equiv. %
  */
 public class ProductosView extends BaseListView<Producto> {
 
@@ -30,7 +31,7 @@ public class ProductosView extends BaseListView<Producto> {
     protected String getTituloVentana() {
         return "Gestión de Productos - SifPyme";
     }
-    
+
     @Override
     protected String getTituloHeader() {
         return "Gestión de Productos";
@@ -48,9 +49,9 @@ public class ProductosView extends BaseListView<Producto> {
 
     @Override
     protected String[] getNombresColumnas() {
-        return new String[]{
-            "ID", "Código", "Nombre",
-            "Precio", "Precio Base", "IVA %", "Retención %", "Rec. equiv. %"
+        return new String[] {
+                "ID", "Código", "Nombre",
+                "Precio Base", "IVA %", "Precio", "Retención %", "Rec. equiv. %"
         };
     }
 
@@ -76,14 +77,14 @@ public class ProductosView extends BaseListView<Producto> {
 
     @Override
     protected void configurarAnchoColumnas() {
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
-        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);  // Código
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(280);  // Nombre
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(90);   // Precio
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(90);   // Precio Base
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(70);   // IVA %
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(85);   // Retención %
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(85);   // Rec. equiv. %
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(50); // ID
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(100); // Código
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(280); // Nombre
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(90); // Precio Base
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(70); // IVA %
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(90); // Precio
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(85); // Retención %
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(85); // Rec. equiv. %
     }
 
     @Override
@@ -91,7 +92,7 @@ public class ProductosView extends BaseListView<Producto> {
         if (controller == null) {
             controller = new ProductoController();
         }
-        
+
         modeloTabla.setRowCount(0);
 
         List<Producto> productos = controller.obtenerTodosLosProductos();
@@ -100,14 +101,14 @@ public class ProductosView extends BaseListView<Producto> {
             String ivaStr = producto.getTipoIva() != null ? formatearPrecio(producto.getTipoIva()) : "";
 
             Object[] fila = {
-                producto.getIdProducto(),
-                producto.getCodigo() != null ? producto.getCodigo() : "",
-                producto.getNombre(),
-                formatearPrecio(producto.getPrecio()),
-                formatearPrecio(producto.getPrecioBase()),
-                ivaStr,
-                formatearPrecio(producto.getTipoRetencion()),
-                formatearPrecio(producto.getRecargoEquivalencia())
+                    producto.getIdProducto(),
+                    producto.getCodigo() != null ? producto.getCodigo() : "",
+                    producto.getNombre(),
+                    formatearPrecio(producto.getPrecioBase()),
+                    ivaStr,
+                    formatearPrecio(producto.getPrecio()),
+                    formatearPrecio(producto.getTipoRetencion()),
+                    formatearPrecio(producto.getRecargoEquivalencia())
             };
             modeloTabla.addRow(fila);
         }
